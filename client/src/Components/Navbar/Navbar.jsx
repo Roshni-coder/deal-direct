@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AiOutlineUser, AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
-import logo from "../../assets/dealdirect_logo.webp";
+import logo from "../../assets/dealdirect_logo.png";
 import CityDropdown from "./CityDropdown";
 import MegaMenu from "./MegaMenu";
 
@@ -104,7 +104,10 @@ function Navbar() {
         
 
         {/* Desktop Menu - Right Side */}
-        <div className="hidden lg:flex items-center space-x-6 ml-auto mr-2">
+        <div className="hidden lg:flex items-center space-x-14 ml-auto ">
+            <Link to="/" className={`${navTextClass} hover:text-red-600 font-medium text-[15px]`}>
+            Home
+          </Link>
           <Link to="/about" className={`${navTextClass} hover:text-red-600 font-medium text-[15px]`}>
             About
           </Link>
@@ -117,14 +120,6 @@ function Navbar() {
               Properties
             </Link>
             <div className={`hidden lg:flex items-center space-x-4 ${navTextClass}`}>
-          <CityDropdown
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            isOpen={activeMenu === "city"}
-            onMouseEnter={() => setActiveMenu("city")}
-            onMouseLeave={() => setActiveMenu(null)}
-            navTextClass={navTextClass}
-          />
 
           {/* <MegaMenu
             title="Buy"
