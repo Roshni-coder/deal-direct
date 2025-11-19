@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone } from "react-icons/fa";
 import { tabConfig } from "./filterConfig";
-import BudgetFilter from "./BudgetFilter";
 import PropertyTypeFilter from "./PropertyTypeFilter";
 
 const defaultTabs = [
@@ -85,28 +84,14 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   const updatePropertyTypes = (updater) => {
     setFilters((prev) => {
       const previous = prev.propertyTypes || [];
-      const nextValue = typeof updater === "function" ? updater(previous) : updater;
+      const nextValue =
+        typeof updater === "function" ? updater(previous) : updater;
       return { ...prev, propertyTypes: nextValue };
     });
   };
 
   const renderFilters = () =>
     currentConfig.filters.map((filterType) => {
-      if (filterType === "budget") {
-        return (
-          <BudgetFilter
-            key="budget"
-            minBudget={filters.minBudget}
-            setMinBudget={(value) => updateFilter("minBudget", value)}
-            maxBudget={filters.maxBudget}
-            setMaxBudget={(value) => updateFilter("maxBudget", value)}
-            openDropdown={openDropdown}
-            setOpenDropdown={setOpenDropdown}
-            dropdownRef={dropdownRefs.budget}
-          />
-        );
-      }
-
       if (filterType === "propertyType") {
         return (
           <PropertyTypeFilter
@@ -139,7 +124,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   };
 
   return (
-    <section className="relative mt-20 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
+    <section className="relative  flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
       {/* === Background Image === */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -163,7 +148,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
       ></div>
 
       {/* === Foreground Content === */}
-      <div className="relative py-26 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
+      <div className="relative pt-30 py-15 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
         {/* Location Tag */}
         <div className="flex items-center bg-white/90 px-5 py-2 rounded-full shadow-md border border-gray-100 gap-2">
           <FaMapMarkerAlt className="text-[#d32f2f]" />
@@ -171,18 +156,18 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
         </div>
 
         {/* Hero Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-lg max-w-4xl">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[700] text-white leading-tight drop-shadow-lg max-w-4xl">
           Find Your <span className="text-white">Dream Property</span> in{" "}
           <span className="text-red-500">Mumbai</span>
         </h1>
 
-      {/* Subtext (No Animation) */}
-<p className="text-base sm:text-lg text-gray-100 max-w-3xl">
-  From finding the right home to{" "}
-  <span className="font-semibold text-white">
-    Property Management, Interiors & More
-  </span>
-</p>
+        {/* Subtext (No Animation) */}
+        <p className="text-base sm:text-lg text-gray-100 max-w-3xl">
+          From finding the right home to{" "}
+          <span className="font-semibold text-white">
+            Property Management, Interiors & More
+          </span>
+        </p>
 
         {/* Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mt-5">
@@ -203,19 +188,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
         {/* Search & Filters */}
         <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-3xl p-6 sm:p-8 mt-6 w-full max-w-5xl border border-gray-100">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <select
-              value={filters.city}
-              onChange={(e) => updateFilter("city", e.target.value)}
-              className="w-full sm:w-48 bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-[#0b1e3f] outline-none"
-            >
-              <option value="">All Cities</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Pune">Pune</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="Hyderabad">Hyderabad</option>
-            </select>
+          <div className="flex pb-3 flex-col sm:flex-row gap-3 ">
 
             <div className="relative flex-1 flex items-center">
               <AiOutlineSearch className="absolute left-3 text-gray-400 text-lg" />
@@ -237,7 +210,19 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap gap-3 items-center">
-            {renderFilters()}
+            <select
+              value={filters.city}
+              onChange={(e) => updateFilter("city", e.target.value)}
+              className="w-full sm:w-48 bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm focus:ring-2 focus:ring-[#0b1e3f] outline-none"
+            >
+              <option value="">All Cities</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Pune">Pune</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Bangalore">Bangalore</option>
+              <option value="Hyderabad">Hyderabad</option>
+            </select>
+            {/* {renderFilters()} */}
             <button className="ml-auto border-red-600 border-1 bg-red-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all shadow-lg">
               <AiOutlineSearch /> Search
             </button>

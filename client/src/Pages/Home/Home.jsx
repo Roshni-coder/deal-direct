@@ -247,53 +247,74 @@ const Home = () => {
     {filteredProperties.length === 0 ? (
       <p className="text-gray-400 text-lg">No properties found.</p>
     ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        {filteredProperties.map((property) => (
-          <div
-            key={property._id}
-            className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden"
-          >
-            {/* 🏙 Image */}
-            <div className="relative">
-              <img
-                src={resolveImageSrc(property.images?.[0])}
-                alt={property.title}
-                className="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={(e) =>
-                  (e.target.src =
-                    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800")
-                }
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
-              <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
-                Featured
-              </span>
-            </div>
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+  {filteredProperties.map((property) => (
+    <div
+      key={property._id}
+      className="group bg-white rounded- shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-200 overflow-hidden"
+    >
+      {/* 🏙 Image */}
+      <div className="relative">
+        <img
+          src={resolveImageSrc(property.images?.[0])}
+          alt={property.title}
+          className="h-60 w-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) =>
+            (e.target.src =
+              'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800')
+          }
+        />
 
-            {/* 🏠 Info */}
-            <div className="p-5 text-left">
-              <h3 className="text-lg font-semibold text-gray-800 truncate">
-                {property.title}
-              </h3>
-              <p className="text-gray-500 text-sm mb-3 flex items-center gap-1">
-                <FaMapMarkerAlt className="text-red-500" />{" "}
-                {property.address?.city}, {property.address?.state}
-              </p>
+        {/* Fade Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
 
-              <p className="text-red-600 font-bold text-xl mb-5">
-                ₹{property.price?.toLocaleString()} {property.priceUnit}
-              </p>
-
-              <button
-                onClick={() => handleViewDetails(property)}
-                className="w-full bg-gradient-to-r from-red-600 to-rose-700 text-white py-2.5 rounded-xl font-semibold hover:scale-[1.02] hover:shadow-lg transition-all"
-              >
-                View Details
-              </button>
-            </div>
-          </div>
-        ))}
+        {/* Badge */}
+        <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
+          Featured
+        </span>
       </div>
+
+      {/* 🏠 Info */}
+      <div className="p-6 text-left">
+
+        {/* Title (Clickable) */}
+        <h3
+          onClick={() => handleViewDetails(property)}
+          className="text-xl font-semibold text-gray-900 mb-2  cursor-pointer hover:text-red-600 transition"
+        >
+          {property.title}
+        </h3>
+
+        {/* Location */}
+        <p className="text-gray-500 text-sm mb-5 flex items-center gap-1">
+          <FaMapMarkerAlt className="text-red-500" />
+          {property.address?.city}, {property.address?.state}
+        </p>
+
+        {/* Bottom Row */}
+        <div className="flex justify-between items-center">
+          {/* Price */}
+          <p className="text-gray-800 font-bold text-2xl tracking-tight">
+            ₹{property.price?.toLocaleString()}
+            <span className="text-sm font-medium text-gray-600 ml-1">
+              {property.priceUnit}
+            </span>
+          </p>
+
+          {/* Button */}
+          <button
+            onClick={() => handleViewDetails(property)}
+            className="px-5 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg 
+                       shadow-md hover:bg-red-700 hover:shadow-lg transition-all"
+          >
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
     )}
   </div>
 </section>
@@ -307,59 +328,70 @@ const Home = () => {
 
 
 
-      {/* 🏢 Developers */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Trusted by Every Indian
-          </h2>
-          <p className="text-gray-600 mb-10">Partnered with 100+ renowned real estate brands</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {featuredDevelopers.map((dev, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105">
-                <div className="text-3xl mb-3">{dev.logo}</div>
-                <h3 className="font-bold text-gray-800 mb-1">{dev.name}</h3>
-                <p className="text-sm text-gray-600">{dev.projects} Projects</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+     {/* 🏘 Property Types */}
+<section className="py-16 bg-gray-50">
+  <div className="max-w-7xl mx-auto px-6 text-center">
 
-      {/* 🏘 Property Types */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Find Your Perfect Property Type
-          </h2>
-          <p className="text-gray-600 mb-10">Explore diverse property categories tailored to your needs</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {propertyShowcaseTypes.map((type, index) => (
-              <div
-                key={index}
-                className="bg-gradient-to-br from-blue-50 to-red-50 rounded-xl p-6 text-center shadow-md hover:shadow-lg transition transform hover:scale-105 border"
-              >
-                <div className="text-3xl mb-3">{type.icon}</div>
-                <h3 className="font-bold text-gray-800 mb-1">{type.type}</h3>
-                <p className="text-sm text-gray-600">{type.count} Listings</p>
-              </div>
-            ))}
-          </div>
+    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+      Find Your Perfect Property Type
+    </h2>
+    <p className="text-gray-500 mb-12">
+      Explore property categories tailored to your needs
+    </p>
+
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+      {propertyShowcaseTypes.map((type, index) => (
+        <div
+          key={index}
+          className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-lg 
+                     transition-all hover:-translate-y-1"
+        >
+          <div className="text-3xl mb-3">{type.icon}</div>
+          <h3 className="font-semibold text-gray-800">{type.type}</h3>
+          <p className="text-xs text-gray-500">{type.count} Listings</p>
         </div>
-      </section>
+      ))}
+    </div>
+
+  </div>
+</section>
+
       
 
       {/* 📈 Investment Banner */}
-      <section className="py-16 bg-gray-100 text-center">
-        <div className="max-w-7xl mx-auto px-6 bg-blue-800 rounded-2xl p-8 text-white">
-          <AiOutlineStar className="text-4xl mx-auto mb-4" />
-          <h3 className="text-2xl font-bold mb-3">Smart Investment Opportunity</h3>
-          <p className="text-lg mb-6 opacity-90">Properties in top cities appreciating 15–20% annually</p>
-          <button className="bg-white text-gray-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-            View High ROI Properties →
-          </button>
-        </div>
-      </section>
+      {/* 📈 Investment Banner */}
+<section className="py-16 bg-white">
+  <div className="max-w-7xl mx-auto px-6">
+
+    <div className="bg-gradient-to-r from-red-600 to-rose-700 rounded-3xl p-10 text-center shadow-xl relative overflow-hidden">
+
+      {/* Soft Glow Effect */}
+      <div className="absolute inset-0 bg-white/10 blur-2xl"></div>
+
+      {/* Icon */}
+      <AiOutlineStar className="text-5xl mx-auto mb-4 text-white drop-shadow-lg relative" />
+
+      {/* Title */}
+      <h3 className="text-3xl font-extrabold mb-3 text-white tracking-wide relative">
+        Smart Investment Opportunity
+      </h3>
+
+      {/* Subtitle */}
+      <p className="text-lg text-white/90 mb-8 relative">
+        Properties in top cities appreciating <span className="font-semibold">15–20% annually</span>
+      </p>
+
+      {/* Button */}
+      <button className="px-8 py-3 bg-white text-red-600 font-semibold rounded-lg 
+                         shadow-md hover:bg-red-50 hover:shadow-lg transition-all duration-200 relative">
+        View High ROI Properties →
+      </button>
+
+    </div>
+
+  </div>
+</section>
+
     </div>
   );
 };

@@ -226,7 +226,7 @@ const DiscoverSection = () => {
                     <div className="text-gray-600 text-xs leading-relaxed mt-3 mb-3">
                       {sections[sectionTitle].description}
                     </div>
-                    <button className="bg-blue-600 text-white font-semibold px-3 py-2 rounded-md shadow hover:bg-blue-700 transition text-xs">
+                    <button className="bg-red-600 text-white font-semibold px-3 py-2 rounded-md shadow hover:bg-blue-700 transition text-xs">
                       View All
                     </button>
                   </div>

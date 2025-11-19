@@ -51,7 +51,7 @@ const MegaMenu = ({ title, sections, isOpen, onMouseEnter, onMouseLeave }) => {
       onMouseLeave={handleMouseLeave}
     >
       <button
-        className="flex items-center space-x-1 px-3 py-2 text-gray-700 hover:text-blue-700 font-medium transition text-[15px]"
+        className="flex items-center space-x-1 px-3 py-2 text-white hover:text-blue-700 font-medium transition text-[15px]"
         type="button"
       >
         <span>{title}</span>
