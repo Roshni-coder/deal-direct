@@ -125,22 +125,15 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
   return (
     <section className="relative  flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
-      {/* === Background Image === */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=2000&auto=format&fit=crop')",
-          filter: "brightness(0.7) contrast(1.1)",
-        }}
-      ></div>
+      {/* === Background Gradient - Modern SaaS Style === */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#dc2626]"></div>
 
-      {/* === Overlay (Red + Dark Blue Gradient) === */}
-      {/* <div className="absolute inset-0 bg-gradient-to-br from-[#0b1e3f]/95 via-[#0b1e3f]/80 to-[#b71c1c]/80"></div> */}
+      {/* === Accent Gradient Overlay === */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#dc2626]/20 to-[#ef4444]/30"></div>
 
       {/* === Subtle Pattern Layer === */}
       <div
-        className="absolute inset-0 opacity-[0.08]"
+        className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage:
             "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ffffff10%22/%3E%3C/svg%3E')",
@@ -149,23 +142,19 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
       {/* === Foreground Content === */}
       <div className="relative pt-30 py-15 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
-        {/* Location Tag */}
-        <div className="flex items-center bg-white/90 px-5 py-2 rounded-full shadow-md border border-gray-100 gap-2">
-          <FaMapMarkerAlt className="text-[#d32f2f]" />
-          <span className="text-sm font-medium text-gray-800">Mumbai</span>
-        </div>
+
 
         {/* Hero Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[700] text-white leading-tight drop-shadow-lg max-w-4xl">
-          Find Your <span className="text-white">Dream Property</span> in{" "}
-          <span className="text-red-500">Mumbai</span>
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[700] text-white leading-tight max-w-4xl">
+          Buy, Sell & Rent Properties{" "}
+          <span className="text-red-500">Directly from Owners</span>
         </h1>
 
-        {/* Subtext (No Animation) */}
-        <p className="text-base sm:text-lg text-gray-100 max-w-3xl">
-          From finding the right home to{" "}
+        {/* Subtext */}
+        <p className="text-base sm:text-lg text-gray-200 max-w-3xl">
+          No middleman. No commission fees.{" "}
           <span className="font-semibold text-white">
-            Property Management, Interiors & More
+            Connect directly with property owners
           </span>
         </p>
 
@@ -175,11 +164,10 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
             <button
               key={`${tab.label}-${i}`}
               onClick={() => handleTabSelect(tab)}
-              className={`px-5 py-2.5 rounded-full font-semibold text-sm border-2 transition-all duration-300 ${
-                activeTab === tab.label
-                  ? "bg-red-600  text-white border-transparent shadow-lg scale-105"
-                  : "bg-white text-gray-800 border-gray-300 "
-              }`}
+              className={`px-5 py-2.5 rounded-full font-semibold text-sm border-2 transition-all duration-300 ${activeTab === tab.label
+                ? "bg-red-600 text-white border-transparent shadow-lg shadow-red-500/50 scale-105"
+                : "bg-white/10 backdrop-blur-sm text-white border-white/30 hover:border-white/50 hover:bg-white/20"
+                }`}
             >
               {tab.label}
             </button>
