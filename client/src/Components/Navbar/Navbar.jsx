@@ -86,59 +86,60 @@ function Navbar() {
   return (
     <nav className={navWrapperClass}>
       <div className="mx-auto flex items-center justify-between px-6 lg:px-8 max-w-[1400px]">
-        {/* Logo */}
-        <Link to="/" className="flex items-center mr-6">
-          <img
-            src={logo}
-            alt="DealDirect"
-            className="h-10 w-auto object-contain hover:scale-105 transition-transform duration-300"
-          />
-        </Link>
+        {/* Left Side: Logo + Navigation */}
+        <div className="flex items-center gap-6">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <img
+              src={logo}
+              alt="DealDirect"
+              className="h-10 w-auto object-contain hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
 
-        {/* Scrolled State: Search Bar + City Dropdown */}
-        {isScrolled && (
-          <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-6 gap-3">
-            {/* City Dropdown */}
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
-            >
-              <option value="Mumbai">Mumbai</option>
-              <option value="Pune">Pune</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Bangalore">Bangalore</option>
-            </select>
+          {/* Scrolled State: Search Bar + City Dropdown */}
+          {isScrolled && (
+            <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-6 gap-3">
+              {/* City Dropdown */}
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
+              >
+                <option value="Mumbai">Mumbai</option>
+                <option value="Pune">Pune</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Bangalore">Bangalore</option>
+              </select>
 
-            {/* Search Bar */}
-            <div className="relative flex-1 flex items-center">
-              <AiOutlineSearch className="absolute left-3 text-gray-400 text-lg" />
-              <input
-                type="text"
-                placeholder="Enter Locality / Project / Society / Landmark"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg pl-10 pr-16 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
-              />
-              <div className="absolute right-3 flex items-center gap-2">
-                <FaMapMarkerAlt className="text-red-600 cursor-pointer hover:text-red-700" />
-                <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700" />
+              {/* Search Bar */}
+              <div className="relative flex-1 flex items-center">
+                <AiOutlineSearch className="absolute left-3 text-gray-400 text-lg" />
+                <input
+                  type="text"
+                  placeholder="Enter Locality / Project / Society / Landmark"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg pl-10 pr-16 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
+                />
+                <div className="absolute right-3 flex items-center gap-2">
+                  <FaMapMarkerAlt className="text-red-600 cursor-pointer hover:text-red-700" />
+                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700" />
+                </div>
               </div>
+
+              {/* Search Button */}
+              <button className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-red-700 transition flex items-center gap-2">
+                <AiOutlineSearch />
+                Search
+              </button>
             </div>
+          )}
 
-            {/* Search Button */}
-            <button className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-red-700 transition flex items-center gap-2">
-              <AiOutlineSearch />
-              Search
-            </button>
-          </div>
-        )}
-
-        {/* Desktop Menu - Right Side */}
-        <div className="hidden lg:flex items-center space-x-8 ml-auto">
+          {/* Desktop Navigation Items - Only in non-scrolled state */}
           {!isScrolled && (
-            <>
-              {/* City Dropdown in initial state */}
+            <div className="hidden lg:flex items-center gap-6">
+              {/* City Dropdown */}
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
@@ -389,8 +390,12 @@ function Navbar() {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
+        </div>
+
+        {/* Right Side: Sell Property + Login */}
+        <div className="hidden lg:flex items-center gap-6 ml-auto">
 
           <div className="flex items-center gap-6">
             {isScrolled && (

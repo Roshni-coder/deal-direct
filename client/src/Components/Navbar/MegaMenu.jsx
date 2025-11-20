@@ -122,11 +122,11 @@ const MegaMenu = ({ title, sections, isOpen, onMouseEnter, onMouseLeave }) => {
                     <h3 className="font-bold text-gray-800 mb-3 text-sm border-b pb-2 flex-shrink-0">
                       {section.title}
                     </h3>
-                    
+
                     {/* Scrollable Content Area */}
-                    <div 
-                      className="overflow-y-auto pr-2 flex-1" 
-                      style={{ 
+                    <div
+                      className="overflow-y-auto pr-2 flex-1"
+                      style={{
                         scrollbarWidth: "thin",
                         scrollbarColor: "#cbd5e0 #f7fafc"
                       }}
@@ -174,9 +174,8 @@ const MegaMenu = ({ title, sections, isOpen, onMouseEnter, onMouseLeave }) => {
                       e.stopPropagation();
                       setCurrentSlide(idx);
                     }}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      currentSlide === idx ? "bg-blue-600 w-6" : "bg-gray-300 w-2"
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? "bg-blue-600 w-6" : "bg-gray-300 w-2"
+                      }`}
                     aria-label={`Go to position ${idx + 1}`}
                     style={{ pointerEvents: "all" }}
                   />
@@ -186,7 +185,7 @@ const MegaMenu = ({ title, sections, isOpen, onMouseEnter, onMouseLeave }) => {
           </div>
         </div>
       )}
-      
+
       {/* Custom Scrollbar Styles */}
       <style>{`
         /* Webkit browsers (Chrome, Safari, Edge) */
