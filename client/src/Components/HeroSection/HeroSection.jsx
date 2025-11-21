@@ -5,6 +5,7 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone, FaHome, FaKey, FaBuilding, FaBed, FaTree, FaStore, FaUserTie } from "react-icons/fa";
 import { tabConfig } from "./filterConfig";
 import PropertyTypeFilter from "./PropertyTypeFilter";
+import SKYBACKGROUND from "../../assets/SKYBACKGROUND.png";
 
 const defaultTabs = [
   { label: "Buy", intent: "buy", icon: FaHome },
@@ -119,8 +120,13 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
   return (
     <section className="relative  flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
-      {/* === Background - Deep Navy Blue === */}
-      <div className="absolute inset-0 bg-[#1A73E8]"></div>
+      {/* === Background - Sky Image === */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${SKYBACKGROUND})`,
+        }}
+      ></div>
 
       {/* === Subtle Pattern Layer === */}
       <div
@@ -132,18 +138,20 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
       ></div>
 
       {/* === Foreground Content === */}
-      <div className="relative pt-30 py-15 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
+      <div className="relative pt-20 py-15 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
 
 
         {/* Hero Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-[700] text-white leading-tight max-w-4xl">
-          Buy, Sell & Rent Properties{" "}
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-[700] text-white leading-tight max-w-4xl">
+          Buy, Sell & Rent Properties
+          <br />
           <span className="text-red-500">Directly from Owners</span>
         </h1>
 
         {/* Subtext */}
-        <p className="text-base sm:text-lg text-gray-200 max-w-3xl">
-          No middleman. No commission fees.{" "}
+        <p className="text-lg sm:text-xl lg:text-2xl text-gray-200 max-w-3xl">
+          No middleman. No commission fees.
+          <br />
           <span className="font-semibold text-white">
             Connect directly with property owners
           </span>
@@ -188,7 +196,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
 
             {/* Search Input */}
             <div className="relative flex-1 flex items-center">
-              <AiOutlineSearch className="absolute left-4 text-gray-400 text-lg" />
+              <AiOutlineSearch className="absolute left-4 text-gray-500 text-lg" />
               <input
                 type="text"
                 placeholder="Search by Project, Locality, or Builder"
@@ -196,10 +204,10 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                 onChange={(e) =>
                   setFilters({ ...filters, search: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-xl pl-11 pr-20 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
+                className="w-full border border-gray-300 rounded-xl pl-11 pr-20 py-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-500 outline-none"
               />
               <div className="absolute right-4 flex items-center gap-3">
-                <FaMapMarkerAlt className="text-gray-500 cursor-pointer hover:text-gray-700" />
+                <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800" />
                 <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700" />
               </div>
             </div>

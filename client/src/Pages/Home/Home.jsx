@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   AiOutlineStar,
   AiOutlineDollarCircle,
 } from "react-icons/ai";
-import {  FaBuilding, FaMapMarkerAlt } from "react-icons/fa";
+import { FaBuilding, FaMapMarkerAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import HeroSection from "../../Components/HeroSection/HeroSection";
-import DiscoverSection from "../../Components/DiscoverSection/DiscoverSection"; 
+import DiscoverSection from "../../Components/DiscoverSection/DiscoverSection";
 import TopDevelopers from "../../Components/TopDevelopers/TopDevelopers";
 import TopLocalities from "../../Components/TopLocalities/TopLocalities";
+import AuthModal from "../../Components/AuthModal/AuthModal";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -54,6 +55,7 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [propertyTypeOptions, setPropertyTypeOptions] = useState([]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -65,6 +67,19 @@ const Home = () => {
     propertyTypes: [],
   });
   const navigate = useNavigate();
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = 320; // Card width + gap
+      if (direction === 'left') {
+        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  };
 
   const resolveImageSrc = (img) => {
     if (!img) return "";
@@ -224,7 +239,8 @@ const Home = () => {
 
   return (
     <div className="font-sans text-gray-800">
-      
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+
       {/* 🏠 Hero Section Component */}
       <HeroSection
         filters={filters}
@@ -233,93 +249,157 @@ const Home = () => {
         subcategories={subcategories}
         propertyTypes={propertyTypeOptions}
       />
-        
+
       {/* 🏙 Featured Properties */}
-<section className="relative py-10  to-white">
-  <div className="max-w-7xl mx-auto px-6 text-center">
-    <h2 className="text-4xl font-bold mb-3 text-gray-800">
-      Featured <span className="text-red-600">Properties</span>
-    </h2>
-    <p className="text-gray-500 mb-12">
-      Handpicked homes and investments across India’s top cities
-    </p>
+      <section className="relative py-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">
+                Popular Owner <span className="text-red-600">Properties</span>
+              </h2>
+              <p className="text-gray-500 mt-2">
+                Handpicked premium homes and investments across India's top cities
+              </p>
+            </div>
 
-    {filteredProperties.length === 0 ? (
-      <p className="text-gray-400 text-lg">No properties found.</p>
-    ) : (
-     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-  {filteredProperties.map((property) => (
-    <div
-      key={property._id}
-      className="group bg-white rounded- shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-200 overflow-hidden"
-    >
-      {/* 🏙 Image */}
-      <div className="relative">
-        <img
-          src={resolveImageSrc(property.images?.[0])}
-          alt={property.title}
-          className="h-60 w-full object-cover group-hover:scale-105 transition-transform duration-500"
-          onError={(e) =>
-            (e.target.src =
-              'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800')
-          }
-        />
+            <button
+              onClick={() => navigate('/properties')}
+              className="text-red-600 font-semibold hover:text-red-700 transition flex items-center gap-2"
+            >
+              See all Properties →
+            </button>
+          </div>
 
-        {/* Fade Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
+          {/* Carousel Container */}
+          {filteredProperties.length === 0 ? (
+            <p className="text-gray-400 text-lg text-center py-12">No properties found.</p>
+          ) : (
+            <div className="relative group">
+              {/* Left Navigation Button */}
+              <button
+                onClick={() => scroll('left')}
+                className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:text-red-600 hover:scale-110 transition-all border border-gray-100"
+                aria-label="Scroll left"
+              >
+                <FaChevronLeft className="text-lg" />
+              </button>
 
-        {/* Badge */}
-        <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
-          Featured
-        </span>
-      </div>
+              {/* Right Navigation Button */}
+              <button
+                onClick={() => scroll('right')}
+                className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:text-red-600 hover:scale-110 transition-all border border-gray-100"
+                aria-label="Scroll right"
+              >
+                <FaChevronRight className="text-lg" />
+              </button>
 
-      {/* 🏠 Info */}
-      <div className="p-6 text-left">
+              <div
+                ref={scrollRef}
+                className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide px-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {[...filteredProperties]
+                  .sort((a, b) => {
+                    const priceA = normalizePrice(a.price, a.priceUnit);
+                    const priceB = normalizePrice(b.price, b.priceUnit);
+                    return priceB - priceA;
+                  })
+                  .slice(0, 6)
+                  .map((property) => (
+                    <div
+                      key={property._id}
+                      onClick={() => handleViewDetails(property)}
+                      className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden cursor-pointer min-w-[300px] w-[300px] flex-shrink-0 snap-start"
+                    >
+                      {/* Image */}
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={resolveImageSrc(property.images?.[0])}
+                          alt={property.title}
+                          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) =>
+                          (e.target.src =
+                            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800')
+                          }
+                        />
+                        {/* Image Count Badge */}
+                        {property.images?.length > 1 && (
+                          <span className="absolute top-3 left-3 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
+                            📷 {property.images.length}
+                          </span>
+                        )}
+                      </div>
 
-        {/* Title (Clickable) */}
-        <h3
-          onClick={() => handleViewDetails(property)}
-          className="text-xl font-semibold text-gray-900 mb-2  cursor-pointer hover:text-red-600 transition"
-        >
-          {property.title}
-        </h3>
+                      {/* Info */}
+                      <div className="p-4">
+                        {/* Property Type & Size */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {property.propertyType?.name || 'Property'}
+                          </span>
+                          {property.size && (
+                            <>
+                              <span className="text-gray-400">|</span>
+                              <span className="text-sm text-gray-600">
+                                {property.size} {property.sizeUnit}
+                              </span>
+                            </>
+                          )}
+                        </div>
 
-        {/* Location */}
-        <p className="text-gray-500 text-sm mb-5 flex items-center gap-1">
-          <FaMapMarkerAlt className="text-red-500" />
-          {property.address?.city}, {property.address?.state}
-        </p>
+                        {/* Price */}
+                        <p className="text-xl font-bold text-gray-900 mb-2">
+                          ₹{property.price?.toLocaleString()}{' '}
+                          <span className="text-sm font-medium text-gray-600">
+                            {property.priceUnit}
+                          </span>
+                        </p>
 
-        {/* Bottom Row */}
-        <div className="flex justify-between items-center">
-          {/* Price */}
-          <p className="text-gray-800 font-bold text-2xl tracking-tight">
-            ₹{property.price?.toLocaleString()}
-            <span className="text-sm font-medium text-gray-600 ml-1">
-              {property.priceUnit}
-            </span>
-          </p>
+                        {/* Location */}
+                        <p className="text-sm text-gray-600 mb-3 flex items-center gap-1 line-clamp-1">
+                          <FaMapMarkerAlt className="text-red-500 flex-shrink-0" />
+                          {property.address?.city}, {property.address?.state}
+                        </p>
 
-          {/* Button */}
+                        {/* Status Badge */}
+                        <div className="flex items-center justify-between">
+                          <span className="inline-block px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full">
+                            {property.category?.name || 'Available'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {property.subcategory?.name || ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 📢 Post Property CTA */}
+      <section className="py-10 bg-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="h-px bg-gray-300 flex-1 max-w-[150px] sm:max-w-[200px]"></div>
+            <h3 className="text-xl sm:text-2xl text-gray-600 font-normal">
+              Are you a Property Owner?
+            </h3>
+            <div className="h-px bg-gray-300 flex-1 max-w-[150px] sm:max-w-[200px]"></div>
+          </div>
+
           <button
-            onClick={() => handleViewDetails(property)}
-            className="px-5 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg 
-                       shadow-md hover:bg-red-700 hover:shadow-lg transition-all"
+            onClick={() => setIsAuthModalOpen(true)}
+            className="bg-red-600 text-white px-8 py-3 rounded-md font-semibold text-lg hover:bg-blue-600 transition-all duration-500 ease-in-out shadow-sm"
           >
-            View Details
+            Post Free Property Ad
           </button>
         </div>
-      </div>
-    </div>
-  ))}
-</div>
-
-    )}
-  </div>
-</section>
-
-
+      </section>
 
       {/* 🏘 Discover Section Component */}
       <DiscoverSection />
@@ -328,69 +408,68 @@ const Home = () => {
 
 
 
-     {/* 🏘 Property Types */}
-<section className="py-16 bg-gray-50">
-  <div className="max-w-7xl mx-auto px-6 text-center">
+      {/* 🏘 Property Types */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 text-center">
 
-    <h2 className="text-3xl font-bold text-gray-900 mb-2">
-      Find Your Perfect Property Type
-    </h2>
-    <p className="text-gray-500 mb-12">
-      Explore property categories tailored to your needs
-    </p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Find Your Perfect Property Type
+          </h2>
+          <p className="text-gray-500 mb-12">
+            Explore property categories tailored to your needs
+          </p>
 
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-      {propertyShowcaseTypes.map((type, index) => (
-        <div
-          key={index}
-          className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-lg 
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {propertyShowcaseTypes.map((type, index) => (
+              <div
+                key={index}
+                className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-lg 
                      transition-all hover:-translate-y-1"
-        >
-          <div className="text-3xl mb-3">{type.icon}</div>
-          <h3 className="font-semibold text-gray-800">{type.type}</h3>
-          <p className="text-xs text-gray-500">{type.count} Listings</p>
+              >
+                <div className="text-3xl mb-3">{type.icon}</div>
+                <h3 className="font-semibold text-gray-800">{type.type}</h3>
+                <p className="text-xs text-gray-500">{type.count} Listings</p>
+              </div>
+            ))}
+          </div>
+
         </div>
-      ))}
-    </div>
+      </section>
 
-  </div>
-</section>
 
-      
 
       {/* 📈 Investment Banner */}
-      {/* 📈 Investment Banner */}
-<section className="py-16 bg-white">
-  <div className="max-w-7xl mx-auto px-6">
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
 
-    <div className="bg-gradient-to-r from-red-600 to-rose-700 rounded-3xl p-10 text-center shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-r from-red-600 to-rose-700 rounded-3xl p-10 text-center shadow-xl relative overflow-hidden">
 
-      {/* Soft Glow Effect */}
-      <div className="absolute inset-0 bg-white/10 blur-2xl"></div>
+            {/* Soft Glow Effect */}
+            <div className="absolute inset-0 bg-white/10 blur-2xl"></div>
 
-      {/* Icon */}
-      <AiOutlineStar className="text-5xl mx-auto mb-4 text-white drop-shadow-lg relative" />
+            {/* Icon */}
+            <AiOutlineStar className="text-5xl mx-auto mb-4 text-white drop-shadow-lg relative" />
 
-      {/* Title */}
-      <h3 className="text-3xl font-extrabold mb-3 text-white tracking-wide relative">
-        Smart Investment Opportunity
-      </h3>
+            {/* Title */}
+            <h3 className="text-3xl font-extrabold mb-3 text-white tracking-wide relative">
+              Smart Investment Opportunity
+            </h3>
 
-      {/* Subtitle */}
-      <p className="text-lg text-white/90 mb-8 relative">
-        Properties in top cities appreciating <span className="font-semibold">15–20% annually</span>
-      </p>
+            {/* Subtitle */}
+            <p className="text-lg text-white/90 mb-8 relative">
+              Properties in top cities appreciating <span className="font-semibold">15–20% annually</span>
+            </p>
 
-      {/* Button */}
-      <button className="px-8 py-3 bg-white text-red-600 font-semibold rounded-lg 
+            {/* Button */}
+            <button className="px-8 py-3 bg-white text-red-600 font-semibold rounded-lg 
                          shadow-md hover:bg-red-50 hover:shadow-lg transition-all duration-200 relative">
-        View High ROI Properties →
-      </button>
+              View High ROI Properties →
+            </button>
 
-    </div>
+          </div>
 
-  </div>
-</section>
+        </div>
+      </section>
 
     </div>
   );

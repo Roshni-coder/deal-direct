@@ -75,10 +75,10 @@ function Navbar() {
     navigate(agentUploadUrl);
   }, [agentUploadUrl, isExternalAgentUrl, navigate, showAgentUpload]);
 
-  // Classes that adapt: transparent initially, blue when scrolled past hero
+  // Classes that adapt: black initially, blue when scrolled past hero
   const navWrapperClass = `fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-    ? "bg-[#0b1e3f] shadow-lg py-2"
-    : "bg-transparent py-4"
+    ? "bg-[#0b1e3f] shadow-lg py-1.5"
+    : "bg-black py-2"
     }`;
 
   const navTextClass = "text-white"; // Always white text in both states

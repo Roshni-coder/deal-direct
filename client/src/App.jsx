@@ -10,7 +10,7 @@ import Register from "./Pages/Register/Register.jsx";
 import About from "./Pages/About/About.jsx";
 import Contact from "./Pages/Contact/Contact.jsx";
 import SampleAgreement from "./Components/SampleAgreement/SampleAgreement.jsx";
-// import AddProperty from "./Pages/AddProperty/AddProperty.jsx"
+import AddProperty from "./Pages/AddProperty/AddProperty.jsx"
 function App() {
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-white">
@@ -25,7 +25,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/register" element={<Register />} />
           <Route path="/agreements" element={<SampleAgreement />} />
-          {/* <Route path="/add-property" element={<AddProperty/>} /> */}
+          <Route path="/add-property" element={<AddProperty />} />
         </Routes>
         <Footer />
       </Router>

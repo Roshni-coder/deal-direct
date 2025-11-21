@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "agent"],
       default: "user",
     },
+    otp: { type: String },
+    otpExpires: { type: Date },
+    isVerified: { type: Boolean, default: false },
   },
   { timestamps: true } // ✅ This automatically adds createdAt & updatedAt
 );
