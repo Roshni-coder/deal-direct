@@ -215,8 +215,9 @@ export const getAllPropertiesList = async (req, res) => {
     const properties = await Property.find({ isApproved: true })
       .populate("category", "name")
       .populate("subcategory", "name")
+      .populate("propertyType", "name")
       .sort({ createdAt: -1 });
-      
+
 
     res.status(200).json({ success: true, data: properties.map((item) => withPublicImages(req, item)) });
   } catch (error) {
@@ -271,7 +272,8 @@ export const searchProperties = async (req, res) => {
     // Build query
     let query = Property.find(filter)
       .populate("category", "name")
-      .populate("subcategory", "name");
+      .populate("subcategory", "name")
+      .populate("propertyType", "name");
 
     // Sorting
     if (sort === "priceAsc") query = query.sort({ price: 1 });

@@ -12,6 +12,19 @@ import TopDevelopers from "../../Components/TopDevelopers/TopDevelopers";
 import TopLocalities from "../../Components/TopLocalities/TopLocalities";
 import AuthModal from "../../Components/AuthModal/AuthModal";
 
+import MumbaiIcon from "../../assets/Mumbai.png";
+import DelhiIcon from "../../assets/Delhi.png";
+import BangaloreIcon from "../../assets/Bangalore.png";
+import HyderabadIcon from "../../assets/Hyderabad.png";
+import PuneIcon from "../../assets/Pune.png";
+import ChennaiIcon from "../../assets/chennai.png";
+import KolkataIcon from "../../assets/kolkata.png";
+import AhmedabadIcon from "../../assets/ahmedabad.png";
+import GurgaonIcon from "../../assets/Gurgaon.png";
+import NoidaIcon from "../../assets/noida.png";
+import ChandigarhIcon from "../../assets/chandigarh.png";
+import JaipurIcon from "../../assets/jaipur.png";
+
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 const parseBudgetValue = (label) => {
@@ -408,31 +421,42 @@ const Home = () => {
 
 
 
-      {/* 🏘 Property Types */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Find Your Perfect Property Type
+      {/* 🏙 Explore Popular Cities */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Explore Real Estate in Popular Indian Cities
           </h2>
-          <p className="text-gray-500 mb-12">
-            Explore property categories tailored to your needs
+          <p className="text-gray-500 mb-10 max-w-6xl text-base leading-relaxed">
+            Thinking of investing in more than one city? Our platform showcases top properties in India's most active real estate markets. Discover city-wise insights, builder details, and pricing comparisons with a click. Whether you want growth, stability, or rental returns, find the right match across India's urban centres.
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-            {propertyShowcaseTypes.map((type, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[
+              { name: "Mumbai", icon: MumbaiIcon },
+              { name: "Delhi", icon: DelhiIcon },
+              { name: "Bangalore", icon: BangaloreIcon },
+              { name: "Hyderabad", icon: HyderabadIcon },
+              { name: "Pune", icon: PuneIcon },
+              { name: "Chennai", icon: ChennaiIcon },
+              { name: "Kolkata", icon: KolkataIcon },
+              { name: "Ahmedabad", icon: AhmedabadIcon },
+              { name: "Gurgaon", icon: GurgaonIcon },
+              { name: "Noida", icon: NoidaIcon },
+              { name: "Chandigarh", icon: ChandigarhIcon },
+              { name: "Jaipur", icon: JaipurIcon },
+            ].map((city, index) => (
               <div
                 key={index}
-                className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-lg 
-                     transition-all hover:-translate-y-1"
+                className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-red-200 transition-all cursor-pointer group bg-white"
               >
-                <div className="text-3xl mb-3">{type.icon}</div>
-                <h3 className="font-semibold text-gray-800">{type.type}</h3>
-                <p className="text-xs text-gray-500">{type.count} Listings</p>
+                <div className="w-16 h-16 flex items-center justify-center bg-red-50 rounded-lg shrink-0 group-hover:bg-red-100 transition-colors p-2">
+                  <img src={city.icon} alt={city.name} className="w-full h-full object-contain" />
+                </div>
+                <span className="font-semibold text-gray-700 group-hover:text-red-600 transition-colors">{city.name}</span>
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
