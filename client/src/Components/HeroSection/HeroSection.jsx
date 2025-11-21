@@ -56,28 +56,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdown]);
 
-  const propertyTypeTabs = useMemo(() => {
-    if (!Array.isArray(propertyTypes) || propertyTypes.length === 0) return [];
-    return propertyTypes
-      .filter((type) => {
-        const name = type.name.toLowerCase();
-        return name !== 'commercial' && name !== 'residential';
-      })
-      .slice(0, 7)
-      .map((type) => ({
-        label: type.name,
-        propertyTypeId: type._id,
-      }));
-  }, [propertyTypes]);
-
-  const tabs = propertyTypeTabs.length ? propertyTypeTabs : defaultTabs;
-
-  useEffect(() => {
-    if (!tabs.length) return;
-    if (!tabs.some((tab) => tab.label === activeTab)) {
-      setActiveTab(tabs[0].label);
-    }
-  }, [tabs, activeTab]);
+  const tabs = defaultTabs;
 
   const configKey = tabConfig[activeTab] ? activeTab : "Buy";
   const currentConfig = tabConfig[configKey];
