@@ -81,6 +81,12 @@ const Home = () => {
   });
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+  const propertiesSectionRef = useRef(null);
+
+  const handleCityClick = (cityName) => {
+    setFilters((prev) => ({ ...prev, city: cityName }));
+    propertiesSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const scroll = (direction) => {
     if (scrollRef.current) {
@@ -264,7 +270,7 @@ const Home = () => {
       />
 
       {/* 🏙 Featured Properties */}
-      <section className="relative py-6 bg-gradient-to-b from-gray-50 to-white">
+      <section ref={propertiesSectionRef} className="relative py-6 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
@@ -448,6 +454,7 @@ const Home = () => {
             ].map((city, index) => (
               <div
                 key={index}
+                onClick={() => handleCityClick(city.name)}
                 className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-red-200 transition-all cursor-pointer group bg-white"
               >
                 <div className="w-16 h-16 flex items-center justify-center bg-red-50 rounded-lg shrink-0 group-hover:bg-red-100 transition-colors p-2">
