@@ -16,7 +16,10 @@ const AllProperty = () => {
     try {
       const res = await axios.get(`${API_URL}/api/properties/list`);
 
-      if (Array.isArray(res.data)) {
+      // Handle new paginated response format
+      if (res.data.properties && Array.isArray(res.data.properties)) {
+        setProperties(res.data.properties);
+      } else if (Array.isArray(res.data)) {
         setProperties(res.data);
       } else {
         toast.error("Unexpected response from server");
@@ -145,7 +148,7 @@ const AllProperty = () => {
                 <tr key={item._id} className="border-b hover:bg-gray-50 transition">
                   <td className="py-3 px-4">
                     <img
-                      src={resolveImage(item.images?.[0])}
+                      src={resolveImage(item.thumbnail || item.images?.[0])}
                       alt={item.title}
                       className="w-16 h-14 rounded-md object-cover border"
                     />

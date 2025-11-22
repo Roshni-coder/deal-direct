@@ -40,6 +40,11 @@ const PropertyDetails = () => {
   const [totalPayment, setTotalPayment] = useState(0);
   const [totalInterest, setTotalInterest] = useState(0);
 
+  // ---- Scroll to top on page load ----
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [id]);
+
   // ---- Fetch property ----
   useEffect(() => {
     if (property) return;

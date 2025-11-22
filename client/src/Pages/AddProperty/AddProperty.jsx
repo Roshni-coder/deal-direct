@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
     Home, MapPin, IndianRupee, Layers, Image as ImageIcon, Calendar,
-    ChevronRight, ChevronLeft, Upload, Check, X, Building2,
-    Wifi, Car, Zap, Shield, Utensils, LandPlot, Store, Warehouse, Briefcase,
-    ArrowRight, Star
+    ChevronLeft, Upload, Check, X, Building2,
+    Wifi, Car, Zap, Shield, Utensils, LandPlot, Store, ArrowRight
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
-// --- Configuration Constants ---
 
 const STEPS = [
     { id: 1, label: "Category & Type", icon: <Home size={20} />, description: "Property basics" },
@@ -63,6 +61,14 @@ const variants = {
     }),
 };
 
+const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
 export default function AddProperty() {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
@@ -71,28 +77,52 @@ export default function AddProperty() {
     const [images, setImages] = useState([]);
     const [previewImages, setPreviewImages] = useState([]);
 
+    const [metadata, setMetadata] = useState({
+        categories: [],
+        subcategories: [],
+        propertyTypes: []
+    });
+
+    useEffect(() => {
+        const fetchMetadata = async () => {
+            try {
+                const [cats, subs, types] = await Promise.all([
+                    axios.get("http://localhost:9000/api/categories/list-category"),
+                    axios.get("http://localhost:9000/api/subcategories/list"),
+                    axios.get("http://localhost:9000/api/propertyTypes/list-propertytype")
+                ]);
+
+                const categoryData = Array.isArray(cats.data) ? cats.data : [];
+                const subData = Array.isArray(subs.data) ? subs.data : [];
+                const typeData = Array.isArray(types.data) ? types.data : [];
+
+                setMetadata({
+                    categories: categoryData,
+                    subcategories: subData,
+                    propertyTypes: typeData
+                });
+            } catch (error) {
+                console.error("Failed to fetch metadata", error);
+            }
+        };
+        fetchMetadata();
+    }, []);
+
     const [formData, setFormData] = useState({
-        // Basics
         listingType: "Rent",
         propertyCategory: "Residential",
         propertyType: "Apartment",
         bhkType: "",
-
-        // Location
         city: "",
         locality: "",
         landmark: "",
         address: "",
-
-        // Pricing & Dimensions
         builtUpArea: "",
         carpetArea: "",
         expectedPrice: "",
         expectedDeposit: "",
         maintenance: "",
         availableFrom: new Date().toISOString().split('T')[0],
-
-        // Features
         furnishing: "Unfurnished",
         bathrooms: 1,
         balconies: 0,
@@ -101,12 +131,9 @@ export default function AddProperty() {
         description: "",
     });
 
-    // --- Helper Booleans ---
     const isResidential = formData.propertyCategory === "Residential";
     const isCommercial = formData.propertyCategory === "Commercial";
     const isPlot = formData.propertyCategory === "Plot";
-
-    // --- Handlers ---
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -148,8 +175,6 @@ export default function AddProperty() {
         setPreviewImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    // --- Validation ---
-
     const validateStep = (step) => {
         const { propertyType, bhkType, city, locality, expectedPrice, builtUpArea } = formData;
 
@@ -168,7 +193,8 @@ export default function AddProperty() {
             case 5:
                 if (images.length < 1) return "Please upload at least 1 photo.";
                 break;
-            default: return null;
+            default:
+                break;
         }
         return null;
     };
@@ -177,37 +203,118 @@ export default function AddProperty() {
         const error = validateStep(currentStep);
         if (error) return toast.error(error);
         setDirection(1);
-        setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setCurrentStep(prev => Math.min(prev + 1, 6));
     };
 
     const handlePrev = () => {
         setDirection(-1);
         setCurrentStep(prev => Math.max(prev - 1, 1));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = async () => {
         setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            toast.success("Property Listed Successfully!");
-            navigate("/dashboard");
-        }, 1500);
-    };
+        try {
+            const matchedPropertyType = metadata.propertyTypes.find(
+                t => t.name.toLowerCase() === formData.propertyCategory.toLowerCase()
+            ) || metadata.propertyTypes[0];
 
-    // --- Render Functions ---
+            const matchedCategory = metadata.categories.find(
+                c => c.name.toLowerCase() === formData.propertyType.toLowerCase()
+            ) || metadata.categories[0];
+
+            const matchedSubcategory = metadata.subcategories.find(
+                s => s.name.toLowerCase() === formData.bhkType.toLowerCase()
+            );
+
+            const submitData = new FormData();
+
+            submitData.append("propertyType", matchedPropertyType?._id || "");
+            submitData.append("category", matchedCategory?._id || "");
+            if (matchedSubcategory) {
+                submitData.append("subcategory", matchedSubcategory._id);
+            }
+
+            const title = `${formData.bhkType ? formData.bhkType + ' ' : ''}${formData.propertyType} for ${formData.listingType} in ${formData.locality}`;
+            submitData.append("title", title);
+            submitData.append("description", formData.description);
+            submitData.append("price", formData.expectedPrice);
+            submitData.append("priceUnit", "Total");
+            submitData.append("listingType", formData.listingType);
+
+            const areaData = {
+                totalSqft: formData.builtUpArea,
+                builtUpSqft: formData.builtUpArea,
+                carpetSqft: formData.carpetArea,
+                pricePerSqft: Math.round(Number(formData.expectedPrice) / Number(formData.builtUpArea)) || 0
+            };
+            submitData.append("area", JSON.stringify(areaData));
+
+            const addressData = {
+                city: formData.city,
+                area: formData.locality,
+                state: "",
+                pincode: "",
+                line: formData.address,
+                landmark: formData.landmark
+            };
+            submitData.append("address", JSON.stringify(addressData));
+
+            const featuresData = {
+                furnishing: formData.furnishing,
+                bathrooms: formData.bathrooms,
+                balconies: formData.balconies,
+                washrooms: formData.washrooms,
+                amenities: formData.selectedAmenities,
+                availableFrom: formData.availableFrom,
+                deposit: formData.expectedDeposit,
+                maintenance: formData.maintenance,
+                bhk: formData.bhkType
+            };
+            submitData.append("features", JSON.stringify(featuresData));
+
+            const parkingData = {
+                covered: formData.selectedAmenities.includes('parking') ? "Available" : "None",
+                open: ""
+            };
+            submitData.append("parking", JSON.stringify(parkingData));
+
+            images.forEach(file => {
+                submitData.append("images", file);
+            });
+
+            if (images.length > 0) {
+                const inlineImages = await Promise.all(images.map(fileToBase64));
+                submitData.append("inlineImages", JSON.stringify(inlineImages));
+            }
+
+            const token = localStorage.getItem("token");
+
+            await axios.post("http://localhost:9000/api/properties/add", submitData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: token ? `Bearer ${token}` : ""
+                }
+            });
+
+            toast.success("Property published successfully!");
+            navigate("/");
+
+        } catch (error) {
+            console.error("Submission failed", error);
+            toast.error(error.response?.data?.message || "Failed to publish property");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const renderStep1 = () => (
         <div className="space-y-8">
             <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Property Details</h2>
-                <p className="text-slate-500 mt-2">Let's start with the basics of your property.</p>
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Basics</h2>
+                <p className="text-slate-500 mt-2">Let's start with the essentials.</p>
             </div>
-
-            {/* Rent or Sell Switch */}
             <div className="flex justify-center mb-8">
-                <div className="bg-slate-100 p-1.5 rounded-2xl inline-flex shadow-inner">
+                <div className="bg-slate-100 p-1 rounded-2xl inline-flex">
                     {["Rent", "Sell"].map(type => (
                         <button
                             key={type}
@@ -222,8 +329,6 @@ export default function AddProperty() {
                     ))}
                 </div>
             </div>
-
-            {/* Category Selector */}
             <div className="space-y-4">
                 <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Property Category</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -252,8 +357,6 @@ export default function AddProperty() {
                     ))}
                 </div>
             </div>
-
-            {/* Sub-Type Grid */}
             <div className="space-y-4">
                 <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Property Type</label>
                 <div className="flex flex-wrap gap-3">
@@ -271,8 +374,6 @@ export default function AddProperty() {
                     ))}
                 </div>
             </div>
-
-            {/* BHK Selector */}
             {isResidential && (
                 <div className="space-y-4">
                     <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">BHK Configuration</label>
@@ -328,8 +429,6 @@ export default function AddProperty() {
                 <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Pricing & Dimensions</h2>
                 <p className="text-slate-500 mt-2">Define the value and size of your property.</p>
             </div>
-
-            {/* Price */}
             <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 space-y-6">
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -353,8 +452,6 @@ export default function AddProperty() {
                     )}
                 </div>
             </div>
-
-            {/* Dimensions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -365,7 +462,6 @@ export default function AddProperty() {
                         <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-slate-400 font-medium">sq.ft</div>
                     </div>
                 </div>
-
                 {!isPlot && (
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700">Carpet Area</label>
@@ -376,8 +472,6 @@ export default function AddProperty() {
                     </div>
                 )}
             </div>
-
-            {/* Date */}
             <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Available From</label>
                 <input type="date" name="availableFrom" value={formData.availableFrom} onChange={handleChange} className="w-full px-5 py-4 rounded-xl border border-slate-200 focus:border-blue-600 outline-none bg-slate-50 focus:bg-white" />
@@ -391,8 +485,6 @@ export default function AddProperty() {
                 <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Features & Amenities</h2>
                 <p className="text-slate-500 mt-2">What makes your property special?</p>
             </div>
-
-            {/* Counters */}
             {!isPlot && (
                 <div className="flex flex-wrap gap-6 justify-center">
                     {isResidential && (
@@ -409,7 +501,6 @@ export default function AddProperty() {
                             ))}
                         </>
                     )}
-
                     {isCommercial && (
                         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center w-36">
                             <span className="text-slate-500 text-sm mb-3 font-medium">Washrooms</span>
@@ -422,8 +513,6 @@ export default function AddProperty() {
                     )}
                 </div>
             )}
-
-            {/* Furnishing */}
             {!isPlot && (
                 <div className="space-y-4">
                     <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Furnishing Status</label>
@@ -440,8 +529,6 @@ export default function AddProperty() {
                     </div>
                 </div>
             )}
-
-            {/* Amenities */}
             {!isPlot && (
                 <div className="space-y-4">
                     <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Amenities</label>
@@ -464,7 +551,6 @@ export default function AddProperty() {
                     </div>
                 </div>
             )}
-
             <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Description</label>
                 <textarea name="description" rows="5" placeholder="Tell us more about the property (e.g. nearby schools, parks, etc.)" value={formData.description} onChange={handleChange} className="w-full p-5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none resize-none bg-slate-50 focus:bg-white transition-all" />
@@ -532,7 +618,6 @@ export default function AddProperty() {
                             <p className="text-sm text-slate-500">{formData.landmark}</p>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-100">
                         <div className="flex items-center gap-2 text-slate-700">
                             <LandPlot size={18} className="text-blue-600" />
@@ -551,7 +636,6 @@ export default function AddProperty() {
                             </div>
                         )}
                     </div>
-
                     {formData.selectedAmenities.length > 0 && (
                         <div>
                             <p className="text-sm font-semibold text-slate-900 mb-3">Amenities</p>
@@ -568,7 +652,6 @@ export default function AddProperty() {
                             </div>
                         </div>
                     )}
-
                     <button onClick={handleSubmit} disabled={isLoading} className="w-full bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
                         {isLoading ? "Publishing..." : <>Confirm & Publish <Check size={20} /></>}
                     </button>
@@ -577,11 +660,8 @@ export default function AddProperty() {
         </div>
     );
 
-    // --- Main Layout ---
-
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 selection:bg-blue-100 pt-20">
-            {/* Sidebar */}
             <aside className="hidden md:flex flex-col w-80 bg-white border-r border-slate-200 h-[calc(100vh-5rem)] sticky top-20 p-6 pt-8 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] overflow-y-auto">
                 <nav className="space-y-2 flex-1">
                     {STEPS.map((step) => {
@@ -611,8 +691,6 @@ export default function AddProperty() {
                     </div>
                 </div>
             </aside>
-
-            {/* Mobile Header */}
             <div className="md:hidden bg-white p-4 sticky top-20 z-30 border-b border-slate-200 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-2">
                     <div className="bg-blue-600 p-1.5 rounded-lg"><Home className="text-white" size={16} /></div>
@@ -624,8 +702,6 @@ export default function AddProperty() {
                     ))}
                 </div>
             </div>
-
-            {/* Content */}
             <main className="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col h-full">
                 <div className="flex-1 bg-white md:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none border md:border-none border-slate-200 p-6 md:p-0 mb-20 md:mb-0 relative">
                     <AnimatePresence mode="wait" custom={direction}>
@@ -650,7 +726,6 @@ export default function AddProperty() {
                             {currentStep === 6 && renderStep6()}
                         </motion.div>
                     </AnimatePresence>
-
                     <div className="flex justify-between items-center mt-12 pt-8 border-t border-slate-200/60">
                         <button
                             onClick={handlePrev}
@@ -662,7 +737,6 @@ export default function AddProperty() {
                         >
                             <ChevronLeft size={20} /> Back
                         </button>
-
                         {currentStep < 6 && (
                             <button
                                 onClick={handleNext}

@@ -134,29 +134,29 @@ const AuthModal = ({ isOpen, onClose }) => {
                         {isLogin ? (
                             <>
                                 <h2 className="text-4xl font-bold leading-tight mb-4">
-                                    Find your dream property, <br /> <span className="text-blue-400">Broker-free.</span>
+                                    Reach serious buyers <br /> <span className="text-blue-400">directly.</span>
                                 </h2>
                                 <p className="text-gray-300 text-lg">
-                                    Join thousands of buyers and sellers connecting directly on the world's most transparent real estate platform.
+                                    List your property for free and manage every lead in one seller dashboard - no middlemen required.
                                 </p>
                             </>
                         ) : (
                             <>
                                 <h2 className="text-4xl font-bold leading-tight mb-6">
-                                    Start your journey <br /> to <span className="text-blue-400">home ownership.</span>
+                                    Start listing with <br /> <span className="text-blue-400">DealDirect.</span>
                                 </h2>
                                 <ul className="space-y-4 text-gray-300">
                                     <li className="flex items-center gap-3">
                                         <CheckCircle className="w-5 h-5 text-blue-400" />
-                                        <span>Direct connections with sellers</span>
+                                        <span>Connect with verified, high-intent buyers</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <CheckCircle className="w-5 h-5 text-blue-400" />
-                                        <span>Zero brokerage fees</span>
+                                        <span>Track inquiries, calls, and visits from one place</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <CheckCircle className="w-5 h-5 text-blue-400" />
-                                        <span>Verified property listings</span>
+                                        <span>Close deals faster with zero brokerage</span>
                                     </li>
                                 </ul>
                             </>
@@ -176,8 +176,8 @@ const AuthModal = ({ isOpen, onClose }) => {
                         {isLogin && (
                             <>
                                 <div className="text-center mb-10">
-                                    <h2 className="text-3xl font-bold text-slate-800">Welcome Back</h2>
-                                    <p className="text-slate-500 mt-2">Please enter your details to sign in.</p>
+                                    <h2 className="text-3xl font-bold text-slate-800">Seller Sign In</h2>
+                                    <p className="text-slate-500 mt-2">Access your dashboard to manage property listings.</p>
                                 </div>
 
                                 <form onSubmit={handleLogin} className="space-y-6">
@@ -254,8 +254,8 @@ const AuthModal = ({ isOpen, onClose }) => {
                         {!isLogin && step === 1 && (
                             <>
                                 <div className="text-center mb-8">
-                                    <h2 className="text-3xl font-bold text-slate-800">Create Account</h2>
-                                    <p className="text-slate-500 mt-2">Join us to unlock exclusive property deals.</p>
+                                    <h2 className="text-3xl font-bold text-slate-800">Create Seller Account</h2>
+                                    <p className="text-slate-500 mt-2">Tell us a few details to start posting your listings.</p>
                                 </div>
 
                                 <form onSubmit={handleRegisterStep1} className="space-y-5">
@@ -312,7 +312,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
+                                                onClick={() => setShowPassword((prev) => !prev)}
                                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
                                             >
                                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -333,7 +333,10 @@ const AuthModal = ({ isOpen, onClose }) => {
                                         </div>
                                         <div className="ml-3 text-sm">
                                             <label htmlFor="agree" className="text-slate-600 cursor-pointer">
-                                                I agree to the <a href="#" className="text-blue-900 font-medium hover:underline">Terms of Service</a> and <a href="#" className="text-blue-900 font-medium hover:underline">Privacy Policy</a>
+                                                I agree to the{' '}
+                                                <a href="#" className="text-blue-900 font-medium hover:underline">Terms of Service</a>{' '}
+                                                and{' '}
+                                                <a href="#" className="text-blue-900 font-medium hover:underline">Privacy Policy</a>
                                             </label>
                                         </div>
                                     </div>
@@ -349,7 +352,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                                 Sending OTP...
                                             </>
                                         ) : (
-                                            "Create Account"
+                                            "Create Seller Account"
                                         )}
                                     </button>
                                 </form>
@@ -363,9 +366,9 @@ const AuthModal = ({ isOpen, onClose }) => {
                                     <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                                         <ShieldCheck className="w-8 h-8 text-blue-600" />
                                     </div>
-                                    <h2 className="text-3xl font-bold text-slate-800">Verify Email</h2>
+                                    <h2 className="text-3xl font-bold text-slate-800">Verify Seller Email</h2>
                                     <p className="text-slate-500 mt-2">
-                                        We've sent a verification code to <br /> <span className="font-semibold text-slate-800">{formData.email}</span>
+                                        We've sent a verification code to <br /> <span className="font-semibold text-slate-800">{formData.email}</span> to activate your seller account.
                                     </p>
                                 </div>
 
@@ -393,7 +396,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                                                 Verifying...
                                             </>
                                         ) : (
-                                            "Verify & Register"
+                                            "Verify & Start Listing"
                                         )}
                                     </button>
 

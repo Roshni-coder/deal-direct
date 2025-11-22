@@ -22,6 +22,18 @@ export const authMiddleware = async (req, res, next) => {
       return next();
     }
 
+    if (decoded?.isEnvOwner) {
+      req.user = {
+        _id: decoded.id,
+        id: decoded.id,
+        name: process.env.OWNER_NAME || process.env.DEMO_OWNER_NAME || "Property Owner",
+        email: process.env.OWNER_EMAIL || process.env.DEMO_OWNER_EMAIL || decoded.email,
+        role: "owner",
+        isEnvOwner: true,
+      };
+      return next();
+    }
+
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ message: "User not found" });
 

@@ -132,7 +132,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
           No middleman. No commission fees.
           <br />
           <span className="font-semibold text-white">
-            Connect directly with property owners
+            Deal directly with property owners
           </span>
         </p>
 

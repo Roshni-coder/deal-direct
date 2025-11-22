@@ -89,20 +89,31 @@ const withPublicImages = (req, doc) => {
   return plain;
 };
 
+// --- CONTROLLERS ---
+
 // Add Property
 export const addProperty = async (req, res) => {
   try {
     const data = req.body;
 
-    ["area", "parking", "address", "flooring"].forEach((key) => {
-      if (data[key]) data[key] = JSON.parse(data[key]);
+    // FIX: Added "features" to the list of fields to parse
+    ["area", "parking", "address", "flooring", "features"].forEach((key) => {
+      if (data[key]) {
+        try {
+          // Handle cases where it might already be an object or a double-stringified JSON
+          data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
+        } catch (e) {
+          console.error(`Error parsing ${key}:`, e);
+        }
+      }
     });
 
     const inlineImages = extractInlineImages(data);
     if (inlineImages.length) {
       data.images = inlineImages;
     } else {
-      const encodedImages = encodeFilesToDataUrls(req.files);
+      // Safely handle file encoding
+      const encodedImages = encodeFilesToDataUrls(req.files || []);
       data.images = encodedImages.length ? encodedImages : [];
     }
     delete data.inlineImages;
@@ -110,6 +121,7 @@ export const addProperty = async (req, res) => {
     const prop = await Property.create(data);
     res.status(201).json(withPublicImages(req, prop));
   } catch (err) {
+    console.error("Add Property Error:", err); // Log error to server console for debugging
     res.status(500).json({ error: err.message });
   }
 };
@@ -145,12 +157,20 @@ export const getPropertyById = async (req, res) => {
   }
 };
 
+// Update Property
 export const updateProperty = async (req, res) => {
   try {
     const data = req.body;
 
-    ["area", "parking", "address", "flooring"].forEach((key) => {
-      if (data[key]) data[key] = JSON.parse(data[key]);
+    // FIX: Added "features" here as well
+    ["area", "parking", "address", "flooring", "features"].forEach((key) => {
+      if (data[key]) {
+        try {
+          data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
+        } catch (e) {
+          console.error(`Error parsing ${key}:`, e);
+        }
+      }
     });
 
     const inlineImages = extractInlineImages(data);
@@ -166,6 +186,7 @@ export const updateProperty = async (req, res) => {
 
     res.json(withPublicImages(req, updated));
   } catch (err) {
+    console.error("Update Property Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -209,6 +230,7 @@ export const disapproveProperty = async (req, res) => {
   );
   res.json(updated);
 };
+
 // 🌐 Public: Get All Approved Properties (Home Page)
 export const getAllPropertiesList = async (req, res) => {
   try {
@@ -217,7 +239,6 @@ export const getAllPropertiesList = async (req, res) => {
       .populate("subcategory", "name")
       .populate("propertyType", "name")
       .sort({ createdAt: -1 });
-
 
     res.status(200).json({ success: true, data: properties.map((item) => withPublicImages(req, item)) });
   } catch (error) {

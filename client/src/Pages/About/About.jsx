@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import heroImg from "../../assets/Villa.jpg";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import Middel from "../About/Middel.jsx";
 
 export default function About() {
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   return (
     <div className="bg-white text-gray-800">
 
@@ -15,7 +20,7 @@ export default function About() {
 
       {/* ABOUT MAIN */}
       <section className="flex flex-col-reverse md:flex-row  justify-between gap-12 px-6 md:px-40 py-20">
-        
+
         {/* LEFT CONTENT */}
         <div className="w-full md:w-1/2 space-y-6">
 
@@ -68,9 +73,9 @@ export default function About() {
               Our Mission
             </h2>
             <p className="text-gray-700 leading-relaxed text-lg">
-              To simplify real estate by empowering individuals to take control 
-              of their property journey without intermediaries. Our goal is to 
-              make every transaction transparent, affordable, and completely 
+              To simplify real estate by empowering individuals to take control
+              of their property journey without intermediaries. Our goal is to
+              make every transaction transparent, affordable, and completely
               hassle-free for every Indian.
             </p>
           </div>
@@ -81,9 +86,9 @@ export default function About() {
               Our Vision
             </h2>
             <p className="text-gray-700 leading-relaxed text-lg">
-              To become India’s most trusted property platform — where 
-              transparency, trust, and technology work together to enable 
-              seamless and direct property transactions for buyers, sellers, 
+              To become India’s most trusted property platform — where
+              transparency, trust, and technology work together to enable
+              seamless and direct property transactions for buyers, sellers,
               renters, and builders.
             </p>
           </div>

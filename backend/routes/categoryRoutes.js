@@ -8,5 +8,5 @@ const router = express.Router();
 router.post("/add-category", protectAdmin, createCategory);     // POST /api/categories/add
 router.get("/list-category", getCategories);                    // GET  /api/categories/list
 router.delete("/delete/:id", protectAdmin, deleteCategory);  // DELETE /api/categories/delete/:id
-router.put("/edit/:id", protectAdmin, updateCategory); 
+router.put("/edit/:id", protectAdmin, updateCategory);
 export default router;

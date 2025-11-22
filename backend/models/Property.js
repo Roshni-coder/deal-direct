@@ -4,7 +4,7 @@ const propertySchema = new mongoose.Schema(
   {
     propertyType: { type: mongoose.Schema.Types.ObjectId, ref: "PropertyType", required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-    subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory", required: true },
+    subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" },
 
     title: { type: String, required: true },
     description: String,
@@ -38,6 +38,17 @@ const propertySchema = new mongoose.Schema(
 
     images: [String],
     isApproved: { type: Boolean, default: false },
+
+    // New Fields
+    listingType: { type: String, enum: ["Rent", "Sell"], default: "Rent" },
+    bhk: String,
+    furnishing: String,
+    bathrooms: Number,
+    balconies: Number,
+    washrooms: Number,
+    maintenance: Number,
+    securityDeposit: Number,
+    availableFrom: Date,
   },
   { timestamps: true }
 );

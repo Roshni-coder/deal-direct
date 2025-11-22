@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import MiddelSection from "../../Components/MiddelSection";
 
 const Contact = () => {
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   return (
     <div className="bg-white text-gray-800">
       <MiddelSection />

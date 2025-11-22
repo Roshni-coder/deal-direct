@@ -14,7 +14,7 @@ const AddSubCategory = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/categories/list`);
+        const res = await axios.get(`${API_URL}/api/categories/list-category`);
         setCategories(res.data);
       } catch (error) {
         toast.error("Failed to load categories");
@@ -92,11 +92,10 @@ const AddSubCategory = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg text-white font-medium ${
-              loading
+            className={`w-full py-3 rounded-lg text-white font-medium ${loading
                 ? "bg-blue-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"
-            } transition`}
+              } transition`}
           >
             {loading ? "Adding..." : "Add Subcategory"}
           </button>

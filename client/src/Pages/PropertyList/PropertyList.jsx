@@ -38,6 +38,11 @@ const PropertyPage = () => {
   const FALLBACK_IMG =
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800";
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   // Fetch hierarchical filters (PropertyType → Categories → Subcategories)
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -119,20 +124,20 @@ const PropertyPage = () => {
 
     const matchesSearch = query
       ? [
-          p.title,
-          p.address?.city,
-          p.address?.state,
-          p.category?.name,
-          p.subcategory?.name,
-          p.propertyType?.name,
-        ]
-          .filter(Boolean)
-          .some((f) => f.toLowerCase().includes(query))
+        p.title,
+        p.address?.city,
+        p.address?.state,
+        p.category?.name,
+        p.subcategory?.name,
+        p.propertyType?.name,
+      ]
+        .filter(Boolean)
+        .some((f) => f.toLowerCase().includes(query))
       : true;
 
     const matchPropertyType = filters.propertyType
       ? String(p.propertyType?._id || p.propertyType) ===
-        String(filters.propertyType)
+      String(filters.propertyType)
       : true;
 
     const matchCategory = filters.category
@@ -141,13 +146,13 @@ const PropertyPage = () => {
 
     const matchSubcategory = filters.subcategory
       ? String(p.subcategory?._id || p.subcategory) ===
-        String(filters.subcategory)
+      String(filters.subcategory)
       : true;
 
     const matchCity = filters.city
       ? (p.address?.city || "")
-          .toLowerCase()
-          .includes(filters.city.toLowerCase())
+        .toLowerCase()
+        .includes(filters.city.toLowerCase())
       : true;
 
     return (
@@ -164,122 +169,122 @@ const PropertyPage = () => {
 
   return (
     <div className="min-h-screen -mt-3 bg-white flex flex-col">
-      
+
       {/* Filters */}
       {/* ===========================
     🔍 PREMIUM SEARCH SECTION
    =========================== */}
-<section className="py-10 px-4 sm:px-6 mt-20">
-  <div className="max-w-6xl mx-auto">
-    {/* Main Search Box */}
-    <div className="bg-white rounded-sm shadow-xl border border-gray-100 p-6 space-y-4">
+      <section className="py-10 px-4 sm:px-6 mt-20">
+        <div className="max-w-6xl mx-auto">
+          {/* Main Search Box */}
+          <div className="bg-white rounded-sm shadow-xl border border-gray-100 p-6 space-y-4">
 
-      {/* 🔍 Search Bar Row */}
-      <div className="flex flex-col lg:flex-row gap-4 items-center">
+            {/* 🔍 Search Bar Row */}
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
 
-        {/* Search Input */}
-        <div className="flex items-center gap-3 w-full bg-gray-100 px-4 py-3 rounded-xl border border-gray-200">
-          <input
-            type="text"
-            placeholder="Search by location, title, category..."
-            className="flex-1 bg-transparent outline-none text-gray-700"
-            value={filters.search}
-            onChange={(e) => handleFilterChange("search", e.target.value)}
-          />
-        </div>
+              {/* Search Input */}
+              <div className="flex items-center gap-3 w-full bg-gray-100 px-4 py-3 rounded-xl border border-gray-200">
+                <input
+                  type="text"
+                  placeholder="Search by location, title, category..."
+                  className="flex-1 bg-transparent outline-none text-gray-700"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                />
+              </div>
 
-        {/* Search Button */}
-        <button
-          onClick={() => console.log("Searching...")}
-          className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold 
+              {/* Search Button */}
+              <button
+                onClick={() => console.log("Searching...")}
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold 
             shadow-lg transition-all duration-300 w-full lg:w-auto"
-        >
-          Search
-        </button>
-      </div>
+              >
+                Search
+              </button>
+            </div>
 
-      {/* 🔻 Filter Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+            {/* 🔻 Filter Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
 
-        {/* Property Type */}
-        <select
-          value={filters.propertyType}
-          onChange={(e) => handleFilterChange("propertyType", e.target.value)}
-          className="w-full border border-gray-300 rounded-sm px-3 py-3 text-sm outline-none 
+              {/* Property Type */}
+              <select
+                value={filters.propertyType}
+                onChange={(e) => handleFilterChange("propertyType", e.target.value)}
+                className="w-full border border-gray-300 rounded-sm px-3 py-3 text-sm outline-none 
             focus:ring-2 focus:ring-red-500 bg-gray-50"
-        >
-          <option value="">Property Type</option>
-          {propertyTypes.map((pt) => (
-            <option key={pt._id} value={pt._id}>{pt.name}</option>
-          ))}
-        </select>
+              >
+                <option value="">Property Type</option>
+                {propertyTypes.map((pt) => (
+                  <option key={pt._id} value={pt._id}>{pt.name}</option>
+                ))}
+              </select>
 
-        {/* Category */}
-        <select
-          value={filters.category}
-          onChange={(e) => handleFilterChange("category", e.target.value)}
-          disabled={!filters.propertyType}
-          className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
+              {/* Category */}
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange("category", e.target.value)}
+                disabled={!filters.propertyType}
+                className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
             focus:ring-2 focus:ring-red-500 
             ${!filters.propertyType ? "bg-gray-100 cursor-not-allowed" : "bg-gray-50"}`}
-        >
-          <option value="">Category</option>
-          {filters.propertyType &&
-            propertyTypes
-              .find((pt) => pt._id === filters.propertyType)
-              ?.categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-        </select>
+              >
+                <option value="">Category</option>
+                {filters.propertyType &&
+                  propertyTypes
+                    .find((pt) => pt._id === filters.propertyType)
+                    ?.categories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
+              </select>
 
-        {/* Subcategory */}
-        <select
-          value={filters.subcategory}
-          onChange={(e) => handleFilterChange("subcategory", e.target.value)}
-          disabled={!filters.category}
-          className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
+              {/* Subcategory */}
+              <select
+                value={filters.subcategory}
+                onChange={(e) => handleFilterChange("subcategory", e.target.value)}
+                disabled={!filters.category}
+                className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
             focus:ring-2 focus:ring-red-500
             ${!filters.category ? "bg-gray-100 cursor-not-allowed" : "bg-gray-50"}`}
-        >
-          <option value="">Subcategory</option>
-          {filters.category &&
-            propertyTypes
-              .find((pt) => pt._id === filters.propertyType)
-              ?.categories.find((cat) => cat._id === filters.category)
-              ?.subcategories.map((sub) => (
-                <option key={sub._id} value={sub._id}>
-                  {sub.name}
-                </option>
-              ))}
-        </select>
+              >
+                <option value="">Subcategory</option>
+                {filters.category &&
+                  propertyTypes
+                    .find((pt) => pt._id === filters.propertyType)
+                    ?.categories.find((cat) => cat._id === filters.category)
+                    ?.subcategories.map((sub) => (
+                      <option key={sub._id} value={sub._id}>
+                        {sub.name}
+                      </option>
+                    ))}
+              </select>
 
-        {/* City */}
-        <input
-          type="text"
-          value={filters.city}
-          onChange={(e) => handleFilterChange("city", e.target.value)}
-          placeholder="City (e.g. Mumbai)"
-          className="border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
+              {/* City */}
+              <input
+                type="text"
+                value={filters.city}
+                onChange={(e) => handleFilterChange("city", e.target.value)}
+                placeholder="City (e.g. Mumbai)"
+                className="border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
             focus:ring-2 focus:ring-red-500 bg-gray-50"
-        />
-      </div>
+              />
+            </div>
 
-      {/* RESET */}
-      {(filters.search || filters.propertyType || filters.category || filters.subcategory || filters.city) && (
-        <div className="flex justify-end pt-2">
-          <button
-            onClick={() => setFilters(initialFilters)}
-            className="text-sm text-red-600 font-semibold hover:underline"
-          >
-            Clear All Filters
-          </button>
+            {/* RESET */}
+            {(filters.search || filters.propertyType || filters.category || filters.subcategory || filters.city) && (
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setFilters(initialFilters)}
+                  className="text-sm text-red-600 font-semibold hover:underline"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  </div>
-</section>
+      </section>
 
 
       {/* Property Cards */}

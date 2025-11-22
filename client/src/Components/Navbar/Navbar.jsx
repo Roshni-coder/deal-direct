@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone } from "react-icons/fa";
 import logo from "../../assets/dealdirect_logo.png";
+import AuthModal from "../AuthModal/AuthModal";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,6 +12,7 @@ function Navbar() {
   const [selectedCity, setSelectedCity] = useState("Mumbai");
   const [activeMenu, setActiveMenu] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const toggleMenu = () => setMenuOpen((s) => !s);
@@ -84,7 +86,12 @@ function Navbar() {
   const navTextClass = "text-white"; // Always white text in both states
 
   return (
-    <nav className={navWrapperClass}>
+    <>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+      <nav className={navWrapperClass}>
       <div className="mx-auto flex items-center justify-between px-6 lg:px-8 max-w-[1400px]">
         {/* Left Side: Logo + Navigation */}
         <div className="flex items-center gap-6">
@@ -297,7 +304,7 @@ function Navbar() {
                           <li><Link to="/services/valuation" className="text-gray-700 hover:text-red-600 text-sm">Valuation</Link></li>
                           <li><Link to="/services/vastu" className="text-gray-700 hover:text-red-600 text-sm">Vastu Calculator</Link></li>
                           <li><Link to="/services/property-management" className="text-gray-700 hover:text-red-600 text-sm">Property Management</Link></li>
-                          <li><Link to="/post-property" className="text-gray-700 hover:text-red-600 text-sm">Sell or Rent Property</Link></li>
+                          <li><Link to="/post-property" className="text-gray-700 hover:text-red-600 text-sm">Register Property</Link></li>
                         </ul>
                       </div>
                       <div>
@@ -430,12 +437,13 @@ function Navbar() {
 
             {/* Sell or Rent Property Button - visible in initial state */}
             {!isScrolled && (
-              <Link
-                to="/post-property"
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
                 className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/20 hover:border-white/50 transition"
               >
-                Sell or Rent Property
-              </Link>
+                Register Property
+              </button>
             )}
           </div>
 
@@ -516,7 +524,8 @@ function Navbar() {
           )}
         </div>
       </div>
-    </nav>
+      </nav>
+    </>
   );
 }
 
