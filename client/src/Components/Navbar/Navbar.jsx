@@ -77,13 +77,13 @@ function Navbar() {
     navigate(agentUploadUrl);
   }, [agentUploadUrl, isExternalAgentUrl, navigate, showAgentUpload]);
 
-  // Classes that adapt: black initially, blue when scrolled past hero
+  // Classes that adapt: white background always
   const navWrapperClass = `fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-    ? "bg-[#0b1e3f] shadow-lg py-1.5"
-    : "bg-black py-2"
+    ? "bg-white shadow-lg py-1.5"
+    : "bg-white py-2"
     }`;
 
-  const navTextClass = "text-white"; // Always white text in both states
+  const navTextClass = "text-gray-800"; // Dark text for white background
 
   return (
     <>
@@ -413,16 +413,14 @@ function Navbar() {
                 </button>
               )}
 
-              {/* Sell or Rent Property Button - visible in initial state */}
-              {!isScrolled && (
-                <button
-                  type="button"
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/20 hover:border-white/50 transition"
-                >
-                  Register Property
-                </button>
-              )}
+              {/* Register Property Button - always visible */}
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition shadow-md"
+              >
+                Register Property
+              </button>
             </div>
 
             {user ? (
@@ -443,7 +441,7 @@ function Navbar() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={toggleMenu}
-            className={`lg:hidden text-2xl transition ${isScrolled ? "text-gray-700" : "text-white"}`}
+            className={`lg:hidden text-2xl transition text-gray-700`}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
             {menuOpen ? <AiOutlineClose /> : <AiOutlineMenu />}
