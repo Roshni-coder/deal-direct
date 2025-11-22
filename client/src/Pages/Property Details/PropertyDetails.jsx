@@ -255,37 +255,13 @@ const PropertyDetails = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-auto space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleInterest}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold shadow-md transition transform active:scale-95"
-              >
-                <HeartIcon className="w-5 h-5" /> I'm Interested
-              </button>
-              <button
-                onClick={handleVisit}
-                className="flex items-center justify-center gap-2 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-xl font-bold shadow-sm transition transform active:scale-95"
-              >
-                <CalendarDaysIcon className="w-5 h-5" /> Reserve a Visit
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <a
-                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-bold shadow-md transition transform active:scale-95"
-              >
-                <ChatBubbleLeftIcon className="w-5 h-5" /> WhatsApp
-              </a>
-              <a
-                href={`tel:${property.contact?.phone || ""}`}
-                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-bold shadow-md transition transform active:scale-95"
-              >
-                <PhoneIcon className="w-5 h-5" /> Call Owner
-              </a>
-            </div>
+          <div className="mt-auto">
+            <button
+              onClick={handleInterest}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95"
+            >
+              <HeartIcon className="w-5 h-5" /> I'm Interested
+            </button>
           </div>
         </div>
       </div>

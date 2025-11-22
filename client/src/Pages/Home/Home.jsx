@@ -410,26 +410,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 📢 Post Property CTA */}
-      <section className="py-10 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="h-px bg-gray-300 flex-1 max-w-[150px] sm:max-w-[200px]"></div>
-            <h3 className="text-xl sm:text-2xl text-gray-600 font-normal">
-              Are you a Property Owner?
-            </h3>
-            <div className="h-px bg-gray-300 flex-1 max-w-[150px] sm:max-w-[200px]"></div>
-          </div>
-
-          <button
-            onClick={() => setIsAuthModalOpen(true)}
-            className="bg-red-600 text-white px-8 py-3 rounded-md font-semibold text-lg hover:bg-blue-600 transition-all duration-500 ease-in-out shadow-sm"
-          >
-            Post Free Property Ad
-          </button>
-        </div>
-      </section>
-
       {/* 🛠 How Deal Direct Works Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 text-center">

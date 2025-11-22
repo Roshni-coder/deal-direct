@@ -172,12 +172,12 @@ const PropertyPage = () => {
 
       {/* Filters */}
       {/* ===========================
-    🔍 PREMIUM SEARCH SECTION
+    🔍 SIMPLE SEARCH SECTION
    =========================== */}
       <section className="py-10 px-4 sm:px-6 mt-20">
         <div className="max-w-6xl mx-auto">
           {/* Main Search Box */}
-          <div className="bg-white rounded-sm shadow-xl border border-gray-100 p-6 space-y-4">
+          <div className="bg-white rounded-sm shadow-xl border border-gray-100 p-6">
 
             {/* 🔍 Search Bar Row */}
             <div className="flex flex-col lg:flex-row gap-4 items-center">
@@ -186,7 +186,7 @@ const PropertyPage = () => {
               <div className="flex items-center gap-3 w-full bg-gray-100 px-4 py-3 rounded-xl border border-gray-200">
                 <input
                   type="text"
-                  placeholder="Search by location, title, category..."
+                  placeholder="Search by Project, Locality, or Builder"
                   className="flex-1 bg-transparent outline-none text-gray-700"
                   value={filters.search}
                   onChange={(e) => handleFilterChange("search", e.target.value)}
@@ -203,82 +203,14 @@ const PropertyPage = () => {
               </button>
             </div>
 
-            {/* 🔻 Filter Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-
-              {/* Property Type */}
-              <select
-                value={filters.propertyType}
-                onChange={(e) => handleFilterChange("propertyType", e.target.value)}
-                className="w-full border border-gray-300 rounded-sm px-3 py-3 text-sm outline-none 
-            focus:ring-2 focus:ring-red-500 bg-gray-50"
-              >
-                <option value="">Property Type</option>
-                {propertyTypes.map((pt) => (
-                  <option key={pt._id} value={pt._id}>{pt.name}</option>
-                ))}
-              </select>
-
-              {/* Category */}
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange("category", e.target.value)}
-                disabled={!filters.propertyType}
-                className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
-            focus:ring-2 focus:ring-red-500 
-            ${!filters.propertyType ? "bg-gray-100 cursor-not-allowed" : "bg-gray-50"}`}
-              >
-                <option value="">Category</option>
-                {filters.propertyType &&
-                  propertyTypes
-                    .find((pt) => pt._id === filters.propertyType)
-                    ?.categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-              </select>
-
-              {/* Subcategory */}
-              <select
-                value={filters.subcategory}
-                onChange={(e) => handleFilterChange("subcategory", e.target.value)}
-                disabled={!filters.category}
-                className={`w-full border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
-            focus:ring-2 focus:ring-red-500
-            ${!filters.category ? "bg-gray-100 cursor-not-allowed" : "bg-gray-50"}`}
-              >
-                <option value="">Subcategory</option>
-                {filters.category &&
-                  propertyTypes
-                    .find((pt) => pt._id === filters.propertyType)
-                    ?.categories.find((cat) => cat._id === filters.category)
-                    ?.subcategories.map((sub) => (
-                      <option key={sub._id} value={sub._id}>
-                        {sub.name}
-                      </option>
-                    ))}
-              </select>
-
-              {/* City */}
-              <input
-                type="text"
-                value={filters.city}
-                onChange={(e) => handleFilterChange("city", e.target.value)}
-                placeholder="City (e.g. Mumbai)"
-                className="border border-gray-300 rounded-xl px-3 py-3 text-sm outline-none 
-            focus:ring-2 focus:ring-red-500 bg-gray-50"
-              />
-            </div>
-
             {/* RESET */}
-            {(filters.search || filters.propertyType || filters.category || filters.subcategory || filters.city) && (
+            {filters.search && (
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setFilters(initialFilters)}
                   className="text-sm text-red-600 font-semibold hover:underline"
                 >
-                  Clear All Filters
+                  Clear Search
                 </button>
               </div>
             )}
