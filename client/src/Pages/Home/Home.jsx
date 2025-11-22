@@ -258,10 +258,11 @@ const Home = () => {
       />
 
       {/* 🏙 Featured Properties */}
-      <section ref={propertiesSectionRef} className="relative py-8 bg-slate-50">
+      {/* Reduced padding from py-8 to py-4 */}
+      <section ref={propertiesSectionRef} className="relative py-4 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Header */}
-          <div className="flex justify-between items-end mb-8">
+          {/* Header - Reduced mb-8 to mb-4 */}
+          <div className="flex justify-between items-end mb-4">
             <div>
               <h2 className="text-3xl font-bold text-slate-900">
                 Popular <span className="text-red-600">Properties</span>
@@ -338,13 +339,15 @@ const Home = () => {
       </section>
 
       {/* 🛠 IMPROVED: How Deal Direct Works (Process Steps UI) */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      {/* Reduced padding from py-24 to py-10 */}
+      <section className="py-10 bg-white relative overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-red-50 rounded-full blur-3xl opacity-50 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50 translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          {/* Header - Reduced mb-16 to mb-8 */}
+          <div className="text-center max-w-2xl mx-auto mb-8">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
               It's Simple. It's Direct.
             </h2>
@@ -388,9 +391,11 @@ const Home = () => {
       </section>
 
       {/* ✨ IMPROVED: Why Choose Deal Direct (High Contrast Dark Mode) */}
-      <section className="py-20 bg-slate-900 text-white relative">
+      {/* Reduced padding from py-20 to py-10 */}
+      <section className="py-10 bg-slate-900 text-white relative">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
+          {/* Reduced gap-16 to gap-8 */}
+          <div className="flex flex-col md:flex-row gap-8 items-center">
 
             {/* Left Side: Text & CTA */}
             <div className="w-full md:w-1/3">
@@ -438,7 +443,8 @@ const Home = () => {
       <TopLocalities />
 
       {/* 🏙 Explore Popular Cities */}
-      <section className="py-16 bg-white">
+      {/* Reduced padding from py-16 to py-8 */}
+      <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Explore by City

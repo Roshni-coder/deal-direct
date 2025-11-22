@@ -79,8 +79,8 @@ function Navbar() {
 
   // Classes that adapt: white background always
   const navWrapperClass = `fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-    ? "bg-white shadow-lg py-1.5"
-    : "bg-white py-2"
+    ? "bg-white shadow-lg py-3"
+    : "bg-white py-4"
     }`;
 
   const navTextClass = "text-gray-800"; // Dark text for white background
@@ -417,7 +417,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition shadow-md"
+                className="bg-red-600 text-white px-6 py-2.5 rounded-lg text-base font-bold hover:bg-red-700 transition shadow-md"
               >
                 Register Property
               </button>

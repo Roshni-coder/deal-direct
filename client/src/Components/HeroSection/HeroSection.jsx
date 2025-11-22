@@ -239,7 +239,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
       {/* Dark overlay for better text visibility */}
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative pt-25 py-15 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
+      <div className="relative pt-32 pb-16 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-[700] text-white leading-tight max-w-4xl">
           Buy, Rent & Sell Properties
           <br />
@@ -258,7 +258,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1" ref={searchInputRef}>
               <div className="relative flex items-center">
-                <AiOutlineSearch className="absolute left-4 text-gray-500 text-lg" />
+                <AiOutlineSearch className="absolute left-5 text-gray-500 text-2xl" />
                 <input
                   type="text"
                   placeholder="Search by Project, Locality, or City"
@@ -271,11 +271,11 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                   onFocus={() => {
                     if (suggestions.length > 0) setShowSuggestions(true);
                   }}
-                  className="w-full border border-gray-300 rounded-xl pl-11 pr-20 py-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-500 outline-none"
+                  className="w-full border border-gray-300 rounded-xl pl-14 pr-24 py-5 text-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-500 outline-none"
                 />
-                <div className="absolute right-4 flex items-center gap-3">
-                  <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800" />
-                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700" />
+                <div className="absolute right-5 flex items-center gap-4">
+                  <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800 text-xl" />
+                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700 text-xl" />
                 </div>
               </div>
 
@@ -318,8 +318,8 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               )}
             </div>
 
-            <button className="bg-red-600 text-white px-8 py-3 rounded-xl font-semibold text-sm hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
-              <AiOutlineSearch />
+            <button className="bg-red-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
+              <AiOutlineSearch className="text-xl" />
               Search
             </button>
           </div>
