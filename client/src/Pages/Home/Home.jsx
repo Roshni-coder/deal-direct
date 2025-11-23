@@ -133,7 +133,7 @@ const Home = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/api/categories/list`);
+        const res = await axios.get(`${API_BASE}/api/categories/list-category`);
         setCategories(res.data || []);
       } catch (error) {
         console.error("Error fetching categories:", error);

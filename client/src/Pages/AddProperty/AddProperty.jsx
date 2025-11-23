@@ -9,6 +9,9 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+// API Base URL
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 // Steps
 const STEPS = [
     { id: 1, label: "Category & Type", icon: <Home size={18} />, description: "Property basics" },
@@ -230,9 +233,9 @@ export default function AddProperty() {
         const fetchMetadata = async () => {
             try {
                 const [cats, subs, types] = await Promise.all([
-                    axios.get("http://localhost:9000/api/categories/list-category"),
-                    axios.get("http://localhost:9000/api/subcategories/list"),
-                    axios.get("http://localhost:9000/api/propertyTypes/list-propertytype")
+                    axios.get(`${API_BASE}/api/categories/list-category`),
+                    axios.get(`${API_BASE}/api/subcategories/list`),
+                    axios.get(`${API_BASE}/api/propertyTypes/list-propertytype`)
                 ]);
                 setMetadata({
                     categories: Array.isArray(cats.data) ? cats.data : [],
@@ -509,7 +512,7 @@ export default function AddProperty() {
             }
 
             const token = localStorage.getItem("token");
-            await axios.post("http://localhost:9000/api/properties/add", submitData, {
+            await axios.post(`${API_BASE}/api/properties/add`, submitData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                     Authorization: token ? `Bearer ${token}` : ""
