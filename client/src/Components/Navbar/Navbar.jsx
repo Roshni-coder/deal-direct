@@ -255,6 +255,14 @@ function Navbar() {
     navigate(agentUploadUrl);
   }, [agentUploadUrl, isExternalAgentUrl, navigate, showAgentUpload]);
 
+  const handleRegisterProperty = () => {
+    if (user) {
+      navigate("/add-property");
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+
   // Classes that adapt: white background always
   const navWrapperClass = `fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
     ? "bg-white shadow-lg py-3"
@@ -508,7 +516,7 @@ function Navbar() {
                             <li><Link to="/services/valuation" className="text-gray-700 hover:text-red-600 text-sm">Valuation</Link></li>
                             <li><Link to="/services/vastu" className="text-gray-700 hover:text-red-600 text-sm">Vastu Calculator</Link></li>
                             <li><Link to="/services/property-management" className="text-gray-700 hover:text-red-600 text-sm">Property Management</Link></li>
-                            <li><Link to="/post-property" className="text-gray-700 hover:text-red-600 text-sm">Register Property</Link></li>
+                            <li><button onClick={handleRegisterProperty} className="text-gray-700 hover:text-red-600 text-sm text-left w-full">Register Property</button></li>
                           </ul>
                         </div>
                         <div>
@@ -642,7 +650,7 @@ function Navbar() {
               {/* Register Property Button - always visible */}
               <button
                 type="button"
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={handleRegisterProperty}
                 className="bg-red-600 text-white px-6 py-2.5 rounded-lg text-base font-bold hover:bg-red-700 transition shadow-md"
               >
                 Register Property

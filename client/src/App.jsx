@@ -11,11 +11,13 @@ import About from "./Pages/About/About.jsx";
 import Contact from "./Pages/Contact/Contact.jsx";
 import SampleAgreement from "./Components/SampleAgreement/SampleAgreement.jsx";
 import AddProperty from "./Pages/AddProperty/AddProperty.jsx"
+import ScrollToTop from "./Components/ScrollToTop/ScrollToTop.jsx";
 
 function App() {
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-white">
       <Router>
+        <ScrollToTop />
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />

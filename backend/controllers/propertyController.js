@@ -123,6 +123,9 @@ export const addProperty = async (req, res) => {
     }
     delete data.inlineImages;
 
+    // Explicitly set isApproved to true for all new properties (Auto-publish)
+    data.isApproved = true;
+
     const prop = await Property.create(data);
     res.status(201).json(withPublicImages(req, prop));
   } catch (err) {

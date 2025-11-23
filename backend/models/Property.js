@@ -42,7 +42,7 @@ const propertySchema = new mongoose.Schema(
     },
 
     images: [String],
-    isApproved: { type: Boolean, default: false },
+    isApproved: { type: Boolean, default: true },
 
     // Listing Details
     listingType: { type: String, enum: ["Rent", "Sell"], default: "Rent" },
