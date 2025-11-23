@@ -1,10 +1,11 @@
 import React from "react";
-import { 
-  AiOutlineMail, 
-  AiOutlinePhone, 
-  AiOutlineFacebook, 
-  AiOutlineTwitter, 
-  AiOutlineInstagram, 
+import { Link } from "react-router-dom";
+import {
+  AiOutlineMail,
+  AiOutlinePhone,
+  AiOutlineFacebook,
+  AiOutlineTwitter,
+  AiOutlineInstagram,
   AiOutlineLinkedin,
   AiOutlineEnvironment
 } from "react-icons/ai";
@@ -13,10 +14,30 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = {
-    "Buy": ["Apartments", "Villas", "Plots", "Commercial"],
-    "Rent": ["Studio", "Family Homes", "Short Term", "Commercial"],
-    "Company": ["About Us", "Careers", "Blog", "Press"],
-    "Support": ["Help Center", "Contact", "Privacy", "Terms"]
+    "Buy": [
+      { name: "Apartments", path: "/properties?type=flat&intent=apartment" },
+      { name: "Villas", path: "/properties?type=villa&intent=villa" },
+      { name: "Plots", path: "/properties?type=plot&intent=plot" },
+      { name: "Commercial", path: "/properties?type=office&intent=commercial" }
+    ],
+    "Rent": [
+      { name: "Studio", path: "/properties?bhk=1rk&intent=rent" },
+      { name: "Family Homes", path: "/properties?intent=rent" },
+      { name: "Short Term", path: "/properties?intent=rent" },
+      { name: "Commercial", path: "/properties?type=office&intent=rent" }
+    ],
+    "Company": [
+      { name: "About Us", path: "/about" },
+      { name: "Careers", path: "/about" },
+      { name: "Blog", path: "/about" },
+      { name: "Press", path: "/about" }
+    ],
+    "Support": [
+      { name: "Help Center", path: "/contact" },
+      { name: "Contact", path: "/contact" },
+      { name: "Privacy", path: "/privacy" },
+      { name: "Terms", path: "/terms" }
+    ]
   };
 
   const cities = ["Mumbai", "Delhi", "Bangalore", "Pune", "Hyderabad", "Chennai"];
@@ -47,15 +68,15 @@ const Footer = () => {
             </p>
             <div className="space-y-3 text-gray-300 text-sm">
               <div className="flex items-center gap-2">
-                <AiOutlineMail className="text-blue-600 text-base flex-shrink-0" /> 
+                <AiOutlineMail className="text-blue-600 text-base flex-shrink-0" />
                 <span>hello@dealdirect.com</span>
               </div>
               <div className="flex items-center gap-2">
-                <AiOutlinePhone className="text-blue-600 text-base flex-shrink-0" /> 
+                <AiOutlinePhone className="text-blue-600 text-base flex-shrink-0" />
                 <span>+91 1800-123-4567</span>
               </div>
               <div className="flex items-center gap-2">
-                <AiOutlineEnvironment className="text-blue-600 text-base flex-shrink-0" /> 
+                <AiOutlineEnvironment className="text-blue-600 text-base flex-shrink-0" />
                 <span>Mumbai, India</span>
               </div>
             </div>
@@ -68,13 +89,13 @@ const Footer = () => {
                 <h4 className="font-semibold text-white text-sm mb-4">{category}</h4>
                 <div className="flex flex-col gap-2.5">
                   {links.map((link, idx) => (
-                    <a 
-                      key={idx} 
-                      href="#" 
+                    <Link
+                      key={idx}
+                      to={link.path}
                       className="text-gray-400 text-sm hover:text-blue-600 transition-colors"
                     >
-                      {link}
-                    </a>
+                      {link.name}
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -87,13 +108,13 @@ const Footer = () => {
               <h4 className="font-semibold text-white text-sm mb-4">Popular Cities</h4>
               <div className="flex flex-wrap gap-2">
                 {cities.map((city, idx) => (
-                  <a 
-                    key={idx} 
-                    href="#" 
+                  <Link
+                    key={idx}
+                    to={`/properties?city=${city}`}
                     className="text-gray-300 text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     {city}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -101,8 +122,8 @@ const Footer = () => {
             <div>
               <h4 className="font-semibold text-white text-sm mb-4">Stay Updated</h4>
               <div className="flex flex-col sm:flex-row gap-2">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="Your email"
                   className="flex-1 px-3.5 py-2.5 rounded-lg bg-gray-800 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 border border-gray-700"
                 />
@@ -117,12 +138,12 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-gray-400 text-sm">
           <p>&copy; {currentYear} DealDirect. All rights reserved.</p>
-          
+
           <div className="flex gap-3">
             {socialLinks.map((social, idx) => (
-              <a 
-                key={idx} 
-                href={social.url} 
+              <a
+                key={idx}
+                href={social.url}
                 aria-label={social.name}
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-800 border border-gray-700 hover:bg-blue-600 hover:border-blue-600 transition-all text-lg"
               >
@@ -130,11 +151,11 @@ const Footer = () => {
               </a>
             ))}
           </div>
-          
+
           <div className="flex flex-wrap gap-4 text-xs sm:text-sm">
-            <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</a>
-            <a href="/cookies" className="hover:text-blue-600 transition-colors">Cookie Policy</a>
+            <Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link>
+            <Link to="/contact" className="hover:text-blue-600 transition-colors">Cookie Policy</Link>
           </div>
         </div>
 
