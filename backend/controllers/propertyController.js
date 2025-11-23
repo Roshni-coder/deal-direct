@@ -94,10 +94,10 @@ const withPublicImages = (req, doc) => {
 // Add Property
 export const addProperty = async (req, res) => {
   try {
-    const data = req.body;
+    let data = req.body;
 
-    // FIX: Added "features" to the list of fields to parse
-    ["area", "parking", "address", "flooring", "features"].forEach((key) => {
+    // FIX: Added "features" and "legal" to the list of fields to parse
+    ["area", "parking", "address", "flooring", "features", "legal"].forEach((key) => {
       if (data[key]) {
         try {
           // Handle cases where it might already be an object or a double-stringified JSON
@@ -107,6 +107,11 @@ export const addProperty = async (req, res) => {
         }
       }
     });
+
+    // Spread features into top-level data if it exists
+    if (data.features && typeof data.features === 'object') {
+      data = { ...data, ...data.features };
+    }
 
     const inlineImages = extractInlineImages(data);
     if (inlineImages.length) {
@@ -160,10 +165,10 @@ export const getPropertyById = async (req, res) => {
 // Update Property
 export const updateProperty = async (req, res) => {
   try {
-    const data = req.body;
+    let data = req.body;
 
-    // FIX: Added "features" here as well
-    ["area", "parking", "address", "flooring", "features"].forEach((key) => {
+    // FIX: Added "features" and "legal"
+    ["area", "parking", "address", "flooring", "features", "legal"].forEach((key) => {
       if (data[key]) {
         try {
           data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
@@ -172,6 +177,11 @@ export const updateProperty = async (req, res) => {
         }
       }
     });
+
+    // Spread features
+    if (data.features && typeof data.features === 'object') {
+      data = { ...data, ...data.features };
+    }
 
     const inlineImages = extractInlineImages(data);
     if (inlineImages.length) {

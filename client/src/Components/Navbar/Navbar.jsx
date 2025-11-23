@@ -1,9 +1,34 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone } from "react-icons/fa";
 import logo from "../../assets/dealdirect_logo.png";
 import AuthModal from "../AuthModal/AuthModal";
+
+const API_BASE = import.meta.env.VITE_API_BASE;
+
+// Omnibox-style relevance scoring (Same as HeroSection)
+const calculateRelevanceScore = (query, text) => {
+  if (!text) return 0;
+
+  const queryLower = query.toLowerCase();
+  const textLower = text.toLowerCase();
+
+  if (textLower === queryLower) return 100;
+  if (textLower.startsWith(queryLower)) return 90;
+
+  const words = textLower.split(/\s+/);
+  if (words.some(word => word.startsWith(queryLower))) return 80;
+  if (textLower.includes(queryLower)) return 70;
+
+  // Fuzzy match
+  let queryIndex = 0;
+  for (let i = 0; i < textLower.length && queryIndex < queryLower.length; i++) {
+    if (textLower[i] === queryLower[queryIndex]) queryIndex++;
+  }
+  return queryIndex === queryLower.length ? 50 : 0;
+};
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,6 +38,15 @@ function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Search Suggestions State
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
   const navigate = useNavigate();
 
   const toggleMenu = () => setMenuOpen((s) => !s);
@@ -46,6 +80,150 @@ function Navbar() {
       window.removeEventListener("auth-change", handleStorage);
     };
   }, [syncUserFromStorage]);
+
+  // Search Suggestions Logic
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!searchQuery || searchQuery.trim().length < 2) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await axios.get(`${API_BASE}/api/properties/property-list`);
+        const properties = response.data.data || [];
+
+        const searchTerm = searchQuery.toLowerCase().trim();
+        const scoredSuggestions = [];
+
+        properties.forEach(property => {
+          if (property.title) {
+            const score = calculateRelevanceScore(searchTerm, property.title);
+            if (score > 0) {
+              scoredSuggestions.push({
+                type: 'project',
+                value: property.title,
+                subtitle: `${property.city || ''} ${property.locality ? '• ' + property.locality : ''}`.trim(),
+                score,
+              });
+            }
+          }
+
+          if (property.locality) {
+            const score = calculateRelevanceScore(searchTerm, property.locality);
+            if (score > 0) {
+              scoredSuggestions.push({
+                type: 'locality',
+                value: property.locality,
+                subtitle: property.city || '',
+                score: score * 0.9,
+              });
+            }
+          }
+
+          if (property.city) {
+            const score = calculateRelevanceScore(searchTerm, property.city);
+            if (score > 0) {
+              scoredSuggestions.push({
+                type: 'city',
+                value: property.city,
+                subtitle: 'City',
+                score: score * 0.8,
+              });
+            }
+          }
+        });
+
+        const uniqueSuggestions = Array.from(
+          new Map(scoredSuggestions.map(item => [`${item.type}-${item.value}`, item])).values()
+        ).sort((a, b) => b.score - a.score).slice(0, 8);
+
+        setSuggestions(uniqueSuggestions);
+        setShowSuggestions(uniqueSuggestions.length > 0);
+        setSelectedIndex(-1);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchSuggestions, 200);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  // Handle Click Outside for Suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion.value);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+    navigate(`/properties?search=${encodeURIComponent(suggestion.value)}`);
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSuggestionClick(suggestions[selectedIndex]);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  };
+
+  const highlightMatch = (text, query) => {
+    if (!query || !text) return text;
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) return text;
+
+    return (
+      <>
+        {text.substring(0, index)}
+        <span className="font-semibold">{text.substring(index, index + query.length)}</span>
+        {text.substring(index + query.length)}
+      </>
+    );
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -106,7 +284,7 @@ function Navbar() {
 
             {/* Scrolled State: Search Bar */}
             {isScrolled && (
-              <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-6 gap-3">
+              <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-6 gap-3 relative" ref={searchInputRef}>
 
                 {/* Search Bar */}
                 <div className="relative flex-1 flex items-center">
@@ -115,7 +293,14 @@ function Navbar() {
                     type="text"
                     placeholder="Enter Locality / Project / Society / Landmark"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => {
+                      if (suggestions.length > 0) setShowSuggestions(true);
+                    }}
                     className="w-full border border-gray-300 rounded-lg pl-10 pr-16 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
                   />
                   <div className="absolute right-3 flex items-center gap-2">
@@ -124,8 +309,49 @@ function Navbar() {
                   </div>
                 </div>
 
+                {/* Search Suggestions Dropdown */}
+                {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50"
+                  >
+                    {isLoadingSuggestions ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <div className="animate-spin inline-block w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full"></div>
+                        <p className="mt-2 text-sm">Searching...</p>
+                      </div>
+                    ) : (
+                      <ul className="py-1">
+                        {suggestions.map((suggestion, index) => (
+                          <li
+                            key={index}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            onMouseEnter={() => setSelectedIndex(index)}
+                            className={`px-4 py-3 cursor-pointer transition-colors flex items-start gap-3 ${selectedIndex === index ? 'bg-gray-100' : 'hover:bg-gray-50'
+                              }`}
+                          >
+                            <AiOutlineSearch className="text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-900">
+                                {highlightMatch(suggestion.value, searchQuery)}
+                              </p>
+                              {suggestion.subtitle && (
+                                <p className="text-xs text-gray-500 truncate">{suggestion.subtitle}</p>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-400 capitalize flex-shrink-0">{suggestion.type}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {/* Search Button */}
-                <button className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-red-700 transition flex items-center gap-2">
+                <button
+                  onClick={handleSearch}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-red-700 transition flex items-center gap-2"
+                >
                   <AiOutlineSearch />
                   Search
                 </button>

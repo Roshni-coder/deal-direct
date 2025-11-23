@@ -12,11 +12,14 @@ const propertySchema = new mongoose.Schema(
     price: Number,
     priceUnit: { type: String, default: "Lac" },
     negotiable: { type: Boolean, default: false },
+    gstApplicable: { type: String },
 
     area: {
       totalSqft: Number,
       carpetSqft: Number,
       builtUpSqft: Number,
+      superBuiltUpSqft: Number,
+      plotSqft: Number,
       pricePerSqft: Number,
     },
 
@@ -32,6 +35,8 @@ const propertySchema = new mongoose.Schema(
       city: String,
       state: String,
       pincode: String,
+      landmark: String,
+      nearby: [String],
       latitude: Number,
       longitude: Number,
     },
@@ -39,16 +44,74 @@ const propertySchema = new mongoose.Schema(
     images: [String],
     isApproved: { type: Boolean, default: false },
 
-    // New Fields
+    // Listing Details
     listingType: { type: String, enum: ["Rent", "Sell"], default: "Rent" },
+    availableFrom: Date,
+
+    // Residential Fields
     bhk: String,
-    furnishing: String,
+    bedrooms: Number,
     bathrooms: Number,
     balconies: Number,
+    furnishing: String,
+    floorNo: String,
+    totalFloors: String,
+    facing: String,
+    constructionStatus: String,
+    propertyAge: String,
+    allowedFor: String,
+    petFriendly: String,
+
+    extras: {
+      servantRoom: Boolean,
+      poojaRoom: Boolean,
+      studyRoom: Boolean,
+      storeRoom: Boolean
+    },
+
+    // Commercial Fields
+    commercialSubType: String,
     washrooms: Number,
+    loadingArea: String,
+    dockAvailable: Boolean,
+    shutters: String,
+    floorHeight: String,
+    powerLoad: String,
     maintenance: Number,
     securityDeposit: Number,
-    availableFrom: Date,
+
+    // Commercial Config Fields (Flattened)
+    workstations: String,
+    conferenceRooms: String,
+    cabins: String,
+    pantry: String,
+    frontage: String,
+    storage: String,
+    displayWindows: String,
+    displayArea: String,
+    seatingCapacity: String,
+    kitchenArea: String,
+    barArea: String,
+    outdoorSeating: String,
+    meetingRooms: String,
+    privateCabins: String,
+    phoneBooths: String,
+    loungeArea: String,
+    loadingDocks: String,
+    ceilingHeight: String,
+    floorLoadCapacity: String,
+    powerConnection: String,
+    overheadCrane: String,
+    centralAC: String,
+    powerBackup: String,
+
+    // Legal
+    legal: {
+      reraId: String,
+      occupancyCertificate: Boolean,
+      tradeLicense: Boolean,
+      fireNoc: Boolean
+    }
   },
   { timestamps: true }
 );

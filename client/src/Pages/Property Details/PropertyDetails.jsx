@@ -13,7 +13,9 @@ import {
   HomeIcon,
   Square2StackIcon,
   TagIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ShieldCheckIcon,
+  DocumentTextIcon
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
@@ -113,18 +115,12 @@ const PropertyDetails = () => {
 
   const price = property.price || property.expectedPrice || 0;
   const formattedPrice = Number(price).toLocaleString();
-  const whatsappNumber = property.contact?.phone
-    ? `91${property.contact.phone.replace(/\D/g, "")}`
-    : "919876543210";
-  const message = `Hi, I'm interested in "${property.title}" located in ${property.city || property.address?.city || ""
-    }. Please share more details.`;
+
+  const isResidential = property.category?.name === "Residential" || property.category === "Residential";
+  const isCommercial = property.category?.name === "Commercial" || property.category === "Commercial";
 
   const handleInterest = () => {
     toast.success("Interest registered! The owner will contact you shortly.");
-  };
-
-  const handleVisit = () => {
-    setIsVisitModalOpen(true);
   };
 
   return (
@@ -135,7 +131,6 @@ const PropertyDetails = () => {
         propertyTitle={property?.title}
       />
 
-      {/* ... rest of the component ... */}
       {/* ---- Images Section ---- */}
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-3/5">
@@ -202,7 +197,7 @@ const PropertyDetails = () => {
                 {property.listingType || "For Sale"}
               </span>
               <span className="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
-                {property.propertyCategory || "Property"}
+                {property.category?.name || property.propertyCategory || "Property"}
               </span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
@@ -219,10 +214,13 @@ const PropertyDetails = () => {
             <p className="text-4xl font-bold text-red-600">
               ₹{formattedPrice}
             </p>
-            {property.maintenance && (
+            {property.maintenance > 0 && (
               <p className="text-sm text-gray-500 mt-1">
                 + ₹{property.maintenance} Maintenance/mo
               </p>
+            )}
+            {property.negotiable && (
+              <span className="inline-block mt-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Price Negotiable</span>
             )}
           </div>
 
@@ -231,13 +229,13 @@ const PropertyDetails = () => {
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <p className="text-xs text-gray-500 uppercase font-semibold">Area</p>
               <p className="font-bold text-gray-800 text-lg">
-                {property.builtUpArea || property.area?.totalSqft || "N/A"} <span className="text-sm font-normal text-gray-500">sq.ft</span>
+                {property.area?.builtUpSqft || property.builtUpArea || property.area?.totalSqft || "N/A"} <span className="text-sm font-normal text-gray-500">sq.ft</span>
               </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <p className="text-xs text-gray-500 uppercase font-semibold">Configuration</p>
               <p className="font-bold text-gray-800 text-lg">
-                {property.bhkType || property.propertyType?.name || property.propertyType || "N/A"}
+                {property.bhk || property.bedrooms ? `${property.bhk || property.bedrooms + ' BHK'}` : (property.propertyType?.name || property.propertyType || "N/A")}
               </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -280,35 +278,79 @@ const PropertyDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Project / Society</span>
-                <span className="font-semibold text-gray-900">{property.locality || "N/A"}</span>
+                <span className="font-semibold text-gray-900">{property.locality || property.address?.area || "N/A"}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Property Type</span>
                 <span className="font-semibold text-gray-900">{property.propertyType?.name || property.propertyType || "N/A"}</span>
               </div>
-              <div className="flex justify-between border-b border-gray-100 pb-2">
-                <span className="text-gray-500">BHK Configuration</span>
-                <span className="font-semibold text-gray-900">{property.bhkType || "N/A"}</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-2">
-                <span className="text-gray-500">Balconies</span>
-                <span className="font-semibold text-gray-900">{property.balconies || 0}</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-2">
-                <span className="text-gray-500">Bathrooms</span>
-                <span className="font-semibold text-gray-900">{property.bathrooms || 1}</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-2">
-                <span className="text-gray-500">Washrooms</span>
-                <span className="font-semibold text-gray-900">{property.washrooms || 0}</span>
-              </div>
+
+              {/* Residential Specifics */}
+              {isResidential && (
+                <>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">BHK Configuration</span>
+                    <span className="font-semibold text-gray-900">{property.bhk || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Bedrooms</span>
+                    <span className="font-semibold text-gray-900">{property.bedrooms || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Bathrooms</span>
+                    <span className="font-semibold text-gray-900">{property.bathrooms || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Balconies</span>
+                    <span className="font-semibold text-gray-900">{property.balconies || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Floor</span>
+                    <span className="font-semibold text-gray-900">{property.floorNo ? `${property.floorNo} of ${property.totalFloors || '?'}` : "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Facing</span>
+                    <span className="font-semibold text-gray-900">{property.facing || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Age of Property</span>
+                    <span className="font-semibold text-gray-900">{property.propertyAge || "N/A"}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Commercial Specifics */}
+              {isCommercial && (
+                <>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Washrooms</span>
+                    <span className="font-semibold text-gray-900">{property.washrooms || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Floor Height</span>
+                    <span className="font-semibold text-gray-900">{property.floorHeight ? `${property.floorHeight} ft` : "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Power Load</span>
+                    <span className="font-semibold text-gray-900">{property.powerLoad ? `${property.powerLoad} kW` : "N/A"}</span>
+                  </div>
+                  {property.commercialSubType && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Condition</span>
+                      <span className="font-semibold text-gray-900">{property.commercialSubType}</span>
+                    </div>
+                  )}
+                </>
+              )}
+
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Parking</span>
-                <span className="font-semibold text-gray-900">{property.parking?.type || "Available"}</span>
-              </div>
-              <div className="flex justify-between border-b border-gray-100 pb-2">
-                <span className="text-gray-500">Ownership</span>
-                <span className="font-semibold text-gray-900">Freehold</span>
+                <span className="font-semibold text-gray-900">
+                  {property.parking?.covered ? `${property.parking.covered} Covered` : ""}
+                  {property.parking?.covered && property.parking?.open ? ", " : ""}
+                  {property.parking?.open ? `${property.parking.open} Open` : ""}
+                  {!property.parking?.covered && !property.parking?.open ? "N/A" : ""}
+                </span>
               </div>
             </div>
           </div>
@@ -321,19 +363,31 @@ const PropertyDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Built-up Area</span>
-                <span className="font-semibold text-gray-900">{property.builtUpArea || "N/A"} sq.ft</span>
+                <span className="font-semibold text-gray-900">{property.area?.builtUpSqft || property.builtUpArea || "N/A"} sq.ft</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Carpet Area</span>
-                <span className="font-semibold text-gray-900">{property.carpetArea || "N/A"} sq.ft</span>
+                <span className="font-semibold text-gray-900">{property.area?.carpetSqft || property.carpetArea || "N/A"} sq.ft</span>
               </div>
+              {property.area?.superBuiltUpSqft && (
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-500">Super Built-up</span>
+                  <span className="font-semibold text-gray-900">{property.area.superBuiltUpSqft} sq.ft</span>
+                </div>
+              )}
+              {property.area?.plotSqft && (
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-500">Plot Area</span>
+                  <span className="font-semibold text-gray-900">{property.area.plotSqft} sq.ft</span>
+                </div>
+              )}
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Expected Price</span>
                 <span className="font-semibold text-gray-900">₹{formattedPrice}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Booking/Token Amount</span>
-                <span className="font-semibold text-gray-900">₹{property.expectedDeposit || "0"}</span>
+                <span className="font-semibold text-gray-900">₹{property.securityDeposit || property.expectedDeposit || "0"}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Maintenance Charges</span>
@@ -343,18 +397,49 @@ const PropertyDetails = () => {
           </div>
 
           {/* Amenities */}
-          {property.selectedAmenities && property.selectedAmenities.length > 0 && (
+          {(property.amenities?.length > 0 || property.selectedAmenities?.length > 0) && (
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-900">
                 <TagIcon className="w-6 h-6 text-red-600" /> Amenities
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {property.selectedAmenities.map((amenity, idx) => (
+                {(property.amenities || property.selectedAmenities).map((amenity, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-gray-700">
                     <CheckCircleIcon className="w-5 h-5 text-green-500" />
                     <span className="capitalize">{amenity.replace(/([A-Z])/g, ' $1').trim()}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Legal & Compliance */}
+          {property.legal && (
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-900">
+                <ShieldCheckIcon className="w-6 h-6 text-red-600" /> Legal & Compliance
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-500">RERA ID</span>
+                  <span className="font-semibold text-gray-900">{property.legal.reraId || "N/A"}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-500">Occupancy Certificate</span>
+                  <span className="font-semibold text-gray-900">{property.legal.occupancyCertificate ? "Yes" : "No"}</span>
+                </div>
+                {isCommercial && (
+                  <>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Trade License</span>
+                      <span className="font-semibold text-gray-900">{property.legal.tradeLicense ? "Yes" : "No"}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Fire NOC</span>
+                      <span className="font-semibold text-gray-900">{property.legal.fireNoc ? "Yes" : "No"}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -437,7 +522,7 @@ const PropertyDetails = () => {
             <div className="rounded-xl overflow-hidden h-64 bg-gray-100">
               <iframe
                 src={`https://www.google.com/maps?q=${encodeURIComponent(
-                  property.locality || property.address?.area || property.city || property.address?.city || "India"
+                  property.address?.line || property.locality || property.address?.area || property.city || property.address?.city || "India"
                 )}&output=embed`}
                 title="Map"
                 width="100%"
@@ -447,9 +532,19 @@ const PropertyDetails = () => {
               />
             </div>
             <p className="text-sm text-gray-500 mt-3">
-              {property.landmark && `Near ${property.landmark}, `}
-              {property.locality || property.address?.area}, {property.city || property.address?.city}
+              {property.address?.landmark || property.landmark ? `Near ${property.address?.landmark || property.landmark}, ` : ""}
+              {property.address?.line || property.locality || property.address?.area}, {property.city || property.address?.city}
             </p>
+            {property.address?.nearby && property.address.nearby.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Nearby</p>
+                <div className="flex flex-wrap gap-2">
+                  {property.address.nearby.map((place, i) => (
+                    <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{place}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

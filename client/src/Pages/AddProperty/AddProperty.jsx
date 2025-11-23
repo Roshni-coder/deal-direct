@@ -2,29 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
     Home, MapPin, IndianRupee, Layers, Image as ImageIcon, Calendar,
-    ChevronLeft, Upload, Check, X, Building2,
-    Wifi, Car, Zap, Shield, Utensils, LandPlot, Store, ArrowRight, FileText, Tag
+    ChevronLeft, Upload, Check, X, Building2, Users, Utensils, Car, Zap,
+    Shield, Store, ArrowRight, FileText, Tag, Wifi, LandPlot
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
-/*
-  Full-featured AddProperty component
-  - Only Residential & Commercial categories
-  - Lots of fields with helper tips
-  - Dynamic field visibility based on category & type
-  - Image upload + preview + inline base64 (optional)
-  - Step validation per-step
-  - Easy for seller: inline helpers & tooltips (simple text)
-*/
 
 // Steps
 const STEPS = [
     { id: 1, label: "Category & Type", icon: <Home size={18} />, description: "Property basics" },
     { id: 2, label: "Location", icon: <MapPin size={18} />, description: "Address details" },
     { id: 3, label: "Pricing & Area", icon: <IndianRupee size={18} />, description: "Value & size" },
-    { id: 4, label: "Features & Rooms", icon: <Layers size={18} />, description: "Rooms & amenities" },
+    { id: 4, label: "Property Details", icon: <Layers size={18} />, description: "Specific features" },
     { id: 5, label: "Photos & Docs", icon: <ImageIcon size={18} />, description: "Images & documents" },
     { id: 6, label: "Review", icon: <Calendar size={18} />, description: "Final check" },
 ];
@@ -56,10 +46,10 @@ const PROPERTY_CATEGORIES = {
             "Office Space",
             "Shop / Retail",
             "Showroom",
+            "Restaurant / Cafe",
             "Co-Working Space",
             "Warehouse / Godown",
             "Industrial Shed",
-            "Restaurant / Cafe Space",
             "Commercial Building / Floor"
         ],
         desc: "Business spaces",
@@ -70,7 +60,51 @@ const PROPERTY_CATEGORIES = {
     }
 };
 
-// Amenity mapping for icons (used in review)
+// Commercial property specific configurations
+const COMMERCIAL_CONFIGS = {
+    "Office Space": {
+        icon: <Building2 size={16} />,
+        fields: ["workstations", "conferenceRooms", "cabins", "washrooms", "pantry"],
+        label: "Office Configuration"
+    },
+    "Shop / Retail": {
+        icon: <Store size={16} />,
+        fields: ["frontage", "washrooms", "storage", "displayWindows"],
+        label: "Shop Configuration"
+    },
+    "Showroom": {
+        icon: <Store size={16} />,
+        fields: ["frontage", "washrooms", "storage", "displayArea", "parking"],
+        label: "Showroom Configuration"
+    },
+    "Restaurant / Cafe": {
+        icon: <Utensils size={16} />,
+        fields: ["seatingCapacity", "kitchenArea", "washrooms", "barArea", "outdoorSeating"],
+        label: "Restaurant Configuration"
+    },
+    "Co-Working Space": {
+        icon: <Users size={16} />,
+        fields: ["workstations", "meetingRooms", "privateCabins", "phoneBooths", "loungeArea"],
+        label: "Co-Working Configuration"
+    },
+    "Warehouse / Godown": {
+        icon: <LandPlot size={16} />,
+        fields: ["loadingDocks", "ceilingHeight", "floorLoadCapacity", "officeSpace", "washrooms"],
+        label: "Warehouse Configuration"
+    },
+    "Industrial Shed": {
+        icon: <Building2 size={16} />,
+        fields: ["ceilingHeight", "floorLoadCapacity", "powerConnection", "overheadCrane", "officeSpace"],
+        label: "Industrial Shed Configuration"
+    },
+    "Commercial Building / Floor": {
+        icon: <Building2 size={16} />,
+        fields: ["washrooms", "pantry", "centralAC", "powerBackup", "parking"],
+        label: "Building Configuration"
+    }
+};
+
+// Amenity mapping for icons
 const AMENITY_ICONS = {
     Lift: <Building2 size={16} />,
     Gym: <Zap size={16} />,
@@ -102,7 +136,7 @@ const variants = {
     }),
 };
 
-// helper to convert file to base64
+// Helper to convert file to base64
 const fileToBase64 = (file) =>
     new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -119,17 +153,79 @@ export default function AddProperty() {
     const [direction, setDirection] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
 
-    // images
+    // Images
     const [images, setImages] = useState([]);
     const [previewImages, setPreviewImages] = useState([]);
 
-    // fetched metadata (categories/subcategories/property types from backend)
+    // Metadata from backend
     const [metadata, setMetadata] = useState({
         categories: [],
         subcategories: [],
         propertyTypes: []
     });
 
+    // Form data
+    const [formData, setFormData] = useState({
+        // Basic
+        listingType: "Rent", // Rent / Sell
+        propertyCategory: "Residential", // Residential / Commercial
+        propertyType: "Apartment / Flat",
+
+        // Residential specific
+        bhkType: "", // for Residential
+        bedrooms: "", bathrooms: 1, balconies: 0,
+
+        // Area
+        builtUpArea: "", carpetArea: "", superBuiltUpArea: "", plotArea: "",
+
+        // Pricing
+        expectedPrice: "", maintenance: "", expectedDeposit: "", priceNegotiable: false, gstApplicable: false,
+
+        // Residential specifics
+        furnishing: "Unfurnished", floorNo: "", totalFloors: "", propertyAge: "New", facing: "", constructionStatus: "Ready to Move",
+
+        // Commercial specifics
+        commercialSubType: "", // bare/warm/fully for office
+        washrooms: 1, loadingArea: "", dockAvailable: false, shutters: "", floorHeight: "",
+
+        // Commercial type specific fields
+        workstations: "", conferenceRooms: "", cabins: "", pantry: "",
+        frontage: "", storage: "", displayWindows: "", displayArea: "",
+        seatingCapacity: "", kitchenArea: "", barArea: "", outdoorSeating: "",
+        meetingRooms: "", privateCabins: "", phoneBooths: "", loungeArea: "",
+        loadingDocks: "", ceilingHeight: "", floorLoadCapacity: "", powerConnection: "", overheadCrane: "",
+        centralAC: "", powerBackup: "",
+
+        // Parking
+        parkingCovered: 0, parkingOpen: 0,
+
+        // Amenities
+        selectedAmenities: [],
+
+        // Rooms extras
+        servantRoom: false, poojaRoom: false, studyRoom: false, storeRoom: false,
+
+        // Legal / Documents
+        reraId: "", occupancyCertificate: false, tradeLicense: false, fireNoc: false,
+
+        // Availability & misc
+        availableFrom: new Date().toISOString().split('T')[0],
+        petFriendly: "No",
+        allowedFor: "Family", // Family / Bachelor / Company Lease / Any
+        ageOfProperty: "", // optional numeric
+
+        // Location
+        city: "", locality: "", landmark: "", address: "", nearby: [],
+
+        // Media & description
+        description: "",
+        videoUrl: "",
+
+        // seller assistance flags (optional)
+        showHelpTips: true
+    });
+
+    // Fetch metadata from backend
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
@@ -145,55 +241,18 @@ export default function AddProperty() {
                 });
             } catch (error) {
                 console.error("Failed to fetch metadata", error);
+                toast.error("Failed to load property options. Please refresh the page.");
             }
         };
         fetchMetadata();
     }, []);
 
-    // Form data: exhaustive fields for Residential + Commercial
-    const [formData, setFormData] = useState({
-        // Basic
-        listingType: "Rent", // Rent / Sell
-        propertyCategory: "Residential", // Residential / Commercial
-        propertyType: "Apartment / Flat",
-        bhkType: "", // for Residential
-        bedrooms: "", bathrooms: 1, balconies: 0,
-        // Area
-        builtUpArea: "", carpetArea: "", superBuiltUpArea: "", plotArea: "",
-        // Pricing
-        expectedPrice: "", maintenance: "", expectedDeposit: "", priceNegotiable: false, gstApplicable: false,
-        // Residential specifics
-        furnishing: "Unfurnished", floorNo: "", totalFloors: "", propertyAge: "New", facing: "", constructionStatus: "Ready to Move",
-        // Commercial specifics
-        commercialSubType: "", // bare/warm/fully for office
-        washrooms: 1, loadingArea: "", dockAvailable: false, shutters: "", floorHeight: "",
-        // Parking
-        parkingCovered: 0, parkingOpen: 0,
-        // Amenities
-        selectedAmenities: [],
-        // Rooms extras
-        servantRoom: false, poojaRoom: false, studyRoom: false, storeRoom: false,
-        // Legal / Documents
-        reraId: "", occupancyCertificate: false, tradeLicense: false, fireNoc: false,
-        // Availability & misc
-        availableFrom: new Date().toISOString().split('T')[0],
-        petFriendly: "No",
-        allowedFor: "Family", // Family / Bachelor / Company Lease / Any
-        ageOfProperty: "", // optional numeric
-        // Location
-        city: "", locality: "", landmark: "", address: "", nearby: [],
-        // Media & description
-        description: "",
-        videoUrl: "",
-        // seller assistance flags (optional)
-        showHelpTips: true
-    });
-
-    // convenience checks
+    // Convenience checks
     const isResidential = formData.propertyCategory === "Residential";
     const isCommercial = formData.propertyCategory === "Commercial";
+    const commercialConfig = isCommercial ? COMMERCIAL_CONFIGS[formData.propertyType] : null;
 
-    // handle form changes
+    // Handle form changes
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (type === "checkbox") {
@@ -203,7 +262,7 @@ export default function AddProperty() {
         }
     };
 
-    // toggle amenity
+    // Toggle amenity
     const handleAmenityToggle = (amenity) => {
         setFormData(prev => {
             const list = prev.selectedAmenities || [];
@@ -214,31 +273,31 @@ export default function AddProperty() {
         });
     };
 
-    // category change -> set default type & reset category-specific fields
+    // Category change -> set default type & reset category-specific fields
     const handleCategoryChange = (category) => {
         const defaultType = PROPERTY_CATEGORIES[category].types[0];
         setFormData(prev => ({
             ...prev,
             propertyCategory: category,
             propertyType: defaultType,
-            // reset category-specific
+            // Reset category-specific fields
             bhkType: category === "Residential" ? prev.bhkType : "",
             furnishing: category === "Residential" ? prev.furnishing : "Bare Shell",
             commercialSubType: category === "Commercial" ? prev.commercialSubType : "",
         }));
     };
 
-    // property type change
+    // Property type change
     const handlePropertyTypeChange = (type) => {
         setFormData(prev => ({
             ...prev,
             propertyType: type,
-            // if it is Apartment etc leave BHK, if it's studio/penthouse
+            // If it's Studio apartment, set BHK accordingly
             bhkType: type.includes("Studio") ? "Studio" : prev.bhkType
         }));
     };
 
-    // images handling (max 15)
+    // Images handling (max 15)
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
@@ -253,28 +312,28 @@ export default function AddProperty() {
         setPreviewImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Validation per step (very thorough)
+    // Validation per step
     const validateStep = (step) => {
         const f = formData;
-        // common minimal checks
-        const requireLocation = !f.city || !f.locality;
         switch (step) {
             case 1:
                 if (!f.propertyCategory) return "Please choose a property category.";
                 if (!f.propertyType) return "Please choose a property type.";
-                if (isResidential && !f.bhkType && !f.propertyType.toLowerCase().includes("studio")) return "Please choose BHK configuration for residential.";
+                if (isResidential && !f.bhkType && !f.propertyType.toLowerCase().includes("studio"))
+                    return "Please choose BHK configuration for residential.";
                 break;
             case 2:
                 if (!f.city || !f.locality) return "City and Locality are required.";
                 break;
             case 3:
                 if (!f.expectedPrice) return "Please enter expected price / rent.";
-                if (!f.builtUpArea && !(isCommercial && f.propertyType.toLowerCase().includes("warehouse"))) return isCommercial ? "Please enter carpet/built-up area for commercial." : "Built-up area is required.";
+                if (!f.builtUpArea && !(isCommercial && f.propertyType.toLowerCase().includes("warehouse")))
+                    return isCommercial ? "Please enter carpet/built-up area for commercial." : "Built-up area is required.";
                 break;
             case 4:
-                // require at least minimal rooms for residential
                 if (isResidential) {
-                    if (!f.bedrooms && !f.bhkType.includes("Studio")) return "Please confirm number of bedrooms / BHK.";
+                    if (!f.bedrooms && !f.bhkType.includes("Studio"))
+                        return "Please confirm number of bedrooms / BHK.";
                 } else if (isCommercial) {
                     if (!f.washrooms) return "Please enter number of washrooms for commercial.";
                 }
@@ -288,31 +347,62 @@ export default function AddProperty() {
         return null;
     };
 
-    // navigation helpers
+    // Navigation helpers
     const handleNext = () => {
         const error = validateStep(currentStep);
         if (error) return toast.error(error);
-        setDirection(1); setCurrentStep(prev => Math.min(prev + 1, 6));
+        setDirection(1);
+        setCurrentStep(prev => Math.min(prev + 1, 6));
     };
-    const handlePrev = () => { setDirection(-1); setCurrentStep(prev => Math.max(prev - 1, 1)); };
 
-    // Submit: assemble submitData with all fields; convert images to files
+    const handlePrev = () => {
+        setDirection(-1);
+        setCurrentStep(prev => Math.max(prev - 1, 1));
+    };
+
+    // Helper function to find the ObjectId for a category or property type
+    const findObjectId = (name, type) => {
+        if (!metadata[type] || !metadata[type].length) return null;
+
+        // Try exact match first
+        let match = metadata[type].find(item => item.name === name);
+
+        // If no exact match, try case-insensitive match
+        if (!match) {
+            match = metadata[type].find(item =>
+                item.name.toLowerCase() === name.toLowerCase()
+            );
+        }
+
+        // If still no match, try partial match
+        if (!match) {
+            match = metadata[type].find(item =>
+                item.name.toLowerCase().includes(name.toLowerCase()) ||
+                name.toLowerCase().includes(item.name.toLowerCase())
+            );
+        }
+
+        return match ? match._id : null;
+    };
+
+    // Submit function
     const handleSubmit = async () => {
         setIsLoading(true);
         try {
-            // Map user-friendly selection to backend ids if available
-            const matchedPropertyType = metadata.propertyTypes.find(
-                t => t.name.toLowerCase() === formData.propertyType.toLowerCase()
-            ) || metadata.propertyTypes[0];
-
-            const matchedCategory = metadata.categories.find(
-                c => c.name.toLowerCase() === formData.propertyCategory.toLowerCase()
-            ) || metadata.categories[0];
-
-            // build formData
+            // Create form data for submission
             const submitData = new FormData();
-            submitData.append("propertyType", matchedPropertyType?._id || "");
-            submitData.append("category", matchedCategory?._id || "");
+
+            // Find the ObjectIds for category and propertyType
+            const categoryId = findObjectId(formData.propertyCategory, 'categories');
+            const propertyTypeId = findObjectId(formData.propertyType, 'propertyTypes');
+
+            // If we couldn't find the IDs, use the first available as fallback
+            const finalCategoryId = categoryId || (metadata.categories.length > 0 ? metadata.categories[0]._id : null);
+            const finalPropertyTypeId = propertyTypeId || (metadata.propertyTypes.length > 0 ? metadata.propertyTypes[0]._id : null);
+
+            // Add basic property info
+            submitData.append("propertyType", finalPropertyTypeId);
+            submitData.append("category", finalCategoryId);
             submitData.append("title", generateTitle());
             submitData.append("description", formData.description || generateShortDescription());
             submitData.append("price", formData.expectedPrice);
@@ -320,7 +410,7 @@ export default function AddProperty() {
             submitData.append("priceUnit", formData.listingType === "Rent" ? "Monthly" : "Total");
             submitData.append("gstApplicable", formData.gstApplicable ? "Yes" : "No");
 
-            // area
+            // Add area information
             const areaData = {
                 builtUpSqft: formData.builtUpArea || "",
                 carpetSqft: formData.carpetArea || "",
@@ -329,7 +419,7 @@ export default function AddProperty() {
             };
             submitData.append("area", JSON.stringify(areaData));
 
-            // address
+            // Add address information
             const addressData = {
                 city: formData.city,
                 area: formData.locality,
@@ -341,46 +431,68 @@ export default function AddProperty() {
             };
             submitData.append("address", JSON.stringify(addressData));
 
-            // features
-            const featuresData = {
+            // Add features based on property type
+            let featuresData = {
                 listingType: formData.listingType,
-                bhk: formData.bhkType,
-                bedrooms: formData.bedrooms || (formData.bhkType || "").split(" ")[0],
-                bathrooms: formData.bathrooms,
-                balconies: formData.balconies,
-                furnishing: formData.furnishing,
-                floorNo: formData.floorNo,
-                totalFloors: formData.totalFloors,
-                facing: formData.facing,
-                constructionStatus: formData.constructionStatus,
-                propertyAge: formData.propertyAge,
-                parking: { covered: Number(formData.parkingCovered || 0), open: Number(formData.parkingOpen || 0) },
-                amenities: formData.selectedAmenities || [],
-                extras: {
-                    servantRoom: formData.servantRoom,
-                    poojaRoom: formData.poojaRoom,
-                    studyRoom: formData.studyRoom,
-                    storeRoom: formData.storeRoom
+                parking: {
+                    covered: Number(formData.parkingCovered || 0),
+                    open: Number(formData.parkingOpen || 0)
                 },
+                amenities: formData.selectedAmenities || [],
                 availableFrom: formData.availableFrom,
                 deposit: formData.expectedDeposit,
                 maintenance: formData.maintenance,
-                allowedFor: formData.allowedFor,
-                petFriendly: formData.petFriendly,
             };
-            // commercial-specific additional fields
-            if (isCommercial) {
-                featuresData.commercialSubType = formData.commercialSubType;
-                featuresData.washrooms = formData.washrooms;
-                featuresData.loadingArea = formData.loadingArea;
-                featuresData.dockAvailable = formData.dockAvailable;
-                featuresData.shutters = formData.shutters;
-                featuresData.floorHeight = formData.floorHeight;
-                featuresData.powerLoad = formData.powerLoad;
+
+            // Add residential specific features
+            if (isResidential) {
+                featuresData = {
+                    ...featuresData,
+                    bhk: formData.bhkType,
+                    bedrooms: formData.bedrooms || (formData.bhkType || "").split(" ")[0],
+                    bathrooms: formData.bathrooms,
+                    balconies: formData.balconies,
+                    furnishing: formData.furnishing,
+                    floorNo: formData.floorNo,
+                    totalFloors: formData.totalFloors,
+                    facing: formData.facing,
+                    constructionStatus: formData.constructionStatus,
+                    propertyAge: formData.propertyAge,
+                    extras: {
+                        servantRoom: formData.servantRoom,
+                        poojaRoom: formData.poojaRoom,
+                        studyRoom: formData.studyRoom,
+                        storeRoom: formData.storeRoom
+                    },
+                    allowedFor: formData.allowedFor,
+                    petFriendly: formData.petFriendly,
+                };
+            } else {
+                // Add commercial specific features
+                featuresData = {
+                    ...featuresData,
+                    commercialSubType: formData.commercialSubType,
+                    washrooms: formData.washrooms,
+                    loadingArea: formData.loadingArea,
+                    dockAvailable: formData.dockAvailable,
+                    shutters: formData.shutters,
+                    floorHeight: formData.floorHeight,
+                    powerLoad: formData.powerLoad,
+                };
+
+                // Add commercial type specific fields
+                if (commercialConfig) {
+                    commercialConfig.fields.forEach(field => {
+                        if (formData[field]) {
+                            featuresData[field] = formData[field];
+                        }
+                    });
+                }
             }
+
             submitData.append("features", JSON.stringify(featuresData));
 
-            // documents / compliance
+            // Add legal/compliance information
             const legalData = {
                 reraId: formData.reraId,
                 occupancyCertificate: !!formData.occupancyCertificate,
@@ -389,7 +501,7 @@ export default function AddProperty() {
             };
             submitData.append("legal", JSON.stringify(legalData));
 
-            // images
+            // Add images
             images.forEach(file => submitData.append("images", file));
             if (images.length > 0) {
                 const inlineImages = await Promise.all(images.map(fileToBase64));
@@ -414,7 +526,7 @@ export default function AddProperty() {
         }
     };
 
-    // helper to generate listing title
+    // Helper to generate listing title
     const generateTitle = () => {
         const parts = [];
         if (isResidential) {
@@ -435,7 +547,7 @@ export default function AddProperty() {
         return `${generateTitle()} | ${formData.builtUpArea || formData.carpetArea || "Area not specified"} sq.ft`;
     };
 
-    // Render step parts (large UI)
+    // Render step parts
     const renderStep1 = () => (
         <div className="space-y-6">
             <div className="text-center">
@@ -489,6 +601,22 @@ export default function AddProperty() {
                     <p className="text-xs text-slate-400 mt-2">Tip: Select the exact BHK — buyers search using these filters.</p>
                 </div>
             )}
+
+            {/* Commercial only: Sub-type */}
+            {isCommercial && (
+                <div>
+                    <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Commercial Sub-type</label>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                        {["Bare Shell", "Warm Shell", "Fully Furnished"].map(subType => (
+                            <button key={subType} onClick={() => setFormData(p => ({ ...p, commercialSubType: subType }))}
+                                className={`px-4 py-2 rounded-xl border text-sm font-medium ${formData.commercialSubType === subType ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200"}`}>
+                                {subType}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">Tip: Select the condition of the commercial space.</p>
+                </div>
+            )}
         </div>
     );
 
@@ -508,7 +636,7 @@ export default function AddProperty() {
                 <div>
                     <label className="text-sm font-medium text-slate-700">Locality / Society</label>
                     <input name="locality" value={formData.locality} onChange={handleChange} placeholder="e.g. Bandra West" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-600" />
-                    <div className="text-xs text-slate-400 mt-1">Add society or locality for better results (autocomplete can be added later).</div>
+                    <div className="text-xs text-slate-400 mt-1">Add society or locality for better results.</div>
                 </div>
             </div>
 
@@ -601,7 +729,10 @@ export default function AddProperty() {
 
                 <div>
                     <label className="text-sm font-medium text-slate-700">Super Built-up Area (optional)</label>
-                    <input name="superBuiltUpArea" value={formData.superBuiltUpArea} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 1400" />
+                    <div className="relative">
+                        <input name="superBuiltUpArea" value={formData.superBuiltUpArea} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 1400" />
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400">sq.ft</div>
+                    </div>
                 </div>
             </div>
 
@@ -628,21 +759,16 @@ export default function AddProperty() {
                 {isCommercial && (
                     <>
                         <div>
-                            <label className="text-sm font-medium text-slate-700">Commercial Sub-type</label>
-                            <select name="commercialSubType" value={formData.commercialSubType} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200">
-                                <option value="">Select</option>
-                                <option value="Bare Shell">Bare Shell</option>
-                                <option value="Warm Shell">Warm Shell</option>
-                                <option value="Fully Furnished">Fully Furnished</option>
-                            </select>
-                        </div>
-                        <div>
                             <label className="text-sm font-medium text-slate-700">Washrooms</label>
                             <input name="washrooms" value={formData.washrooms} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
                         </div>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Floor Height (ft)</label>
                             <input name="floorHeight" value={formData.floorHeight} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">Power Load (kW)</label>
+                            <input name="powerLoad" value={formData.powerLoad} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" />
                         </div>
                     </>
                 )}
@@ -653,103 +779,205 @@ export default function AddProperty() {
     const renderStep4 = () => (
         <div className="space-y-6">
             <div className="text-center">
-                <h2 className="text-3xl font-bold">Features & Amenities</h2>
-                <p className="text-slate-500 mt-2">Add rooms, amenities and special features to make your listing stand out.</p>
+                <h2 className="text-3xl font-bold">Property Details</h2>
+                <p className="text-slate-500 mt-2">Add specific features to make your listing stand out.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl p-4 border">
-                    <label className="text-sm font-medium">Bedrooms</label>
-                    <input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
-                </div>
-                <div className="bg-white rounded-2xl p-4 border">
-                    <label className="text-sm font-medium">Bathrooms</label>
-                    <input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
-                </div>
-                <div className="bg-white rounded-2xl p-4 border">
-                    <label className="text-sm font-medium">Balconies</label>
-                    <input name="balconies" value={formData.balconies} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label className="text-sm font-medium text-slate-700">Furnishing</label>
-                    <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200">
-                        {isResidential ? (
-                            <>
-                                <option>Unfurnished</option>
-                                <option>Semi-Furnished</option>
-                                <option>Fully Furnished</option>
-                            </>
-                        ) : (
-                            <>
-                                <option>Bare Shell</option>
-                                <option>Warm Shell</option>
-                                <option>Fully Furnished</option>
-                            </>
-                        )}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="text-sm font-medium text-slate-700">Parking (Covered)</label>
-                    <input name="parkingCovered" value={formData.parkingCovered} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
-                </div>
-
-                <div>
-                    <label className="text-sm font-medium text-slate-700">Parking (Open)</label>
-                    <input name="parkingOpen" value={formData.parkingOpen} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
-                </div>
-            </div>
-
-            {/* Room extras */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <label className="flex items-center gap-2"><input type="checkbox" name="servantRoom" checked={formData.servantRoom} onChange={handleChange} /> Servant Room</label>
-                <label className="flex items-center gap-2"><input type="checkbox" name="poojaRoom" checked={formData.poojaRoom} onChange={handleChange} /> Pooja Room</label>
-                <label className="flex items-center gap-2"><input type="checkbox" name="studyRoom" checked={formData.studyRoom} onChange={handleChange} /> Study Room</label>
-                <label className="flex items-center gap-2"><input type="checkbox" name="storeRoom" checked={formData.storeRoom} onChange={handleChange} /> Store Room</label>
-            </div>
-
-            {/* Amenities */}
-            <div>
-                <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Amenities</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
-                    {PROPERTY_CATEGORIES[formData.propertyCategory].amenities.map(am => (
-                        <div key={am} onClick={() => handleAmenityToggle(am)} className={`p-3 rounded-xl border cursor-pointer ${formData.selectedAmenities.includes(am) ? "bg-green-50 border-green-400" : "bg-white border-slate-200"}`}>
-                            <div className="flex items-center gap-2">
-                                <div className="text-slate-600">{AMENITY_ICONS[am] || <Tag size={14} />}</div>
-                                <div className="text-sm">{am}</div>
+            {/* Residential specific fields */}
+            {isResidential && (
+                <>
+                    <div className="bg-white rounded-2xl p-4 border">
+                        <h3 className="font-bold mb-4 flex items-center gap-2">
+                            <Home size={18} />
+                            Residential Configuration
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="text-sm font-medium">Bedrooms</label>
+                                <input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Bathrooms</label>
+                                <input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Balconies</label>
+                                <input name="balconies" value={formData.balconies} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
                             </div>
                         </div>
-                    ))}
-                </div>
-                <div className="text-xs text-slate-400 mt-2">Tip: Select all amenities that apply — this helps match filtered searches.</div>
-            </div>
 
-            {/* Commercial extras */}
-            {isCommercial && (
-                <div className="bg-white p-4 rounded-xl border">
-                    <h4 className="font-bold mb-2">Commercial Features</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Furnishing</label>
+                                <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200">
+                                    <option>Unfurnished</option>
+                                    <option>Semi-Furnished</option>
+                                    <option>Fully Furnished</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Property Age</label>
+                                <select name="propertyAge" value={formData.propertyAge} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200">
+                                    <option>New</option>
+                                    <option>1-5 Years</option>
+                                    <option>5-10 Years</option>
+                                    <option>10+ Years</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="servantRoom" checked={formData.servantRoom} onChange={handleChange} />
+                                Servant Room
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="poojaRoom" checked={formData.poojaRoom} onChange={handleChange} />
+                                Pooja Room
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="studyRoom" checked={formData.studyRoom} onChange={handleChange} />
+                                Study Room
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="storeRoom" checked={formData.storeRoom} onChange={handleChange} />
+                                Store Room
+                            </label>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Commercial specific fields */}
+            {isCommercial && commercialConfig && (
+                <div className="bg-white rounded-2xl p-4 border">
+                    <h3 className="font-bold mb-4 flex items-center gap-2">
+                        {commercialConfig.icon}
+                        {commercialConfig.label}
+                    </h3>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="text-sm">Loading Area (sq.ft)</label>
-                            <input name="loadingArea" value={formData.loadingArea} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-200" />
-                        </div>
-                        <div>
-                            <label className="text-sm">Dock Available?</label>
-                            <select name="dockAvailable" value={formData.dockAvailable ? "Yes" : "No"} onChange={(e) => setFormData(p => ({ ...p, dockAvailable: e.target.value === "Yes" }))} className="w-full px-3 py-2 rounded-xl border border-slate-200">
-                                <option>No</option>
-                                <option>Yes</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="text-sm">Shutters (count)</label>
-                            <input name="shutters" value={formData.shutters} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-200" />
-                        </div>
+                        {commercialConfig.fields.includes("workstations") && (
+                            <div>
+                                <label className="text-sm font-medium">Workstations</label>
+                                <input name="workstations" value={formData.workstations} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("conferenceRooms") && (
+                            <div>
+                                <label className="text-sm font-medium">Conference Rooms</label>
+                                <input name="conferenceRooms" value={formData.conferenceRooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("cabins") && (
+                            <div>
+                                <label className="text-sm font-medium">Private Cabins</label>
+                                <input name="cabins" value={formData.cabins} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("seatingCapacity") && (
+                            <div>
+                                <label className="text-sm font-medium">Seating Capacity</label>
+                                <input name="seatingCapacity" value={formData.seatingCapacity} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("kitchenArea") && (
+                            <div>
+                                <label className="text-sm font-medium">Kitchen Area (sq.ft)</label>
+                                <input name="kitchenArea" value={formData.kitchenArea} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("frontage") && (
+                            <div>
+                                <label className="text-sm font-medium">Frontage (ft)</label>
+                                <input name="frontage" value={formData.frontage} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("loadingDocks") && (
+                            <div>
+                                <label className="text-sm font-medium">Loading Docks</label>
+                                <input name="loadingDocks" value={formData.loadingDocks} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("ceilingHeight") && (
+                            <div>
+                                <label className="text-sm font-medium">Ceiling Height (ft)</label>
+                                <input name="ceilingHeight" value={formData.ceilingHeight} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+
+                        {commercialConfig.fields.includes("floorLoadCapacity") && (
+                            <div>
+                                <label className="text-sm font-medium">Floor Load Capacity (kg/sq.ft)</label>
+                                <input name="floorLoadCapacity" value={formData.floorLoadCapacity} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        {commercialConfig.fields.includes("barArea") && (
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="barArea" checked={formData.barArea} onChange={handleChange} />
+                                Bar Area Available
+                            </label>
+                        )}
+
+                        {commercialConfig.fields.includes("outdoorSeating") && (
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="outdoorSeating" checked={formData.outdoorSeating} onChange={handleChange} />
+                                Outdoor Seating Available
+                            </label>
+                        )}
+
+                        {commercialConfig.fields.includes("overheadCrane") && (
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="overheadCrane" checked={formData.overheadCrane} onChange={handleChange} />
+                                Overhead Crane Available
+                            </label>
+                        )}
                     </div>
                 </div>
             )}
+
+            {/* Common fields for both property types */}
+            <div className="bg-white rounded-2xl p-4 border">
+                <h3 className="font-bold mb-4">Parking & Amenities</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm font-medium text-slate-700">Parking (Covered)</label>
+                        <input name="parkingCovered" value={formData.parkingCovered} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-slate-700">Parking (Open)</label>
+                        <input name="parkingOpen" value={formData.parkingOpen} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Amenities</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
+                        {PROPERTY_CATEGORIES[formData.propertyCategory].amenities.map(am => (
+                            <div key={am} onClick={() => handleAmenityToggle(am)} className={`p-3 rounded-xl border cursor-pointer ${formData.selectedAmenities.includes(am) ? "bg-green-50 border-green-400" : "bg-white border-slate-200"}`}>
+                                <div className="flex items-center gap-2">
+                                    <div className="text-slate-600">{AMENITY_ICONS[am] || <Tag size={14} />}</div>
+                                    <div className="text-sm">{am}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2">Tip: Select all amenities that apply — this helps match filtered searches.</div>
+                </div>
+            </div>
         </div>
     );
 
@@ -766,7 +994,7 @@ export default function AddProperty() {
                     <Upload size={20} className="text-blue-600" />
                     <div>
                         <div className="font-bold">Click to upload photos</div>
-                        <div className="text-xs text-slate-500">Up to 15 photos. Start with living room, bedrooms, kitchen, facade, amenities.</div>
+                        <div className="text-xs text-slate-500">Up to 15 photos. Start with main area, facade, amenities.</div>
                     </div>
                 </div>
             </div>
@@ -838,10 +1066,15 @@ export default function AddProperty() {
                                 <div className="font-semibold">{formData.bedrooms || formData.bhkType || "-"}</div>
                             </div>
                         )}
-                        {isCommercial && (
+                        {isCommercial && commercialConfig && (
                             <div>
-                                <div className="text-xs text-slate-500">Washrooms</div>
-                                <div className="font-semibold">{formData.washrooms}</div>
+                                <div className="text-xs text-slate-500">Key Feature</div>
+                                <div className="font-semibold">
+                                    {formData.seatingCapacity && `Seating: ${formData.seatingCapacity}`}
+                                    {formData.workstations && `Workstations: ${formData.workstations}`}
+                                    {formData.frontage && `Frontage: ${formData.frontage} ft`}
+                                    {!formData.seatingCapacity && !formData.workstations && !formData.frontage && "-"}
+                                </div>
                             </div>
                         )}
                     </div>
