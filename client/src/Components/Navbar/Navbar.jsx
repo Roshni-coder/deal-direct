@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
+import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch, AiOutlineHome, AiOutlineInfoCircle, AiOutlinePhone, AiOutlineFileText, AiOutlinePlusCircle, AiOutlineLogin, AiOutlineLogout } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone } from "react-icons/fa";
+import { BsBuilding } from "react-icons/bs";
 import logo from "../../assets/dealdirect_logo.png";
 import AuthModal from "../AuthModal/AuthModal";
 
@@ -682,56 +683,135 @@ function Navbar() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu Overlay */}
         <div
-          className={`lg:hidden absolute left-0 w-full bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 ease-in-out ${menuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-5 invisible"
+          className={`lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+            }`}
+          onClick={toggleMenu}
+        />
+
+        {/* Mobile Menu Drawer */}
+        <div
+          className={`lg:hidden fixed top-0 right-0 h-full w-[80%] max-w-sm bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out ${menuOpen ? "translate-x-0" : "translate-x-full"
             }`}
         >
-          <div className="flex flex-col px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
-            <Link to="/" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-              Home
-            </Link>
-            <Link to="/properties" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-              Properties
-            </Link>
-
-            {showAgentUpload && (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b">
+              <span className="text-xl font-bold text-slate-800">Menu</span>
               <button
-                type="button"
-                className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b text-left"
-                onClick={() => {
-                  handleAgentUploadNavigation();
-                  if (!isExternalAgentUrl) toggleMenu();
-                }}
+                onClick={toggleMenu}
+                className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition"
               >
-                Upload Property
+                <AiOutlineClose size={24} />
               </button>
-            )}
+            </div>
 
-            <Link to="/agreements" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-              Agreements
-            </Link>
-
-            <Link to="/about" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-              About
-            </Link>
-
-            <Link to="/contact" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-              Contact
-            </Link>
-
-            {user ? (
-              <div className="flex flex-col items-start space-y-3 py-2">
-                <span className="text-gray-700 dark:text-gray-100 font-medium">Hi, {user.name?.split(" ")[0] || "User"}</span>
-                <button onClick={() => { handleLogout(); toggleMenu(); }} className="text-red-500 hover:underline text-sm">
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" onClick={toggleMenu} className="text-gray-700 dark:text-gray-100 font-medium hover:text-red-600 transition py-2 border-b">
-                Login
+            {/* Links */}
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-2">
+              <Link
+                to="/"
+                onClick={toggleMenu}
+                className="flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition"
+              >
+                <AiOutlineHome size={20} />
+                Home
               </Link>
-            )}
+
+              <Link
+                to="/properties"
+                onClick={toggleMenu}
+                className="flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition"
+              >
+                <BsBuilding size={20} />
+                Properties
+              </Link>
+
+              <button
+                onClick={() => {
+                  handleRegisterProperty();
+                  toggleMenu();
+                }}
+                className="w-full flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition text-left"
+              >
+                <AiOutlinePlusCircle size={20} />
+                Register Property
+              </button>
+
+              {showAgentUpload && (
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition text-left"
+                  onClick={() => {
+                    handleAgentUploadNavigation();
+                    if (!isExternalAgentUrl) toggleMenu();
+                  }}
+                >
+                  <AiOutlinePlusCircle size={20} />
+                  Upload Property
+                </button>
+              )}
+
+              <Link
+                to="/agreements"
+                onClick={toggleMenu}
+                className="flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition"
+              >
+                <AiOutlineFileText size={20} />
+                Agreements
+              </Link>
+
+              <Link
+                to="/about"
+                onClick={toggleMenu}
+                className="flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition"
+              >
+                <AiOutlineInfoCircle size={20} />
+                About
+              </Link>
+
+              <Link
+                to="/contact"
+                onClick={toggleMenu}
+                className="flex items-center gap-4 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition"
+              >
+                <AiOutlinePhone size={20} />
+                Contact
+              </Link>
+            </div>
+
+            {/* Footer / User Section */}
+            <div className="p-5 border-t bg-slate-50">
+              {user ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-lg">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800">{user.name || "User"}</p>
+                      <p className="text-xs text-slate-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { handleLogout(); toggleMenu(); }}
+                    className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-red-600 py-2.5 rounded-lg font-medium hover:bg-red-50 transition"
+                  >
+                    <AiOutlineLogout size={18} />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={toggleMenu}
+                  className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-lg font-semibold hover:bg-slate-800 transition"
+                >
+                  <AiOutlineLogin size={20} />
+                  Login / Sign Up
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -740,3 +820,4 @@ function Navbar() {
 }
 
 export default Navbar;
+

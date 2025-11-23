@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Eye, EyeOff, Loader2, Building2, CheckCircle, ShieldCheck } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck } from "lucide-react";
+import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -77,9 +78,8 @@ export default function Register() {
           <div className="absolute inset-0 bg-slate-900/70 z-10"></div>
 
           {/* Header Branding */}
-          <div className="relative z-20 flex items-center gap-2">
-            <Building2 className="w-8 h-8 text-blue-400" />
-            <span className="text-2xl font-bold tracking-wide">Deal<span className="text-blue-400">Direct</span></span>
+          <div className="relative z-20 flex items-center gap-2 mb-6">
+            <img src={dealDirectLogo} alt="DealDirect" className="h-12 w-auto" />
           </div>
 
           {/* Main Text */}
