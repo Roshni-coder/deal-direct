@@ -132,84 +132,95 @@ const PropertyPage = () => {
     navigate(`/properties/${property._id}`, { state: { property } });
 
   return (
-    // 1. Reduced padding-top from pt-24 to pt-14 (~56px)
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pt-14">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pt-16">
 
-      {/* 2. Reduced sticky top from top-20 to top-14 to match */}
-      <div className="sticky top-14 z-30 bg-white shadow-md border-b border-slate-200 py-4 px-4 sm:px-6 transition-all">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 items-center justify-between">
+      {/* Filter Bar - Sticky */}
+      <div className="sticky top-16 z-30 bg-white shadow-md border-b border-slate-200 py-5 px-6 transition-all">
+        <div className="max-w-7xl mx-auto">
 
-          {/* Search Input */}
-          <div className="relative w-full lg:w-1/3">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search project, locality..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-transparent focus:bg-white focus:border-red-500 rounded-xl outline-none transition-all"
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-            />
-          </div>
-
-          {/* Dropdowns Group */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-
-            {/* City Dropdown */}
-            <div className="relative">
-              <select
-                className="appearance-none bg-white border border-slate-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm"
-                value={filters.city}
-                onChange={(e) => handleFilterChange("city", e.target.value)}
-              >
-                <option value="">All Cities</option>
-                {cities.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <FaMapMarkerAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
-            </div>
-
-            {/* Type Dropdown */}
-            <div className="relative">
-              <select
-                className="appearance-none bg-white border border-slate-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm"
-                value={filters.propertyType}
-                onChange={(e) => handleFilterChange("propertyType", e.target.value)}
-              >
-                <option value="">All Types</option>
-                {propertyTypes.map(pt => <option key={pt._id} value={pt._id}>{pt.name}</option>)}
-              </select>
-              <FaFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
-            </div>
-
-            {/* Price Range */}
-            <div className="relative">
-              <select
-                className="appearance-none bg-white border border-slate-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm"
-                value={filters.priceRange}
-                onChange={(e) => handleFilterChange("priceRange", e.target.value)}
-              >
-                <option value="">Price Range</option>
-                <option value="low">Under ₹50 Lac</option>
-                <option value="mid">₹50 Lac - ₹1.5 Cr</option>
-                <option value="high">Above ₹1.5 Cr</option>
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs">₹</span>
-            </div>
-
-            {/* Clear Button */}
-            {(filters.search || filters.city || filters.propertyType || filters.priceRange) && (
+          {/* Search Bar with Button */}
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between mb-4">
+            <div className="relative w-full lg:w-2/5 flex gap-2">
+              <div className="relative flex-1">
+                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search project, locality..."
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:border-red-500 rounded-xl outline-none transition-all text-sm"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleFilterChange("search", filters.search)}
+                />
+              </div>
               <button
-                onClick={() => setFilters(initialFilters)}
-                className="text-red-600 text-sm font-semibold hover:underline px-2"
+                onClick={() => handleFilterChange("search", filters.search)}
+                className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium text-sm shadow-sm flex items-center gap-2 whitespace-nowrap"
               >
-                Reset
+                <FaSearch className="text-sm" />
+                <span className="hidden sm:inline">Search</span>
               </button>
-            )}
+            </div>
+
+            {/* Dropdowns Group */}
+            <div className="flex flex-wrap items-center gap-3">
+
+              {/* City Dropdown */}
+              <div className="relative">
+                <select
+                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  value={filters.city}
+                  onChange={(e) => handleFilterChange("city", e.target.value)}
+                >
+                  <option value="">All Cities</option>
+                  {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <FaMapMarkerAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
+              </div>
+
+              {/* Type Dropdown */}
+              <div className="relative">
+                <select
+                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  value={filters.propertyType}
+                  onChange={(e) => handleFilterChange("propertyType", e.target.value)}
+                >
+                  <option value="">All Types</option>
+                  {propertyTypes.map(pt => <option key={pt._id} value={pt._id}>{pt.name}</option>)}
+                </select>
+                <FaFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
+              </div>
+
+              {/* Price Range */}
+              <div className="relative">
+                <select
+                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  value={filters.priceRange}
+                  onChange={(e) => handleFilterChange("priceRange", e.target.value)}
+                >
+                  <option value="">Price Range</option>
+                  <option value="low">Under ₹50 Lac</option>
+                  <option value="mid">₹50 Lac - ₹1.5 Cr</option>
+                  <option value="high">Above ₹1.5 Cr</option>
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs">₹</span>
+              </div>
+
+              {/* Clear Button */}
+              {(filters.search || filters.city || filters.propertyType || filters.priceRange) && (
+                <button
+                  onClick={() => setFilters(initialFilters)}
+                  className="text-red-600 text-sm font-semibold hover:underline px-3 py-2 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Content Grid */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Real Estate Listings</h1>

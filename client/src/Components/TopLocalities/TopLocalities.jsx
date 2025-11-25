@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 
-// --- Internal LogoLoop Component (Simulated for Single File) ---
+// --- Internal LogoLoop Component ---
 const LogoLoop = ({ logos, speed = 50, direction = "left", gap = 24 }) => {
   // Duplicate logos to create seamless loop
   const scrollerContent = [...logos, ...logos];
@@ -45,6 +46,8 @@ const LogoLoop = ({ logos, speed = 50, direction = "left", gap = 24 }) => {
 };
 
 const TopLocalities = () => {
+  const navigate = useNavigate();
+
   const localities = [
     {
       id: 1,
@@ -118,26 +121,24 @@ const TopLocalities = () => {
     },
   ];
 
+  // Handler for locality click
+  const handleLocalityClick = (city) => {
+    navigate(`/properties?city=${encodeURIComponent(city)}`);
+  };
+
   // Convert localities to logo format for LogoLoop
   const localityLogos = localities.map((locality) => ({
     node: (
-      // Updated card styles to match TopDevelopers (larger padding, larger image)
-      <div className="flex flex-col items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100">
-        {/* FIX APPLIED: 
-            1. Increased size to w-24 h-24 (was w-20 h-20)
-            2. Ensured overflow-hidden and relative positioning
-        */}
+      <div
+        onClick={() => handleLocalityClick(locality.city)}
+        className="flex flex-col items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 cursor-pointer hover:border-blue-300"
+      >
         <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-blue-100 relative flex-shrink-0">
           <img
             src={locality.image}
             alt={locality.name}
-            /* FIX APPLIED:
-               1. 'object-cover' ensures image fills the square completely
-               2. No padding on image
-            */
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Fallback SVG if image fails
               e.target.parentElement.innerHTML = `<div class="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center"><svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg></div>`;
             }}
           />
@@ -156,7 +157,6 @@ const TopLocalities = () => {
       </div>
     ),
     title: locality.name,
-    href: "#",
   }));
 
   return (
@@ -185,7 +185,10 @@ const TopLocalities = () => {
 
         {/* View All Button */}
         <div className="mt-8 text-center">
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg text-sm">
+          <button
+            onClick={() => navigate('/properties')}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg text-sm"
+          >
             <MapPin className="w-4 h-4" />
             <span>Explore All Localities in India</span>
           </button>
