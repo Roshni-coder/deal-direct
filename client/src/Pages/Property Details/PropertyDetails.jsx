@@ -6,16 +6,12 @@ import {
   ShareIcon,
   MapPinIcon,
   BuildingStorefrontIcon,
-  PhoneIcon,
-  ChatBubbleLeftIcon,
   BanknotesIcon,
-  CalendarDaysIcon,
   HomeIcon,
   Square2StackIcon,
   TagIcon,
   CheckCircleIcon,
   ShieldCheckIcon,
-  DocumentTextIcon
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
@@ -82,6 +78,9 @@ const PropertyDetails = () => {
 
   // ---- EMI Calculation ----
   useEffect(() => {
+    // Optional: Stop calculation if it's Rent, though hiding the UI is the main fix
+    if (property?.listingType === "Rent") return;
+
     const P = loanAmount;
     const r = interestRate / 100 / 12;
     const n = loanTenure * 12;
@@ -90,7 +89,7 @@ const PropertyDetails = () => {
     setEmi(emiCalc);
     setTotalPayment(totalPay);
     setTotalInterest(totalPay - P);
-  }, [loanAmount, interestRate, loanTenure]);
+  }, [loanAmount, interestRate, loanTenure, property]);
 
   if (loading)
     return (
@@ -459,60 +458,62 @@ const PropertyDetails = () => {
         {/* Right Column: Tools & Map */}
         <div className="space-y-8">
 
-          {/* EMI Calculator */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 sticky top-24">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
-              <BanknotesIcon className="w-6 h-6 text-red-600" /> EMI Calculator
-            </h2>
+          {/* EMI Calculator - CONDITIONALLY HIDDEN HERE */}
+          {property?.listingType !== "Rent" && (
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 sticky top-24">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
+                <BanknotesIcon className="w-6 h-6 text-red-600" /> EMI Calculator
+              </h2>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Loan Amount (₹)</label>
-                <input
-                  type="number"
-                  value={loanAmount}
-                  onChange={(e) => setLoanAmount(+e.target.value)}
-                  className="w-full bg-gray-50 border-gray-200 rounded-xl p-3 text-sm focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rate (%)</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Loan Amount (₹)</label>
                   <input
                     type="number"
-                    step="0.1"
-                    value={interestRate}
-                    onChange={(e) => setInterestRate(+e.target.value)}
+                    value={loanAmount}
+                    onChange={(e) => setLoanAmount(+e.target.value)}
                     className="w-full bg-gray-50 border-gray-200 rounded-xl p-3 text-sm focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Years</label>
-                  <input
-                    type="number"
-                    value={loanTenure}
-                    onChange={(e) => setLoanTenure(+e.target.value)}
-                    className="w-full bg-gray-50 border-gray-200 rounded-xl p-3 text-sm focus:ring-red-500 focus:border-red-500"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rate (%)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={interestRate}
+                      onChange={(e) => setInterestRate(+e.target.value)}
+                      className="w-full bg-gray-50 border-gray-200 rounded-xl p-3 text-sm focus:ring-red-500 focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Years</label>
+                    <input
+                      type="number"
+                      value={loanTenure}
+                      onChange={(e) => setLoanTenure(+e.target.value)}
+                      className="w-full bg-gray-50 border-gray-200 rounded-xl p-3 text-sm focus:ring-red-500 focus:border-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-gray-500 font-medium">Monthly EMI</span>
+                  <span className="text-2xl font-bold text-red-600">₹{emi.toFixed(0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500 mt-2">
+                  <span>Total Interest</span>
+                  <span>₹{totalInterest.toFixed(0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                  <span>Total Amount</span>
+                  <span>₹{totalPayment.toFixed(0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
-
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-gray-500 font-medium">Monthly EMI</span>
-                <span className="text-2xl font-bold text-red-600">₹{emi.toFixed(0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-500 mt-2">
-                <span>Total Interest</span>
-                <span>₹{totalInterest.toFixed(0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-500 mt-1">
-                <span>Total Amount</span>
-                <span>₹{totalPayment.toFixed(0).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Map */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
