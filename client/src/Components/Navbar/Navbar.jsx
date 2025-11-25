@@ -377,14 +377,14 @@ function Navbar() {
                   onMouseEnter={() => setActiveMenu('buy')}
                   onMouseLeave={() => setActiveMenu(null)}
                 >
-                  <button className={`${navTextClass} hover:text-red-400 font-medium text-[15px] flex items-center gap-1`}>
+                  <button className={`${navTextClass} hover:text-red-600 font-medium text-[15px] flex items-center gap-1 transition-colors duration-200`}>
                     Buy
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {activeMenu === 'buy' && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
                       <div className="grid grid-cols-4 gap-6">
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Popular Searches</h3>
@@ -438,14 +438,14 @@ function Navbar() {
                   onMouseEnter={() => setActiveMenu('rent')}
                   onMouseLeave={() => setActiveMenu(null)}
                 >
-                  <button className={`${navTextClass} hover:text-red-400 font-medium text-[15px] flex items-center gap-1`}>
+                  <button className={`${navTextClass} hover:text-red-600 font-medium text-[15px] flex items-center gap-1 transition-colors duration-200`}>
                     Rent
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {activeMenu === 'rent' && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
                       <div className="grid grid-cols-4 gap-6">
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Popular Searches</h3>
@@ -500,14 +500,14 @@ function Navbar() {
                   onMouseEnter={() => setActiveMenu('services')}
                   onMouseLeave={() => setActiveMenu(null)}
                 >
-                  <button className={`${navTextClass} hover:text-red-400 font-medium text-[15px] flex items-center gap-1`}>
+                  <button className={`${navTextClass} hover:text-red-600 font-medium text-[15px] flex items-center gap-1 transition-colors duration-200`}>
                     Services
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {activeMenu === 'services' && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
                       <div className="grid grid-cols-4 gap-6">
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">For Buyers / Owners</h3>
@@ -556,14 +556,14 @@ function Navbar() {
                   onMouseEnter={() => setActiveMenu('resources')}
                   onMouseLeave={() => setActiveMenu(null)}
                 >
-                  <button className={`${navTextClass} hover:text-red-400 font-medium text-[15px] flex items-center gap-1`}>
+                  <button className={`${navTextClass} hover:text-red-600 font-medium text-[15px] flex items-center gap-1 transition-colors duration-200`}>
                     Resources
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {activeMenu === 'resources' && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg p-6 w-[600px] z-50">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[600px] z-50">
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Tools and Services</h3>
@@ -620,19 +620,19 @@ function Navbar() {
             <div className="flex items-center gap-6">
               {isScrolled && (
                 <>
-                  <Link to="/properties" className={`${navTextClass} hover:text-red-400 font-medium text-[15px]`}>
+                  <Link to="/properties" className={`${navTextClass} hover:text-red-600 font-medium text-[15px] transition-colors duration-200`}>
                     Properties
                   </Link>
                   <Link
                     to="/agreements"
-                    className={`${navTextClass} hover:text-red-400 font-medium transition text-[15px]`}
+                    className={`${navTextClass} hover:text-red-600 font-medium text-[15px] transition-colors duration-200`}
                   >
                     Agreements
                   </Link>
-                  <Link to="/about" className={`${navTextClass} hover:text-red-400 font-medium text-[15px]`}>
+                  <Link to="/about" className={`${navTextClass} hover:text-red-600 font-medium text-[15px] transition-colors duration-200`}>
                     About
                   </Link>
-                  <Link to="/contact" className={`${navTextClass} hover:text-red-400 font-medium text-[15px]`}>
+                  <Link to="/contact" className={`${navTextClass} hover:text-red-600 font-medium text-[15px] transition-colors duration-200`}>
                     Contact
                   </Link>
                 </>
@@ -666,7 +666,7 @@ function Navbar() {
                 </button>
               </div>
             ) : (
-              <Link to="/login" className={`flex items-center space-x-1 ${navTextClass} hover:text-red-400 transition`}>
+              <Link to="/login" className={`flex items-center space-x-1 ${navTextClass} hover:text-red-600 transition-colors duration-200`}>
                 <AiOutlineUser className="text-lg" />
                 <span className="font-medium text-sm">Login</span>
               </Link>

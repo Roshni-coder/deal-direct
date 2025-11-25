@@ -200,51 +200,6 @@ const Home = () => {
     navigate(`/properties/${property._id}`, { state: { property } });
   };
 
-  // --- Updated Data with visual improvements ---
-  const workSteps = [
-    {
-      icon: <FaSearch />,
-      step: "01",
-      title: "Search Properties",
-      desc: "Browse thousands of verified listings directly from owners. Filter by location & budget.",
-    },
-    {
-      icon: <FaRegCommentDots />,
-      step: "02",
-      title: "Connect Directly",
-      desc: "Message owners instantly. No intermediaries, no waiting. Arrange viewings on your terms.",
-    },
-    {
-      icon: <FaKey />,
-      step: "03",
-      title: "Close the Deal",
-      desc: "Negotiate directly and save on commission fees. Complete the transaction with confidence.",
-    },
-  ];
-
-  const benefits = [
-    {
-      icon: <AiOutlineDollarCircle />,
-      title: "Zero Commission",
-      desc: "Save lakhs by connecting directly with property owners.",
-    },
-    {
-      icon: <FaRegClock />,
-      title: "Faster Deals",
-      desc: "Skip the middleman and close deals 2x faster.",
-    },
-    {
-      icon: <FaShieldAlt />,
-      title: "Secure Data",
-      desc: "We ensure your contact details remain private and safe.",
-    },
-    {
-      icon: <FaUserFriends />,
-      title: "Direct Chat",
-      desc: "Instant communication with the decision makers.",
-    },
-  ];
-
   return (
     <div className="font-sans text-gray-800">
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
@@ -258,10 +213,8 @@ const Home = () => {
       />
 
       {/* 🏙 Featured Properties */}
-      {/* Reduced padding from py-8 to py-4 */}
       <section ref={propertiesSectionRef} className="relative py-4 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Header - Reduced mb-8 to mb-4 */}
           <div className="flex justify-between items-end mb-4">
             <div>
               <h2 className="text-3xl font-bold text-slate-900">
@@ -280,7 +233,6 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Carousel Container */}
           {filteredProperties.length === 0 ? (
             <p className="text-gray-400 text-lg text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">No properties found matching your search.</p>
           ) : (
@@ -338,117 +290,132 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 🛠 IMPROVED: How Deal Direct Works (Process Steps UI) */}
-      {/* Reduced padding from py-24 to py-10 */}
-      {/* 🛠 HOW IT WORKS — Bolder & More Eye-Catching */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-4xl font-bold text-slate-900 mb-2">
+      {/* 🛠 PREMIUM: How Deal Direct Works Section */}
+      <section className="py-20 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+        <div className="max-w-5xl mx-auto text-center px-6 relative z-10">
+          <h2 className="text-5xl font-extrabold text-slate-900 mb-3 tracking-tight">
             How Deal Direct Works
           </h2>
-          <p className="text-slate-500 text-lg mb-12">
+          <p className="text-slate-600 text-lg mb-16 max-w-2xl mx-auto leading-relaxed">
             Three simple steps to find your perfect property or sell directly to buyers
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-12 px-6">
-
-          <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full mb-4 text-3xl text-slate-700">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 px-6 relative z-10">
+          {/* Step 1: Search Properties */}
+          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-blue-200 hover:-translate-y-2">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaSearch />
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">Search Properties</h3>
-            <p className="text-slate-500 text-sm">
-              Browse thousands of listings directly from property owners.
-            </p>
+            <div className="mt-10 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Search Properties</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Browse thousands of listings directly from property owners.
+              </p>
+            </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-blue-50 to-transparent rounded-tl-full opacity-50"></div>
           </div>
 
-          <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full mb-4 text-3xl text-slate-700">
+          {/* Step 2: Connect Directly */}
+          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-purple-200 hover:-translate-y-2">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaRegCommentDots />
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">Connect Directly</h3>
-            <p className="text-slate-500 text-sm">
-              Message property owners instantly. No intermediaries.
-            </p>
+            <div className="mt-10 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Connect Directly</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Message property owners instantly. No intermediaries.
+              </p>
+            </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-purple-50 to-transparent rounded-tl-full opacity-50"></div>
           </div>
 
-          <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full mb-4 text-3xl text-slate-700">
+          {/* Step 3: Close the Deal */}
+          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-green-200 hover:-translate-y-2">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaKey />
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">Close the Deal</h3>
-            <p className="text-slate-500 text-sm">
-              Negotiate directly and complete your deal confidently.
-            </p>
+            <div className="mt-10 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Close the Deal</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Negotiate directly and complete your deal confidently.
+              </p>
+            </div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-green-50 to-transparent rounded-tl-full opacity-50"></div>
           </div>
-
         </div>
       </section>
 
+      {/* ✨ PREMIUM: Why Choose Deal Direct Section */}
+      <section className="py-24 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0) 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }}></div>
 
-      {/* ✨ IMPROVED: Why Choose Deal Direct (High Contrast Dark Mode) */}
-      {/* Reduced padding from py-20 to py-10 */}
-      {/* ✨ WHY CHOOSE US — Premium Dark Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-4xl font-bold text-slate-900 mb-2">
+        <div className="max-w-6xl mx-auto text-center px-6 relative z-10">
+          <h2 className="text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
             Why Choose Deal Direct?
           </h2>
-          <p className="text-slate-500 text-lg mb-12">
+          <p className="text-slate-600 text-lg mb-20 max-w-2xl mx-auto leading-relaxed">
             Experience the benefits of direct property transactions
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-4 gap-10 px-6">
-
-          <div className="text-center flex flex-col items-center">
-            <div className="w-14 h-14 flex items-center justify-center bg-orange-50 rounded-full mb-3 text-2xl text-orange-500">
-              <AiOutlineDollarCircle />
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 px-8 relative z-10">
+          {/* Benefit 1: Zero Commission */}
+          <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
+            <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
+              <AiOutlineDollarCircle className="w-12 h-12" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Zero Commission</h3>
-            <p className="text-slate-500 text-sm">
+            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Zero Commission</h3>
+            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
               Save thousands by connecting directly with owners.
             </p>
           </div>
 
-          <div className="text-center flex flex-col items-center">
-            <div className="w-14 h-14 flex items-center justify-center bg-orange-50 rounded-full mb-3 text-2xl text-orange-500">
-              <FaRegClock />
+          {/* Benefit 2: Faster Deals */}
+          <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
+            <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
+              <FaRegClock className="w-11 h-11" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Faster Deals</h3>
-            <p className="text-slate-500 text-sm">
+            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Faster Deals</h3>
+            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
               Close deals quicker with direct communication.
             </p>
           </div>
 
-          <div className="text-center flex flex-col items-center">
-            <div className="w-14 h-14 flex items-center justify-center bg-orange-50 rounded-full mb-3 text-2xl text-orange-500">
-              <FaShieldAlt />
+          {/* Benefit 3: Secure Transactions */}
+          <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
+            <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
+              <FaShieldAlt className="w-11 h-11" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Secure Transactions</h3>
-            <p className="text-slate-500 text-sm">
+            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Secure Transactions</h3>
+            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
               Safe and transparent property transactions.
             </p>
           </div>
 
-          <div className="text-center flex flex-col items-center">
-            <div className="w-14 h-14 flex items-center justify-center bg-orange-50 rounded-full mb-3 text-2xl text-orange-500">
-              <FaUserFriends />
+          {/* Benefit 4: Direct Communication */}
+          <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
+            <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
+              <FaUserFriends className="w-11 h-11" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Direct Communication</h3>
-            <p className="text-slate-500 text-sm">
+            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Direct Communication</h3>
+            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
               Chat directly with owners and get instant replies.
             </p>
           </div>
-
         </div>
       </section>
 
       <TopLocalities />
 
       {/* 🏙 Explore Popular Cities */}
-      {/* Reduced padding from py-16 to py-8 */}
       <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
