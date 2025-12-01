@@ -182,7 +182,13 @@ export default function AddProperty() {
         builtUpArea: "", carpetArea: "", superBuiltUpArea: "", plotArea: "",
 
         // Pricing
-        expectedPrice: "", maintenance: "", expectedDeposit: "", priceNegotiable: false, gstApplicable: false,
+        expectedPrice: "", 
+        maintenanceIncluded: true, // NEW: If true, maintenance is included in rent
+        maintenance: "", 
+        expectedDeposit: "", 
+        bookingAmount: "", // NEW: For Sell - token/booking amount
+        priceNegotiable: false, 
+        gstApplicable: false,
 
         // Residential specifics
         furnishing: "Unfurnished", floorNo: "", totalFloors: "", propertyAge: "New", facing: "", constructionStatus: "Ready to Move",
@@ -451,7 +457,8 @@ export default function AddProperty() {
                 amenities: formData.selectedAmenities || [],
                 availableFrom: formData.availableFrom,
                 deposit: formData.expectedDeposit,
-                maintenance: formData.maintenance,
+                maintenance: formData.maintenanceIncluded ? "Included" : formData.maintenance,
+                maintenanceIncluded: formData.maintenanceIncluded,
             };
 
             // Add residential specific features
@@ -666,7 +673,11 @@ export default function AddProperty() {
         </div>
     );
 
-    const renderStep3 = () => (
+    const renderStep3 = () => {
+        const isRent = formData.listingType === "Rent";
+        const isSell = formData.listingType === "Sell";
+        
+        return (
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-3xl font-bold">Pricing & Area</h2>
@@ -684,7 +695,7 @@ export default function AddProperty() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-slate-700">Expected {formData.listingType === "Rent" ? "Monthly Rent" : "Total Price"}</label>
+                        <label className="text-sm font-medium text-slate-700">Expected {isRent ? "Monthly Rent" : "Sale Price"}</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">₹</div>
                             <input name="expectedPrice" value={formData.expectedPrice} onChange={handleChange} type="number" className="w-full pl-10 px-4 py-3 rounded-xl border border-slate-200" placeholder="0" />
@@ -693,23 +704,88 @@ export default function AddProperty() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                        <label className="text-sm font-medium text-slate-700">Maintenance (Monthly)</label>
-                        <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="0" />
-                    </div>
-                    {formData.listingType === "Rent" && (
+                {/* Rent-specific fields */}
+                {isRent && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
                             <label className="text-sm font-medium text-slate-700">Security Deposit</label>
-                            <input name="expectedDeposit" value={formData.expectedDeposit} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="0" />
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">₹</div>
+                                <input name="expectedDeposit" value={formData.expectedDeposit} onChange={handleChange} type="number" className="w-full pl-10 px-4 py-3 rounded-xl border border-slate-200" placeholder="0" />
+                            </div>
+                            <div className="text-xs text-slate-400 mt-1">Usually 2-3 months rent</div>
                         </div>
-                    )}
-                    <div>
-                        <label className="text-sm font-medium text-slate-700">Price Negotiable?</label>
-                        <select name="priceNegotiable" value={formData.priceNegotiable ? "Yes" : "No"} onChange={(e) => setFormData(p => ({ ...p, priceNegotiable: e.target.value === "Yes" }))} className="w-full px-4 py-3 rounded-xl border border-slate-200">
-                            <option>No</option>
-                            <option>Yes</option>
-                        </select>
+                        
+                        <div className="md:col-span-2">
+                            <label className="text-sm font-medium text-slate-700">Monthly Maintenance</label>
+                            <div className="flex items-center gap-3 mt-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={formData.maintenanceIncluded} 
+                                        onChange={(e) => setFormData(p => ({ ...p, maintenanceIncluded: e.target.checked, maintenance: e.target.checked ? "" : p.maintenance }))}
+                                        className="w-4 h-4 rounded border-slate-300"
+                                    />
+                                    <span className="text-sm text-slate-600">Included in rent</span>
+                                </label>
+                                {!formData.maintenanceIncluded && (
+                                    <div className="relative flex-1">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">₹</div>
+                                        <input 
+                                            name="maintenance" 
+                                            value={formData.maintenance} 
+                                            onChange={handleChange} 
+                                            type="number" 
+                                            className="w-full pl-8 px-4 py-2 rounded-xl border border-slate-200" 
+                                            placeholder="Monthly amount" 
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Sell-specific fields */}
+                {isSell && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">Booking / Token Amount</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">₹</div>
+                                <input name="bookingAmount" value={formData.bookingAmount} onChange={handleChange} type="number" className="w-full pl-10 px-4 py-3 rounded-xl border border-slate-200" placeholder="0" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">Monthly Maintenance</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">₹</div>
+                                <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className="w-full pl-10 px-4 py-3 rounded-xl border border-slate-200" placeholder="Society maintenance" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">GST Applicable?</label>
+                            <select name="gstApplicable" value={formData.gstApplicable ? "Yes" : "No"} onChange={(e) => setFormData(p => ({ ...p, gstApplicable: e.target.value === "Yes" }))} className="w-full px-4 py-3 rounded-xl border border-slate-200">
+                                <option>No</option>
+                                <option>Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-4 mt-4">
+                    <label className="text-sm font-medium text-slate-700">Price Negotiable?</label>
+                    <div className="flex gap-2">
+                        {["No", "Yes"].map(opt => (
+                            <button 
+                                key={opt} 
+                                type="button"
+                                onClick={() => setFormData(p => ({ ...p, priceNegotiable: opt === "Yes" }))} 
+                                className={`px-4 py-2 rounded-lg text-sm ${formData.priceNegotiable === (opt === "Yes") ? "bg-blue-600 text-white" : "bg-white border border-slate-200"}`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -747,17 +823,33 @@ export default function AddProperty() {
                     <>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Floor No</label>
-                            <input name="floorNo" value={formData.floorNo} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 3" />
+                            <input 
+                                name="floorNo" 
+                                value={formData.floorNo} 
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    // Validate floor doesn't exceed total floors
+                                    if (formData.totalFloors && Number(val) > Number(formData.totalFloors)) {
+                                        toast.error("Floor number cannot exceed total floors");
+                                        return;
+                                    }
+                                    handleChange(e);
+                                }} 
+                                type="number"
+                                min="0"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200" 
+                                placeholder="eg. 3" 
+                            />
                         </div>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Total Floors</label>
-                            <input name="totalFloors" value={formData.totalFloors} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 10" />
+                            <input name="totalFloors" value={formData.totalFloors} onChange={handleChange} type="number" min="1" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 10" />
                         </div>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Facing</label>
                             <select name="facing" value={formData.facing} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200">
                                 <option value="">Select</option>
-                                {["East", "West", "North", "South", "NE", "NW", "SE", "SW"].map(d => <option key={d}>{d}</option>)}
+                                {["East", "West", "North", "South", "North-East", "North-West", "South-East", "South-West"].map(d => <option key={d}>{d}</option>)}
                             </select>
                         </div>
                     </>
@@ -766,23 +858,28 @@ export default function AddProperty() {
                     <>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Washrooms</label>
-                            <input name="washrooms" value={formData.washrooms} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                            <input name="washrooms" value={formData.washrooms} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
                         </div>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Floor Height (ft)</label>
-                            <input name="floorHeight" value={formData.floorHeight} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                            <input name="floorHeight" value={formData.floorHeight} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 10" />
                         </div>
                         <div>
                             <label className="text-sm font-medium text-slate-700">Power Load (kW)</label>
-                            <input name="powerLoad" value={formData.powerLoad} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200" />
+                            <input name="powerLoad" value={formData.powerLoad} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="eg. 50" />
                         </div>
                     </>
                 )}
             </div>
         </div>
     );
+    };
 
-    const renderStep4 = () => (
+    const renderStep4 = () => {
+        const isRent = formData.listingType === "Rent";
+        const isSell = formData.listingType === "Sell";
+        
+        return (
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-3xl font-bold">Property Details</h2>
@@ -800,15 +897,15 @@ export default function AddProperty() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="text-sm font-medium">Bedrooms</label>
-                                <input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                                <input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" min="0" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Bathrooms</label>
-                                <input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                                <input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" min="1" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
                             </div>
                             <div>
                                 <label className="text-sm font-medium">Balconies</label>
-                                <input name="balconies" value={formData.balconies} onChange={handleChange} type="number" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
+                                <input name="balconies" value={formData.balconies} onChange={handleChange} type="number" min="0" className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" />
                             </div>
                         </div>
 
@@ -833,25 +930,117 @@ export default function AddProperty() {
                             </div>
                         </div>
 
+                        {/* Construction Status - More relevant for Sell */}
+                        {isSell && (
+                            <div className="mt-4">
+                                <label className="text-sm font-medium text-slate-700">Construction Status</label>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {["Ready to Move", "Under Construction", "New Launch"].map(status => (
+                                        <button 
+                                            key={status} 
+                                            type="button"
+                                            onClick={() => setFormData(p => ({ ...p, constructionStatus: status }))} 
+                                            className={`px-4 py-2 rounded-xl text-sm ${formData.constructionStatus === status ? "bg-blue-600 text-white" : "bg-white border border-slate-200"}`}
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
-                            <label className="flex items-center gap-2">
-                                <input type="checkbox" name="servantRoom" checked={formData.servantRoom} onChange={handleChange} />
-                                Servant Room
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="servantRoom" checked={formData.servantRoom} onChange={handleChange} className="w-4 h-4 rounded" />
+                                <span className="text-sm">Servant Room</span>
                             </label>
-                            <label className="flex items-center gap-2">
-                                <input type="checkbox" name="poojaRoom" checked={formData.poojaRoom} onChange={handleChange} />
-                                Pooja Room
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="poojaRoom" checked={formData.poojaRoom} onChange={handleChange} className="w-4 h-4 rounded" />
+                                <span className="text-sm">Pooja Room</span>
                             </label>
-                            <label className="flex items-center gap-2">
-                                <input type="checkbox" name="studyRoom" checked={formData.studyRoom} onChange={handleChange} />
-                                Study Room
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="studyRoom" checked={formData.studyRoom} onChange={handleChange} className="w-4 h-4 rounded" />
+                                <span className="text-sm">Study Room</span>
                             </label>
-                            <label className="flex items-center gap-2">
-                                <input type="checkbox" name="storeRoom" checked={formData.storeRoom} onChange={handleChange} />
-                                Store Room
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="storeRoom" checked={formData.storeRoom} onChange={handleChange} className="w-4 h-4 rounded" />
+                                <span className="text-sm">Store Room</span>
                             </label>
                         </div>
                     </div>
+
+                    {/* Rent-specific tenant preferences */}
+                    {isRent && (
+                        <div className="bg-white rounded-2xl p-4 border">
+                            <h3 className="font-bold mb-4 flex items-center gap-2">
+                                <Users size={18} />
+                                Tenant Preferences
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Preferred Tenants</label>
+                                    <select name="allowedFor" value={formData.allowedFor} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 mt-2">
+                                        <option value="Family">Family</option>
+                                        <option value="Bachelor Male">Bachelor Male</option>
+                                        <option value="Bachelor Female">Bachelor Female</option>
+                                        <option value="Company Lease">Company Lease</option>
+                                        <option value="Any">Any</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Pet Friendly?</label>
+                                    <select name="petFriendly" value={formData.petFriendly} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 mt-2">
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Available From</label>
+                                    <input 
+                                        type="date" 
+                                        name="availableFrom" 
+                                        value={formData.availableFrom} 
+                                        onChange={handleChange} 
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 mt-2" 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Possession Details for Under Construction properties (Sell) */}
+                    {isSell && formData.constructionStatus === "Under Construction" && (
+                        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
+                            <h3 className="font-bold mb-3 flex items-center gap-2 text-amber-800">
+                                <Calendar size={18} />
+                                Possession Details
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Expected Possession</label>
+                                    <input 
+                                        type="date" 
+                                        name="availableFrom" 
+                                        value={formData.availableFrom} 
+                                        onChange={handleChange}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 mt-2" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">RERA ID (if available)</label>
+                                    <input 
+                                        name="reraId" 
+                                        value={formData.reraId} 
+                                        onChange={handleChange}
+                                        placeholder="e.g. P52000012345"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 mt-2" 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 
@@ -986,6 +1175,7 @@ export default function AddProperty() {
             </div>
         </div>
     );
+    };
 
     const renderStep5 = () => (
         <div className="space-y-6">
@@ -1082,6 +1272,38 @@ export default function AddProperty() {
                                     {!formData.seatingCapacity && !formData.workstations && !formData.frontage && "-"}
                                 </div>
                             </div>
+                        )}
+                        {/* Rent specific fields */}
+                        {formData.listingType === "Rent" && isResidential && (
+                            <>
+                                <div>
+                                    <div className="text-xs text-slate-500">Preferred Tenants</div>
+                                    <div className="font-semibold">{formData.allowedFor}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500">Pet Friendly</div>
+                                    <div className="font-semibold">{formData.petFriendly}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500">Available From</div>
+                                    <div className="font-semibold">{formData.availableFrom || "Immediate"}</div>
+                                </div>
+                            </>
+                        )}
+                        {/* Sell specific fields */}
+                        {formData.listingType === "Sell" && isResidential && (
+                            <>
+                                <div>
+                                    <div className="text-xs text-slate-500">Construction Status</div>
+                                    <div className="font-semibold">{formData.constructionStatus || "Ready to Move"}</div>
+                                </div>
+                                {formData.constructionStatus === "Under Construction" && formData.availableFrom && (
+                                    <div>
+                                        <div className="text-xs text-slate-500">Expected Possession</div>
+                                        <div className="font-semibold">{formData.availableFrom}</div>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 

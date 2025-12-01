@@ -84,7 +84,8 @@ const propertySchema = new mongoose.Schema(
     shutters: String,
     floorHeight: String,
     powerLoad: String,
-    maintenance: Number,
+    maintenance: mongoose.Schema.Types.Mixed, // Can be Number or "Included"
+    maintenanceIncluded: Boolean,
     securityDeposit: Number,
 
     // Commercial Config Fields (Flattened)

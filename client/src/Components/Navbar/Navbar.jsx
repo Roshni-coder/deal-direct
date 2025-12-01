@@ -384,47 +384,35 @@ function Navbar() {
                     </svg>
                   </button>
                   {activeMenu === 'buy' && (
-                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
-                      <div className="grid grid-cols-4 gap-6">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[600px] z-50">
+                      <div className="grid grid-cols-3 gap-6">
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Popular Searches</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Residential</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?type=property" className="text-gray-700 hover:text-red-600 text-sm">Property in {selectedCity}</Link></li>
-                            <li><Link to="/properties?type=gated-community" className="text-gray-700 hover:text-red-600 text-sm">Gated Community Flats</Link></li>
-                            <li><Link to="/properties?brokerage=no" className="text-gray-700 hover:text-red-600 text-sm">No Brokerage Flats</Link></li>
-                            <li><Link to="/properties?budget=under-50" className="text-gray-700 hover:text-red-600 text-sm">Property Under 50 Lakhs</Link></li>
-                            <li><Link to="/properties?bhk=2" className="text-gray-700 hover:text-red-600 text-sm">2 BHK Flats</Link></li>
+                            <li><Link to="/properties?search=Apartment" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
+                            <li><Link to="/properties?search=Independent House" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
+                            <li><Link to="/properties?search=Villa" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
+                            <li><Link to="/properties?search=Builder Floor" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
+                            <li><Link to="/properties?search=Penthouse" className="text-gray-700 hover:text-red-600 text-sm">Penthouse</Link></li>
                           </ul>
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Property Type</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Commercial</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?type=plot" className="text-gray-700 hover:text-red-600 text-sm">Plot</Link></li>
-                            <li><Link to="/properties?type=flat" className="text-gray-700 hover:text-red-600 text-sm">Flats</Link></li>
-                            <li><Link to="/properties?type=villa" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
-                            <li><Link to="/properties?type=house" className="text-gray-700 hover:text-red-600 text-sm">Houses</Link></li>
-                            <li><Link to="/properties?type=builder-floor" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
-                            <li><Link to="/properties?type=office" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
-                            <li><Link to="/properties?type=shop" className="text-gray-700 hover:text-red-600 text-sm">Shop</Link></li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">New Projects</h3>
-                          <ul className="space-y-2">
-                            <li><Link to="/projects?status=new" className="text-gray-700 hover:text-red-600 text-sm">New Projects</Link></li>
-                            <li><Link to="/projects?status=ready" className="text-gray-700 hover:text-red-600 text-sm">Ready to Move</Link></li>
-                            <li><Link to="/projects?status=construction" className="text-gray-700 hover:text-red-600 text-sm">Under Construction</Link></li>
-                            <li><Link to="/projects?status=launch" className="text-gray-700 hover:text-red-600 text-sm">New Launch</Link></li>
+                            <li><Link to="/properties?search=Office Space" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
+                            <li><Link to="/properties?search=Shop" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
+                            <li><Link to="/properties?search=Warehouse" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
+                            <li><Link to="/properties?search=Industrial" className="text-gray-700 hover:text-red-600 text-sm">Industrial Building</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">By BHK</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?bhk=1" className="text-gray-700 hover:text-red-600 text-sm">1 BHK Flats</Link></li>
-                            <li><Link to="/properties?bhk=2" className="text-gray-700 hover:text-red-600 text-sm">2 BHK Flats</Link></li>
-                            <li><Link to="/properties?bhk=3" className="text-gray-700 hover:text-red-600 text-sm">3 BHK Flats</Link></li>
-                            <li><Link to="/properties?bhk=4" className="text-gray-700 hover:text-red-600 text-sm">4 BHK Flats</Link></li>
-                            <li><Link to="/properties?bhk=5" className="text-gray-700 hover:text-red-600 text-sm">5 BHK Flats</Link></li>
+                            <li><Link to="/properties?search=1 BHK" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
+                            <li><Link to="/properties?search=2 BHK" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
+                            <li><Link to="/properties?search=3 BHK" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
+                            <li><Link to="/properties?search=4 BHK" className="text-gray-700 hover:text-red-600 text-sm">4 BHK</Link></li>
+                            <li><Link to="/properties?search=5 BHK" className="text-gray-700 hover:text-red-600 text-sm">5+ BHK</Link></li>
                           </ul>
                         </div>
                       </div>
@@ -445,48 +433,35 @@ function Navbar() {
                     </svg>
                   </button>
                   {activeMenu === 'rent' && (
-                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
-                      <div className="grid grid-cols-4 gap-6">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[600px] z-50">
+                      <div className="grid grid-cols-3 gap-6">
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Popular Searches</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Residential</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?intent=rent" className="text-gray-700 hover:text-red-600 text-sm">Property for Rent</Link></li>
-                            <li><Link to="/properties?intent=rent&furnished=yes" className="text-gray-700 hover:text-red-600 text-sm">Furnished Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&type=gated" className="text-gray-700 hover:text-red-600 text-sm">Gated Community Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=2" className="text-gray-700 hover:text-red-600 text-sm">2 BHK Flats for Rent</Link></li>
+                            <li><Link to="/properties?search=Apartment Rent" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
+                            <li><Link to="/properties?search=Independent House Rent" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
+                            <li><Link to="/properties?search=Villa Rent" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
+                            <li><Link to="/properties?search=Builder Floor Rent" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
+                            <li><Link to="/properties?search=PG" className="text-gray-700 hover:text-red-600 text-sm">PG / Hostel</Link></li>
                           </ul>
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Property Type</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Commercial</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?intent=rent&type=flat" className="text-gray-700 hover:text-red-600 text-sm">Flats for Rent</Link></li>
-                            <li><Link to="/properties?intent=rent&type=house" className="text-gray-700 hover:text-red-600 text-sm">Houses for Rent</Link></li>
-                            <li><Link to="/properties?intent=rent&type=builder-floor" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
-                            <li><Link to="/properties?intent=rent&type=villa" className="text-gray-700 hover:text-red-600 text-sm">Villa for Rent</Link></li>
-                            <li><Link to="/properties?intent=rent&type=pg" className="text-gray-700 hover:text-red-600 text-sm">PG</Link></li>
-                            <li><Link to="/properties?intent=rent&type=office" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
-                            <li><Link to="/properties?intent=rent&type=coworking" className="text-gray-700 hover:text-red-600 text-sm">Coworking Space</Link></li>
+                            <li><Link to="/properties?search=Office Rent" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
+                            <li><Link to="/properties?search=Shop Rent" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
+                            <li><Link to="/properties?search=Coworking" className="text-gray-700 hover:text-red-600 text-sm">Coworking Space</Link></li>
+                            <li><Link to="/properties?search=Warehouse Rent" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">By BHK</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?intent=rent&bhk=1rk" className="text-gray-700 hover:text-red-600 text-sm">1 RK for Rent</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=1" className="text-gray-700 hover:text-red-600 text-sm">1 BHK Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=2" className="text-gray-700 hover:text-red-600 text-sm">2 BHK Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=3" className="text-gray-700 hover:text-red-600 text-sm">3 BHK Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=4" className="text-gray-700 hover:text-red-600 text-sm">4 BHK Flats</Link></li>
-                            <li><Link to="/properties?intent=rent&bhk=5" className="text-gray-700 hover:text-red-600 text-sm">5 BHK Flats</Link></li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Budget</h3>
-                          <ul className="space-y-2">
-                            <li><Link to="/properties?intent=rent&budget=10-20k" className="text-gray-700 hover:text-red-600 text-sm">10-20 Thousand</Link></li>
-                            <li><Link to="/properties?intent=rent&budget=20-30k" className="text-gray-700 hover:text-red-600 text-sm">20-30 Thousand</Link></li>
-                            <li><Link to="/properties?intent=rent&budget=30-40k" className="text-gray-700 hover:text-red-600 text-sm">30-40 Thousand</Link></li>
-                            <li><Link to="/properties?intent=rent&budget=40-50k" className="text-gray-700 hover:text-red-600 text-sm">40-50 Thousand</Link></li>
-                            <li><Link to="/properties?intent=rent&budget=50-60k" className="text-gray-700 hover:text-red-600 text-sm">50-60 Thousand</Link></li>
+                            <li><Link to="/properties?search=1 RK Rent" className="text-gray-700 hover:text-red-600 text-sm">1 RK</Link></li>
+                            <li><Link to="/properties?search=1 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
+                            <li><Link to="/properties?search=2 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
+                            <li><Link to="/properties?search=3 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
+                            <li><Link to="/properties?search=4 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">4+ BHK</Link></li>
                           </ul>
                         </div>
                       </div>
@@ -507,42 +482,21 @@ function Navbar() {
                     </svg>
                   </button>
                   {activeMenu === 'services' && (
-                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[800px] z-50">
-                      <div className="grid grid-cols-4 gap-6">
+                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[400px] z-50">
+                      <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">For Buyers / Owners</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Property Services</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/services/home-loan" className="text-gray-700 hover:text-red-600 text-sm">Home Loan</Link></li>
-                            <li><Link to="/services/interior-design" className="text-gray-700 hover:text-red-600 text-sm">Home Interior Design</Link></li>
-                            <li><Link to="/services/valuation" className="text-gray-700 hover:text-red-600 text-sm">Valuation</Link></li>
-                            <li><Link to="/services/vastu" className="text-gray-700 hover:text-red-600 text-sm">Vastu Calculator</Link></li>
-                            <li><Link to="/services/property-management" className="text-gray-700 hover:text-red-600 text-sm">Property Management</Link></li>
-                            <li><button onClick={handleRegisterProperty} className="text-gray-700 hover:text-red-600 text-sm text-left w-full">Register Property</button></li>
+                            <li><button onClick={handleRegisterProperty} className="text-gray-700 hover:text-red-600 text-sm text-left w-full">Post Property Free</button></li>
+                            <li><Link to="/properties" className="text-gray-700 hover:text-red-600 text-sm">Browse Properties</Link></li>
+                            <li><Link to="/agreements" className="text-gray-700 hover:text-red-600 text-sm">Rent Agreement</Link></li>
                           </ul>
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">For Tenants</h3>
+                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Company</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/agreements" className="text-gray-700 hover:text-red-600 text-sm">Online Rent Agreement</Link></li>
-                            <li><Link to="/services/rent-receipts" className="text-gray-700 hover:text-red-600 text-sm">Rent Receipts</Link></li>
-                            <li><Link to="/services/property-management" className="text-gray-700 hover:text-red-600 text-sm">Property Management</Link></li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">For Agents</h3>
-                          <ul className="space-y-2">
-                            <li><Link to="/services/list-property" className="text-gray-700 hover:text-red-600 text-sm">List Property With Us</Link></li>
-                            <li><Link to="/services/co-broking" className="text-gray-700 hover:text-red-600 text-sm">Co-Broking For New Projects</Link></li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">For Builders & Banks</h3>
-                          <ul className="space-y-2">
-                            <li><Link to="/services/advertise" className="text-gray-700 hover:text-red-600 text-sm">Advertise With Us</Link></li>
-                            <li><Link to="/services/3d-services" className="text-gray-700 hover:text-red-600 text-sm">3D/AR/VR Services</Link></li>
-                            <li><Link to="/services/data-intelligence" className="text-gray-700 hover:text-red-600 text-sm">Data Intelligence</Link></li>
-                            <li><Link to="/services/mortgage" className="text-gray-700 hover:text-red-600 text-sm">Mortgage Partnerships</Link></li>
-                            <li><Link to="/services/super-agent" className="text-gray-700 hover:text-red-600 text-sm">Super Agent Pro</Link></li>
+                            <li><Link to="/about" className="text-gray-700 hover:text-red-600 text-sm">About Us</Link></li>
+                            <li><Link to="/contact" className="text-gray-700 hover:text-red-600 text-sm">Contact Us</Link></li>
                           </ul>
                         </div>
                       </div>
@@ -550,66 +504,7 @@ function Navbar() {
                   )}
                 </div>
 
-                {/* Resources Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => setActiveMenu('resources')}
-                  onMouseLeave={() => setActiveMenu(null)}
-                >
-                  <button className={`${navTextClass} hover:text-red-600 font-medium text-[15px] flex items-center gap-1 transition-colors duration-200`}>
-                    Resources
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {activeMenu === 'resources' && (
-                    <div className="absolute top-full left-0 pt-2 bg-white shadow-2xl rounded-lg p-6 w-[600px] z-50">
-                      <div className="grid grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm">Tools and Services</h3>
-                          <ul className="space-y-2">
-                            <li><Link to="/resources/heatmaps" className="text-gray-700 hover:text-red-600 text-sm">Heatmaps</Link></li>
-                            <li><Link to="/resources/price-vs-size" className="text-gray-700 hover:text-red-600 text-sm">Price vs Size</Link></li>
-                            <li><Link to="/resources/escrow" className="text-gray-700 hover:text-red-600 text-sm">Escrow</Link></li>
-                            <li><Link to="/resources/property-inspection" className="text-gray-700 hover:text-red-600 text-sm">Property Inspection</Link></li>
-                            <li><Link to="/resources/credit-score" className="text-gray-700 hover:text-red-600 text-sm">Check your Credit Score</Link></li>
-                            <li><Link to="/resources/legal-services" className="text-gray-700 hover:text-red-600 text-sm">Property Legal Services</Link></li>
-                            <li><Link to="/resources/litigation-search" className="text-gray-700 hover:text-red-600 text-sm">Litigation Search</Link></li>
-                            <li><Link to="/resources/title-search" className="text-gray-700 hover:text-red-600 text-sm">Title Search</Link></li>
-                          </ul>
-                        </div>
-                        <div className="space-y-6">
-                          <div>
-                            <h3 className="font-bold text-gray-900 mb-3 text-sm">Solutions</h3>
-                            <ul className="space-y-2">
-                              <li><Link to="/resources/solutions" className="text-gray-700 hover:text-red-600 text-sm">Home Services</Link></li>
-                            </ul>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900 mb-3 text-sm">Loans</h3>
-                            <ul className="space-y-2">
-                              <li><Link to="/resources/financial-tools" className="text-gray-700 hover:text-red-600 text-sm">Financial Tools</Link></li>
-                            </ul>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900 mb-3 text-sm">Calculators</h3>
-                            <ul className="space-y-2">
-                              <li><Link to="/resources/calculators" className="text-gray-700 hover:text-red-600 text-sm">Calculators</Link></li>
-                            </ul>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900 mb-3 text-sm">Guide</h3>
-                            <ul className="space-y-2">
-                              <li><Link to="/resources/guide" className="text-gray-700 hover:text-red-600 text-sm">Guide</Link></li>
-                              <li><Link to="/resources/glossary" className="text-gray-700 hover:text-red-600 text-sm">Glossary</Link></li>
-                              <li><Link to="/resources/forum" className="text-gray-700 hover:text-red-600 text-sm">Real Estate Q&A Forum</Link></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+
               </div>
             )}
           </div>
