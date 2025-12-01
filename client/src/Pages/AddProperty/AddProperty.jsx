@@ -405,13 +405,20 @@ export default function AddProperty() {
 
             // Add basic property info
             submitData.append("propertyType", finalPropertyTypeId);
+            submitData.append("propertyTypeName", formData.propertyType); // Store exact name like "Apartment / Flat"
             submitData.append("category", finalCategoryId);
+            submitData.append("categoryName", formData.propertyCategory); // Store "Residential" or "Commercial"
             submitData.append("title", generateTitle());
             submitData.append("description", formData.description || generateShortDescription());
             submitData.append("price", formData.expectedPrice);
             submitData.append("listingType", formData.listingType);
             submitData.append("priceUnit", formData.listingType === "Rent" ? "Monthly" : "Total");
+            submitData.append("negotiable", formData.priceNegotiable ? "true" : "false");
             submitData.append("gstApplicable", formData.gstApplicable ? "Yes" : "No");
+            
+            // Add top-level location fields for easier querying
+            submitData.append("city", formData.city);
+            submitData.append("locality", formData.locality);
 
             // Add area information
             const areaData = {
@@ -504,12 +511,8 @@ export default function AddProperty() {
             };
             submitData.append("legal", JSON.stringify(legalData));
 
-            // Add images
+            // Add images as files (Cloudinary handles upload via multer)
             images.forEach(file => submitData.append("images", file));
-            if (images.length > 0) {
-                const inlineImages = await Promise.all(images.map(fileToBase64));
-                submitData.append("inlineImages", JSON.stringify(inlineImages));
-            }
 
             const token = localStorage.getItem("token");
             await axios.post(`${API_BASE}/api/properties/add`, submitData, {

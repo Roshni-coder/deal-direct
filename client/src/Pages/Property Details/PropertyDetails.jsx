@@ -234,7 +234,7 @@ const PropertyDetails = () => {
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <p className="text-xs text-gray-500 uppercase font-semibold">Configuration</p>
               <p className="font-bold text-gray-800 text-lg">
-                {property.bhk || property.bedrooms ? `${property.bhk || property.bedrooms + ' BHK'}` : (property.propertyType?.name || property.propertyType || "N/A")}
+                {property.bhk || property.bedrooms ? `${property.bhk || property.bedrooms + ' BHK'}` : (property.propertyTypeName || property.propertyType?.name || "N/A")}
               </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -281,7 +281,7 @@ const PropertyDetails = () => {
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Property Type</span>
-                <span className="font-semibold text-gray-900">{property.propertyType?.name || property.propertyType || "N/A"}</span>
+                <span className="font-semibold text-gray-900">{property.propertyTypeName || property.propertyType?.name || "N/A"}</span>
               </div>
 
               {/* Residential Specifics */}

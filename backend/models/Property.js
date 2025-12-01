@@ -2,8 +2,10 @@ import mongoose from "mongoose";
 
 const propertySchema = new mongoose.Schema(
   {
-    propertyType: { type: mongoose.Schema.Types.ObjectId, ref: "PropertyType", required: true },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+    propertyType: { type: mongoose.Schema.Types.ObjectId, ref: "PropertyType" },
+    propertyTypeName: { type: String }, // Stores exact property type name like "Apartment / Flat", "Office Space"
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    categoryName: { type: String }, // Stores "Residential" or "Commercial"
     subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" },
 
     title: { type: String, required: true },
@@ -25,8 +27,8 @@ const propertySchema = new mongoose.Schema(
 
     amenities: [String],
     parking: {
-      covered: { type: String },
-      open: { type: String },
+      covered: { type: mongoose.Schema.Types.Mixed }, // Can be String or Number
+      open: { type: mongoose.Schema.Types.Mixed },    // Can be String or Number
     },
 
     address: {
@@ -40,6 +42,10 @@ const propertySchema = new mongoose.Schema(
       latitude: Number,
       longitude: Number,
     },
+    
+    // Convenience fields (duplicated from address for easier access)
+    city: String,
+    locality: String,
 
     images: [String],
     isApproved: { type: Boolean, default: true },
@@ -47,6 +53,7 @@ const propertySchema = new mongoose.Schema(
     // Listing Details
     listingType: { type: String, enum: ["Rent", "Sell"], default: "Rent" },
     availableFrom: Date,
+    deposit: mongoose.Schema.Types.Mixed, // Security deposit / booking amount
 
     // Residential Fields
     bhk: String,

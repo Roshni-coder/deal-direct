@@ -1,5 +1,7 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config(); // Load env vars BEFORE other imports
+
+import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 
@@ -9,11 +11,10 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 import propertyRoutes from "./routes/propertyRoutes.js";
 import propertyTypeRoutes from './routes/propertyTypeRoutes.js'
-dotenv.config();
+
 connectDB();
 
 const app = express();
-app.use(cors());
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // serve images

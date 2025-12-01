@@ -283,16 +283,18 @@ const AddProperty = () => {
         const simpleKeys = ["propertyType", "category", "subcategory", "title", "description", "price", "priceUnit"];
         simpleKeys.forEach((k) => data.append(k, formData[k] ? String(formData[k]) : ""));
 
+        // Add property type and category names for proper display
+        const selectedPropertyType = propertyTypes.find(pt => pt._id === formData.propertyType);
+        const selectedCategory = categories.find(c => c._id === formData.category);
+        if (selectedPropertyType) data.append("propertyTypeName", selectedPropertyType.name);
+        if (selectedCategory) data.append("categoryName", selectedCategory.name);
+
         ["area", "parking", "address", "flooring"].forEach((k) => {
           if (formData[k] !== undefined) data.append(k, JSON.stringify(formData[k]));
         });
 
+        // Add images as files (Cloudinary handles upload via multer)
         images.forEach((file) => data.append("images", file));
-
-        if (images.length) {
-          const inlineImages = await Promise.all(images.map(fileToBase64));
-          data.append("inlineImages", JSON.stringify(inlineImages));
-        }
 
         await axios.post(`${API_BASE_URL}/api/properties/add`, data, {
           headers: getAuthHeaders(),

@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import {
   addProperty,
   getProperties,
@@ -13,19 +12,11 @@ import {
   filterProperties,
 } from "../controllers/propertyController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
+import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
-// 🖼️ Multer config (memory storage so nothing persists locally)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fieldSize: 50 * 1024 * 1024, // 50MB for base64 images
-    fileSize: 10 * 1024 * 1024,  // 10MB per file
-  }
-});
-
-// ✅ Routes
+// ✅ Routes - Using Cloudinary upload middleware
 router.post("/add", upload.array("images", 10), addProperty);
 router.get("/list", getProperties);
 router.get("/property-list", getAllPropertiesList); // 🟢 For frontend home page

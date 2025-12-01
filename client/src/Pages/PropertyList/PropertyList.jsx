@@ -105,7 +105,7 @@ const PropertyPage = () => {
     const query = filters.search.toLowerCase();
 
     const matchesSearch = query
-      ? [p.title, p.address?.city, p.address?.state, p.propertyType?.name]
+      ? [p.title, p.address?.city, p.address?.state, p.propertyTypeName, p.propertyType?.name]
         .filter(Boolean).some((f) => f.toLowerCase().includes(query))
       : true;
 

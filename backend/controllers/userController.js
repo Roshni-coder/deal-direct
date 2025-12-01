@@ -180,10 +180,6 @@ export const loginUser = async (req, res) => {
     const envOwnerName = process.env.OWNER_NAME || process.env.DEMO_OWNER_NAME || "Property Owner";
     const normalizedEnvOwnerEmail = (envOwnerEmail || "").trim().toLowerCase();
 
-    console.log("Login Attempt:", normalizedInputEmail);
-    console.log("Owner Email (Env):", normalizedEnvOwnerEmail);
-    console.log("Owner Password Set:", !!envOwnerPassword);
-
     if (normalizedEnvOwnerEmail && normalizedInputEmail === normalizedEnvOwnerEmail) {
       if (!envOwnerPassword) {
         return res.status(500).json({ message: "Owner password not configured" });
@@ -219,10 +215,7 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      // DEBUG: Return detailed info to help troubleshoot
-      return res.status(404).json({
-        message: `User not found. Input: '${normalizedInputEmail}', OwnerEnv: '${normalizedEnvOwnerEmail}'`
-      });
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (!user.isVerified) {

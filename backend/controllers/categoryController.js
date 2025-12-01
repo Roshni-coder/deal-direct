@@ -29,7 +29,8 @@ export const getCategories = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
   try {
-    await Category.findByIdAndDelete(req.params.id);
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) return res.status(404).json({ message: "Category not found" });
     res.json({ message: "Category deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -43,6 +44,7 @@ export const updateCategory = async (req, res) => {
       req.body,
       { new: true }
     );
+    if (!updated) return res.status(404).json({ message: "Category not found" });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });

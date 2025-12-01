@@ -1,85 +1,21 @@
 import Property from "../models/Property.js";
-import fs from "fs";
-import path from "path";
+import { cloudinary } from "../middleware/upload.js";
 
-const isDataUrl = (img = "") => typeof img === "string" && img.trim().toLowerCase().startsWith("data:");
+const isCloudinaryUrl = (img = "") => typeof img === "string" && img.includes("cloudinary.com");
 
-const extensionToMime = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-};
+// Process uploaded files from multer-cloudinary (they already have URLs)
+const extractCloudinaryUrls = (files = []) =>
+  files.map((file) => file.path || file.secure_url).filter(Boolean);
 
-const fileToDataUrl = (filePath) => {
-  if (!fs.existsSync(filePath)) return "";
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeType = extensionToMime[ext] || "image/jpeg";
-  const buffer = fs.readFileSync(filePath);
-  return `data:${mimeType};base64,${buffer.toString("base64")}`;
-};
-
-const normalizeImagePath = (img) => {
-  if (!img) return "";
-  let cleaned = img.replace(/\\/g, "/");
-  cleaned = cleaned.replace(/^\/?uploads\//i, "");
-  return cleaned;
-};
-
-const encodeFilesToDataUrls = (files = []) =>
-  files
-    .map((file) => {
-      try {
-        let buffer = file?.buffer;
-        let cleanupPath = null;
-
-        if (!buffer) {
-          const filePath = file?.path || (file?.filename ? path.join("uploads", file.filename) : null);
-          if (!filePath || !fs.existsSync(filePath)) return "";
-          buffer = fs.readFileSync(filePath);
-          cleanupPath = filePath;
-        }
-
-        const base64 = buffer.toString("base64");
-        const mime = file?.mimetype || "image/jpeg";
-        return `data:${mime};base64,${base64}`;
-      } catch (error) {
-        console.error("Failed to encode image", error);
-        return "";
-      } finally {
-        // Clean up legacy temp files if any were created
-        if (cleanupPath && fs.existsSync(cleanupPath)) {
-          fs.unlinkSync(cleanupPath);
-        }
-      }
-    })
-    .filter(Boolean);
-
-const extractInlineImages = (payload) => {
-  const raw = payload?.inlineImages;
-  if (!raw) return [];
-  try {
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    if (Array.isArray(parsed)) {
-      return parsed.filter((img) => typeof img === "string" && img.trim().startsWith("data:"));
-    }
-  } catch (error) {
-    console.error("Failed to parse inline images", error.message);
-  }
-  return [];
-};
-
+// Build public image URL (returns Cloudinary URLs directly)
 const buildPublicImageUrl = (req, img) => {
   if (!img) return "";
-  const lower = img.toLowerCase();
-  if (lower.startsWith("data:")) return img;
-  if (lower.startsWith("http://") || lower.startsWith("https://")) return img;
-  const normalized = normalizeImagePath(img);
-  const filePath = path.join("uploads", normalized);
-  const dataUrl = fileToDataUrl(filePath);
-  if (dataUrl) return dataUrl;
-  return `${req.protocol}://${req.get("host")}/uploads/${normalized}`;
+  // Already a Cloudinary or external URL
+  if (img.startsWith("http://") || img.startsWith("https://")) return img;
+  // Data URL - legacy, return as-is
+  if (img.toLowerCase().startsWith("data:")) return img;
+  // Legacy local path - return as-is
+  return img;
 };
 
 const withPublicImages = (req, doc) => {
@@ -96,11 +32,10 @@ export const addProperty = async (req, res) => {
   try {
     let data = req.body;
 
-    // FIX: Added "features" and "legal" to the list of fields to parse
-    ["area", "parking", "address", "flooring", "features", "legal"].forEach((key) => {
+    // Parse JSON fields that might be stringified
+    ["area", "parking", "address", "flooring", "features", "legal", "extras"].forEach((key) => {
       if (data[key]) {
         try {
-          // Handle cases where it might already be an object or a double-stringified JSON
           data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
         } catch (e) {
           console.error(`Error parsing ${key}:`, e);
@@ -108,28 +43,52 @@ export const addProperty = async (req, res) => {
       }
     });
 
-    // Spread features into top-level data if it exists
-    if (data.features && typeof data.features === 'object') {
-      data = { ...data, ...data.features };
+    // Convert string booleans to actual booleans
+    if (data.negotiable !== undefined) {
+      data.negotiable = data.negotiable === 'true' || data.negotiable === true;
     }
 
-    const inlineImages = extractInlineImages(data);
-    if (inlineImages.length) {
-      data.images = inlineImages;
-    } else {
-      // Safely handle file encoding
-      const encodedImages = encodeFilesToDataUrls(req.files || []);
-      data.images = encodedImages.length ? encodedImages : [];
+    // Spread features into top-level data if it exists
+    if (data.features && typeof data.features === 'object') {
+      // Extract parking from features before spreading
+      const { parking: featuresParking, extras: featuresExtras, ...restFeatures } = data.features;
+      
+      // Spread rest of features to top level
+      data = { ...data, ...restFeatures };
+      
+      // Handle parking - merge or set from features
+      if (featuresParking) {
+        data.parking = {
+          covered: String(featuresParking.covered || 0),
+          open: String(featuresParking.open || 0)
+        };
+      }
+      
+      // Handle extras
+      if (featuresExtras) {
+        data.extras = featuresExtras;
+      }
+      
+      // Remove the features object after spreading
+      delete data.features;
     }
-    delete data.inlineImages;
+
+    // Process images from Cloudinary multer upload
+    if (req.files?.length > 0) {
+      data.images = extractCloudinaryUrls(req.files);
+    } else {
+      data.images = [];
+    }
 
     // Explicitly set isApproved to true for all new properties (Auto-publish)
     data.isApproved = true;
 
+    console.log("Final data being saved:", JSON.stringify(data, null, 2)); // Debug log
+
     const prop = await Property.create(data);
     res.status(201).json(withPublicImages(req, prop));
   } catch (err) {
-    console.error("Add Property Error:", err); // Log error to server console for debugging
+    console.error("Add Property Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -170,8 +129,8 @@ export const updateProperty = async (req, res) => {
   try {
     let data = req.body;
 
-    // FIX: Added "features" and "legal"
-    ["area", "parking", "address", "flooring", "features", "legal"].forEach((key) => {
+    // Parse JSON fields that might be stringified
+    ["area", "parking", "address", "flooring", "features", "legal", "extras"].forEach((key) => {
       if (data[key]) {
         try {
           data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
@@ -181,19 +140,30 @@ export const updateProperty = async (req, res) => {
       }
     });
 
-    // Spread features
+    // Spread features into top-level data if it exists
     if (data.features && typeof data.features === 'object') {
-      data = { ...data, ...data.features };
+      const { parking: featuresParking, extras: featuresExtras, ...restFeatures } = data.features;
+      
+      data = { ...data, ...restFeatures };
+      
+      if (featuresParking) {
+        data.parking = {
+          covered: String(featuresParking.covered || 0),
+          open: String(featuresParking.open || 0)
+        };
+      }
+      
+      if (featuresExtras) {
+        data.extras = featuresExtras;
+      }
+      
+      delete data.features;
     }
 
-    const inlineImages = extractInlineImages(data);
-    if (inlineImages.length) {
-      data.images = inlineImages;
-    } else if (req.files?.length > 0) {
-      const encodedImages = encodeFilesToDataUrls(req.files);
-      if (encodedImages.length) data.images = encodedImages;
+    // Process images from Cloudinary multer upload (only if new files uploaded)
+    if (req.files?.length > 0) {
+      data.images = extractCloudinaryUrls(req.files);
     }
-    delete data.inlineImages;
 
     const updated = await Property.findByIdAndUpdate(req.params.id, data, { new: true });
 
@@ -211,11 +181,24 @@ export const deleteProperty = async (req, res) => {
     const p = await Property.findById(req.params.id);
     if (!p) return res.status(404).json({ message: "Not found" });
 
-    p.images.forEach((img) => {
-      if (isDataUrl(img)) return;
-      const imgPath = path.join("uploads", normalizeImagePath(img));
-      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-    });
+    // Delete images from Cloudinary
+    for (const img of p.images || []) {
+      if (isCloudinaryUrl(img)) {
+        try {
+          // Extract public_id from Cloudinary URL
+          const urlParts = img.split("/");
+          const uploadIndex = urlParts.indexOf("upload");
+          if (uploadIndex !== -1) {
+            // Get everything after upload/v{version}/ and remove extension
+            const publicIdParts = urlParts.slice(uploadIndex + 2);
+            const publicId = publicIdParts.join("/").replace(/\.[^/.]+$/, "");
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (deleteError) {
+          console.error("Failed to delete image from Cloudinary:", deleteError);
+        }
+      }
+    }
 
     await p.deleteOne();
     res.json({ message: "Deleted" });
@@ -226,22 +209,32 @@ export const deleteProperty = async (req, res) => {
 
 // Approve
 export const approveProperty = async (req, res) => {
-  const updated = await Property.findByIdAndUpdate(
-    req.params.id,
-    { isApproved: true },
-    { new: true }
-  );
-  res.json(updated);
+  try {
+    const updated = await Property.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Property not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // Disapprove
 export const disapproveProperty = async (req, res) => {
-  const updated = await Property.findByIdAndUpdate(
-    req.params.id,
-    { isApproved: false },
-    { new: true }
-  );
-  res.json(updated);
+  try {
+    const updated = await Property.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: false },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Property not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // 🌐 Public: Get All Approved Properties (Home Page)
@@ -292,14 +285,15 @@ export const searchProperties = async (req, res) => {
       if (priceTo) filter.price.$lte = +priceTo;
     }
 
-    // Search in multiple fields
+    // Search in multiple fields (excluding ObjectId fields from regex search)
     if (search) {
       const regex = new RegExp(search, "i");
       filter.$or = [
         { title: regex },
         { description: regex },
         { "address.city": regex },
-        { propertyType: regex },
+        { "address.area": regex },
+        { "address.locality": regex },
       ];
     }
 

@@ -180,7 +180,7 @@ const Home = () => {
     const title = (p.title || "").toLowerCase();
     const city = (p.address?.city || "").toLowerCase();
     const state = (p.address?.state || "").toLowerCase();
-    const propertyTypeName = (p.propertyType?.name || "").toLowerCase();
+    const propertyTypeName = (p.propertyTypeName || p.propertyType?.name || "").toLowerCase();
     const q = filters.search.toLowerCase();
     const priceInRupees = normalizePrice(p.price, p.priceUnit);
 
@@ -278,7 +278,7 @@ const Home = () => {
                             ₹{property.price?.toLocaleString()} <span className="text-xs font-medium text-gray-500">{property.priceUnit}</span>
                           </p>
                           <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md">
-                            {property.propertyType?.name}
+                            {property.propertyTypeName || property.propertyType?.name}
                           </span>
                         </div>
                       </div>
