@@ -17,11 +17,18 @@ import { upload } from "../middleware/upload.js";
 const router = express.Router();
 
 // ✅ Routes - Using Cloudinary upload middleware
-router.post("/add", upload.array("images", 10), addProperty);
+// Handle both legacy images and categorized images
+router.post("/add", upload.fields([
+  { name: "images", maxCount: 15 },
+  { name: "categorizedImages", maxCount: 50 }
+]), addProperty);
 router.get("/list", getProperties);
 router.get("/property-list", getAllPropertiesList); // 🟢 For frontend home page
 router.get("/:id", getPropertyById);
-router.put("/edit/:id", protectAdmin, upload.array("images", 10), updateProperty);
+router.put("/edit/:id", protectAdmin, upload.fields([
+  { name: "images", maxCount: 15 },
+  { name: "categorizedImages", maxCount: 50 }
+]), updateProperty);
 router.delete("/delete/:id", protectAdmin, deleteProperty);
 router.put("/approve/:id", protectAdmin, approveProperty);
 router.put("/disapprove/:id", protectAdmin, disapproveProperty);

@@ -74,7 +74,60 @@ const PropertyDetails = () => {
     return `${API_BASE}/uploads/${img}`;
   };
 
-  const imgs = (property?.images || []).map(buildImageUrl);
+  // Combine regular images with categorized images
+  const getAllImages = () => {
+    const allImages = [];
+    
+    // Add regular images
+    if (property?.images?.length > 0) {
+      property.images.forEach(img => allImages.push({ url: buildImageUrl(img), category: 'Gallery' }));
+    }
+    
+    // Add categorized images if available
+    if (property?.categorizedImages) {
+      const catImages = property.categorizedImages;
+      
+      // Check residential images
+      if (catImages.residential) {
+        Object.entries(catImages.residential).forEach(([category, images]) => {
+          if (Array.isArray(images)) {
+            images.forEach(img => {
+              if (img) allImages.push({ url: buildImageUrl(img), category: formatCategoryName(category) });
+            });
+          }
+        });
+      }
+      
+      // Check commercial images
+      if (catImages.commercial) {
+        Object.entries(catImages.commercial).forEach(([category, images]) => {
+          if (Array.isArray(images)) {
+            images.forEach(img => {
+              if (img) allImages.push({ url: buildImageUrl(img), category: formatCategoryName(category) });
+            });
+          }
+        });
+      }
+    }
+    
+    return allImages;
+  };
+  
+  // Format category key to display name (e.g., "livingRoom" -> "Living Room")
+  const formatCategoryName = (key) => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
+      .trim();
+  };
+
+  const allPropertyImages = getAllImages();
+  const imgs = allPropertyImages.length > 0 
+    ? allPropertyImages.map(item => item.url) 
+    : (property?.images || []).map(buildImageUrl);
+  
+  // Get current image category for display
+  const currentImageCategory = allPropertyImages[activeImage]?.category || 'Gallery';
 
   // ---- EMI Calculation ----
   useEffect(() => {
@@ -163,9 +216,16 @@ const PropertyDetails = () => {
               </button>
             </div>
 
-            {/* Image counter */}
-            <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
-              {activeImage + 1} / {imgs.length || 1}
+            {/* Image counter and category */}
+            <div className="absolute bottom-4 left-4 flex gap-2">
+              <div className="bg-black/60 text-white text-sm px-3 py-1 rounded-full">
+                {activeImage + 1} / {imgs.length || 1}
+              </div>
+              {currentImageCategory && (
+                <div className="bg-red-500/90 text-white text-sm px-3 py-1 rounded-full font-medium">
+                  {currentImageCategory}
+                </div>
+              )}
             </div>
           </div>
 
@@ -173,16 +233,22 @@ const PropertyDetails = () => {
           {imgs.length > 1 && (
             <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
               {imgs.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt=""
-                  onClick={() => setActiveImage(i)}
-                  className={`h-24 w-32 object-cover rounded-xl cursor-pointer border-2 flex-shrink-0 ${i === activeImage
-                    ? "border-red-500 scale-105"
-                    : "border-transparent hover:border-red-300"
-                    } transition-all`}
-                />
+                <div key={i} className="relative flex-shrink-0">
+                  <img
+                    src={img}
+                    alt=""
+                    onClick={() => setActiveImage(i)}
+                    className={`h-24 w-32 object-cover rounded-xl cursor-pointer border-2 ${i === activeImage
+                      ? "border-red-500 scale-105"
+                      : "border-transparent hover:border-red-300"
+                      } transition-all`}
+                  />
+                  {allPropertyImages[i]?.category && (
+                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded text-[10px]">
+                      {allPropertyImages[i].category}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}

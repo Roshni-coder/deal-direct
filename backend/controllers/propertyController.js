@@ -22,6 +22,25 @@ const withPublicImages = (req, doc) => {
   if (!doc) return doc;
   const plain = doc.toObject ? doc.toObject() : doc;
   plain.images = (plain.images || []).map((img) => buildPublicImageUrl(req, img));
+  
+  // Process categorized images as well
+  if (plain.categorizedImages) {
+    // Process residential categories
+    if (plain.categorizedImages.residential) {
+      Object.keys(plain.categorizedImages.residential).forEach(key => {
+        plain.categorizedImages.residential[key] = (plain.categorizedImages.residential[key] || [])
+          .map(img => buildPublicImageUrl(req, img));
+      });
+    }
+    // Process commercial categories
+    if (plain.categorizedImages.commercial) {
+      Object.keys(plain.categorizedImages.commercial).forEach(key => {
+        plain.categorizedImages.commercial[key] = (plain.categorizedImages.commercial[key] || [])
+          .map(img => buildPublicImageUrl(req, img));
+      });
+    }
+  }
+  
   return plain;
 };
 
@@ -33,7 +52,7 @@ export const addProperty = async (req, res) => {
     let data = req.body;
 
     // Parse JSON fields that might be stringified
-    ["area", "parking", "address", "flooring", "features", "legal", "extras"].forEach((key) => {
+    ["area", "parking", "address", "flooring", "features", "legal", "extras", "imageCategoryMap"].forEach((key) => {
       if (data[key]) {
         try {
           data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
@@ -73,11 +92,54 @@ export const addProperty = async (req, res) => {
       delete data.features;
     }
 
-    // Process images from Cloudinary multer upload
-    if (req.files?.length > 0) {
-      data.images = extractCloudinaryUrls(req.files);
+    // Process legacy images from Cloudinary multer upload
+    if (req.files?.images?.length > 0) {
+      data.images = extractCloudinaryUrls(req.files.images);
     } else {
       data.images = [];
+    }
+    
+    // Process categorized images
+    if (req.files?.categorizedImages?.length > 0 && data.imageCategoryMap) {
+      const categorizedUrls = extractCloudinaryUrls(req.files.categorizedImages);
+      const categoryMap = data.imageCategoryMap;
+      
+      // Determine if property is residential or commercial
+      const isResidential = data.categoryName === 'Residential' || 
+                           (data.category && data.category.name === 'Residential');
+      
+      // Initialize categorizedImages structure
+      data.categorizedImages = {
+        residential: {},
+        commercial: {}
+      };
+      
+      // Track which URL index we're at
+      let urlIndex = 0;
+      
+      // Map images to their categories
+      Object.entries(categoryMap).forEach(([categoryKey, indices]) => {
+        const categoryImages = [];
+        for (let i = 0; i < indices.length && urlIndex < categorizedUrls.length; i++) {
+          categoryImages.push(categorizedUrls[urlIndex]);
+          urlIndex++;
+        }
+        
+        // Add to appropriate category (residential or commercial)
+        if (isResidential) {
+          data.categorizedImages.residential[categoryKey] = categoryImages;
+        } else {
+          data.categorizedImages.commercial[categoryKey] = categoryImages;
+        }
+      });
+      
+      // Also add categorized images to the main images array for backward compatibility
+      if (data.images.length === 0) {
+        data.images = categorizedUrls;
+      }
+      
+      // Clean up the temporary map
+      delete data.imageCategoryMap;
     }
 
     // Explicitly set isApproved to true for all new properties (Auto-publish)
@@ -130,7 +192,7 @@ export const updateProperty = async (req, res) => {
     let data = req.body;
 
     // Parse JSON fields that might be stringified
-    ["area", "parking", "address", "flooring", "features", "legal", "extras"].forEach((key) => {
+    ["area", "parking", "address", "flooring", "features", "legal", "extras", "imageCategoryMap"].forEach((key) => {
       if (data[key]) {
         try {
           data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
@@ -160,9 +222,45 @@ export const updateProperty = async (req, res) => {
       delete data.features;
     }
 
-    // Process images from Cloudinary multer upload (only if new files uploaded)
-    if (req.files?.length > 0) {
-      data.images = extractCloudinaryUrls(req.files);
+    // Process legacy images from Cloudinary multer upload (only if new files uploaded)
+    if (req.files?.images?.length > 0) {
+      data.images = extractCloudinaryUrls(req.files.images);
+    }
+    
+    // Process categorized images
+    if (req.files?.categorizedImages?.length > 0 && data.imageCategoryMap) {
+      const categorizedUrls = extractCloudinaryUrls(req.files.categorizedImages);
+      const categoryMap = data.imageCategoryMap;
+      
+      // Determine if property is residential or commercial
+      const isResidential = data.categoryName === 'Residential' || 
+                           (data.category && data.category.name === 'Residential');
+      
+      // Initialize categorizedImages structure
+      data.categorizedImages = {
+        residential: {},
+        commercial: {}
+      };
+      
+      // Track which URL index we're at
+      let urlIndex = 0;
+      
+      // Map images to their categories
+      Object.entries(categoryMap).forEach(([categoryKey, indices]) => {
+        const categoryImages = [];
+        for (let i = 0; i < indices.length && urlIndex < categorizedUrls.length; i++) {
+          categoryImages.push(categorizedUrls[urlIndex]);
+          urlIndex++;
+        }
+        
+        if (isResidential) {
+          data.categorizedImages.residential[categoryKey] = categoryImages;
+        } else {
+          data.categorizedImages.commercial[categoryKey] = categoryImages;
+        }
+      });
+      
+      delete data.imageCategoryMap;
     }
 
     const updated = await Property.findByIdAndUpdate(req.params.id, data, { new: true });

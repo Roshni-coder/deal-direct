@@ -47,7 +47,50 @@ const propertySchema = new mongoose.Schema(
     city: String,
     locality: String,
 
+    // Regular images array (for backward compatibility)
     images: [String],
+    
+    // Categorized images - stores images by room/area type
+    categorizedImages: {
+      // Residential categories
+      residential: {
+        exterior: [String],
+        livingRoom: [String],
+        bedroom: [String],
+        bathroom: [String],
+        kitchen: [String],
+        balcony: [String],
+        hall: [String],
+        diningArea: [String],
+        studyRoom: [String],
+        poojaRoom: [String],
+        garden: [String],
+        parking: [String],
+        floorPlan: [String],
+        other: [String]
+      },
+      // Commercial categories
+      commercial: {
+        facade: [String],
+        reception: [String],
+        workArea: [String],
+        cabin: [String],
+        conferenceRoom: [String],
+        pantry: [String],
+        washroom: [String],
+        warehouse: [String],
+        loadingArea: [String],
+        shopFloor: [String],
+        displayArea: [String],
+        seatingArea: [String],
+        kitchenCommercial: [String],
+        storageArea: [String],
+        parking: [String],
+        floorPlan: [String],
+        other: [String]
+      }
+    },
+    
     isApproved: { type: Boolean, default: true },
 
     // Listing Details
