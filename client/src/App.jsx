@@ -10,7 +10,8 @@ import Register from "./Pages/Register/Register.jsx";
 import About from "./Pages/About/About.jsx";
 import Contact from "./Pages/Contact/Contact.jsx";
 import SampleAgreement from "./Components/SampleAgreement/SampleAgreement.jsx";
-import AddProperty from "./Pages/AddProperty/AddProperty.jsx"
+import AddProperty from "./Pages/AddProperty/AddProperty.jsx";
+import Profile from "./Pages/Profile/Profile.jsx";
 import ScrollToTop from "./Components/ScrollToTop/ScrollToTop.jsx";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/agreements" element={<SampleAgreement />} />
           <Route path="/add-property" element={<AddProperty />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
         <Footer />
       </Router>

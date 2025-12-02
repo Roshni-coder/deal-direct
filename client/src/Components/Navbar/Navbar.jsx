@@ -555,7 +555,13 @@ function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-3">
-                <span className={`${navTextClass} font-medium text-sm`}>Hi, {user.name?.split(" ")[0] || "User"}</span>
+                <Link 
+                  to="/profile" 
+                  className={`${navTextClass} font-medium text-sm hover:text-red-600 transition-colors flex items-center gap-1`}
+                >
+                  <AiOutlineUser className="text-lg" />
+                  Hi, {user.name?.split(" ")[0] || "User"}
+                </Link>
                 <button onClick={handleLogout} className="text-sm text-red-400 hover:underline">
                   Logout
                 </button>
@@ -679,7 +685,11 @@ function Navbar() {
             <div className="p-5 border-t bg-slate-50">
               {user ? (
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    to="/profile"
+                    onClick={toggleMenu}
+                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition"
+                  >
                     <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-lg">
                       {user.name?.charAt(0).toUpperCase() || "U"}
                     </div>
@@ -687,14 +697,24 @@ function Navbar() {
                       <p className="font-semibold text-slate-800">{user.name || "User"}</p>
                       <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
+                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      to="/profile"
+                      onClick={toggleMenu}
+                      className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg font-medium hover:bg-red-700 transition"
+                    >
+                      <AiOutlineUser size={18} />
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => { handleLogout(); toggleMenu(); }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 text-red-600 py-2.5 rounded-lg font-medium hover:bg-red-50 transition"
+                    >
+                      <AiOutlineLogout size={18} />
+                      Logout
+                    </button>
                   </div>
-                  <button
-                    onClick={() => { handleLogout(); toggleMenu(); }}
-                    className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-red-600 py-2.5 rounded-lg font-medium hover:bg-red-50 transition"
-                  >
-                    <AiOutlineLogout size={18} />
-                    Logout
-                  </button>
                 </div>
               ) : (
                 <Link

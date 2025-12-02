@@ -201,7 +201,7 @@ const Home = () => {
   };
 
   return (
-    <div className="font-sans text-gray-800">
+    <div className="font-sans text-white bg-gray-900 min-h-screen">
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       <HeroSection
@@ -213,28 +213,28 @@ const Home = () => {
       />
 
       {/* 🏙 Featured Properties */}
-      <section ref={propertiesSectionRef} className="relative py-4 bg-slate-50">
+      <section ref={propertiesSectionRef} className="relative py-4 bg-gray-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-end mb-4">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">
-                Popular <span className="text-red-600">Properties</span>
+              <h2 className="text-3xl font-bold text-white">
+                Popular <span className="text-red-400">Properties</span>
               </h2>
-              <p className="text-slate-500 mt-2 max-w-lg">
+              <p className="text-white/70 mt-2 max-w-lg">
                 Handpicked premium homes and investments across India's top cities.
               </p>
             </div>
 
             <button
               onClick={() => navigate('/properties')}
-              className="text-red-600 font-semibold hover:text-red-700 transition flex items-center gap-2 pb-1 border-b-2 border-transparent hover:border-red-600"
+              className="text-red-400 font-semibold hover:text-red-300 transition flex items-center gap-2 pb-1 border-b-2 border-transparent hover:border-red-400"
             >
               View All <FaArrowRight className="text-sm" />
             </button>
           </div>
 
           {filteredProperties.length === 0 ? (
-            <p className="text-gray-400 text-lg text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">No properties found matching your search.</p>
+            <p className="text-white/60 text-lg text-center py-12 bg-white/10 rounded-xl border border-dashed border-white/30">No properties found matching your search.</p>
           ) : (
             <div className="relative group">
               <button onClick={() => scroll('left')} className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center text-gray-800 hover:text-red-600 transition-all border border-gray-100 opacity-0 group-hover:opacity-100">
@@ -291,77 +291,77 @@ const Home = () => {
       </section>
 
       {/* 🛠 PREMIUM: How Deal Direct Works Section */}
-      <section className="py-20 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+      <section className="py-20 bg-gray-800 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
 
         <div className="max-w-5xl mx-auto text-center px-6 relative z-10">
-          <h2 className="text-5xl font-extrabold text-slate-900 mb-3 tracking-tight">
+          <h2 className="text-5xl font-extrabold text-white mb-3 tracking-tight">
             How Deal Direct Works
           </h2>
-          <p className="text-slate-600 text-lg mb-16 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/70 text-lg mb-16 max-w-2xl mx-auto leading-relaxed">
             Three simple steps to find your perfect property or sell directly to buyers
           </p>
         </div>
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 px-6 relative z-10">
           {/* Step 1: Search Properties */}
-          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-blue-200 hover:-translate-y-2">
+          <div className="group relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 hover:border-blue-300/50 hover:-translate-y-2">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaSearch />
             </div>
             <div className="mt-10 text-center">
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Search Properties</h3>
-              <p className="text-slate-600 text-base leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-3">Search Properties</h3>
+              <p className="text-white/70 text-base leading-relaxed">
                 Browse thousands of listings directly from property owners.
               </p>
             </div>
-            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-blue-50 to-transparent rounded-tl-full opacity-50"></div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-blue-400/20 to-transparent rounded-tl-full opacity-50"></div>
           </div>
 
           {/* Step 2: Connect Directly */}
-          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-purple-200 hover:-translate-y-2">
+          <div className="group relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 hover:border-purple-300/50 hover:-translate-y-2">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaRegCommentDots />
             </div>
             <div className="mt-10 text-center">
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Connect Directly</h3>
-              <p className="text-slate-600 text-base leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-3">Connect Directly</h3>
+              <p className="text-white/70 text-base leading-relaxed">
                 Message property owners instantly. No intermediaries.
               </p>
             </div>
-            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-purple-50 to-transparent rounded-tl-full opacity-50"></div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-purple-400/20 to-transparent rounded-tl-full opacity-50"></div>
           </div>
 
           {/* Step 3: Close the Deal */}
-          <div className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 hover:border-green-200 hover:-translate-y-2">
+          <div className="group relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 hover:border-green-300/50 hover:-translate-y-2">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl text-4xl text-white group-hover:scale-110 transition-transform duration-300">
               <FaKey />
             </div>
             <div className="mt-10 text-center">
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Close the Deal</h3>
-              <p className="text-slate-600 text-base leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-3">Close the Deal</h3>
+              <p className="text-white/70 text-base leading-relaxed">
                 Negotiate directly and complete your deal confidently.
               </p>
             </div>
-            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-green-50 to-transparent rounded-tl-full opacity-50"></div>
+            <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-green-400/20 to-transparent rounded-tl-full opacity-50"></div>
           </div>
         </div>
       </section>
 
       {/* ✨ PREMIUM: Why Choose Deal Direct Section */}
-      <section className="py-24 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+      <section className="py-24 bg-gray-900 relative overflow-hidden">
         {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0) 1px, transparent 0)',
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)',
           backgroundSize: '40px 40px'
         }}></div>
 
         <div className="max-w-6xl mx-auto text-center px-6 relative z-10">
-          <h2 className="text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+          <h2 className="text-5xl font-extrabold text-white mb-4 tracking-tight">
             Why Choose Deal Direct?
           </h2>
-          <p className="text-slate-600 text-lg mb-20 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/70 text-lg mb-20 max-w-2xl mx-auto leading-relaxed">
             Experience the benefits of direct property transactions
           </p>
         </div>
@@ -372,8 +372,8 @@ const Home = () => {
             <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
               <AiOutlineDollarCircle className="w-12 h-12" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Zero Commission</h3>
-            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
+            <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Zero Commission</h3>
+            <p className="text-white/70 text-[15px] leading-relaxed max-w-[220px]">
               Save thousands by connecting directly with owners.
             </p>
           </div>
@@ -383,8 +383,8 @@ const Home = () => {
             <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
               <FaRegClock className="w-11 h-11" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Faster Deals</h3>
-            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
+            <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Faster Deals</h3>
+            <p className="text-white/70 text-[15px] leading-relaxed max-w-[220px]">
               Close deals quicker with direct communication.
             </p>
           </div>
@@ -394,8 +394,8 @@ const Home = () => {
             <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
               <FaShieldAlt className="w-11 h-11" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Secure Transactions</h3>
-            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
+            <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Secure Transactions</h3>
+            <p className="text-white/70 text-[15px] leading-relaxed max-w-[220px]">
               Safe and transparent property transactions.
             </p>
           </div>
@@ -405,8 +405,8 @@ const Home = () => {
             <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
               <FaUserFriends className="w-11 h-11" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Direct Communication</h3>
-            <p className="text-slate-600 text-[15px] leading-relaxed max-w-[220px]">
+            <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Direct Communication</h3>
+            <p className="text-white/70 text-[15px] leading-relaxed max-w-[220px]">
               Chat directly with owners and get instant replies.
             </p>
           </div>
@@ -416,12 +416,12 @@ const Home = () => {
       <TopLocalities />
 
       {/* 🏙 Explore Popular Cities */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-gray-800">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-white mb-4">
             Explore by City
           </h2>
-          <p className="text-gray-500 mb-10 max-w-3xl text-base leading-relaxed">
+          <p className="text-white/70 mb-10 max-w-3xl text-base leading-relaxed">
             Discover city-wise insights and properties in India's most active real estate markets.
           </p>
 
@@ -443,12 +443,12 @@ const Home = () => {
               <div
                 key={index}
                 onClick={() => handleCityClick(city.name)}
-                className="flex flex-col items-center justify-center p-6 border border-gray-100 rounded-2xl bg-white hover:shadow-xl hover:border-red-100 transition-all cursor-pointer group hover:-translate-y-1"
+                className="flex flex-col items-center justify-center p-6 border border-white/20 rounded-2xl bg-white/10 hover:bg-white/20 hover:shadow-xl hover:border-white/40 transition-all cursor-pointer group hover:-translate-y-1"
               >
-                <div className="w-14 h-14 flex items-center justify-center bg-gray-50 rounded-full mb-3 group-hover:bg-red-50 transition-colors">
-                  <img src={city.icon} alt={city.name} className="w-8 h-8 object-contain opacity-70 group-hover:opacity-100 transition-all" />
+                <div className="w-14 h-14 flex items-center justify-center bg-white/10 rounded-full mb-3 group-hover:bg-white/20 transition-colors">
+                  <img src={city.icon} alt={city.name} className="w-8 h-8 object-contain opacity-80 group-hover:opacity-100 transition-all" />
                 </div>
-                <span className="font-semibold text-gray-700 text-sm group-hover:text-red-600 transition-colors">{city.name}</span>
+                <span className="font-semibold text-white text-sm group-hover:text-red-400 transition-colors">{city.name}</span>
               </div>
             ))}
           </div>

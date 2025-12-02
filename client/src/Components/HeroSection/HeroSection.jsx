@@ -6,7 +6,7 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone, FaHome, FaKey, FaBuilding, FaBed, FaTree } from "react-icons/fa";
 import { tabConfig } from "./filterConfig";
 import PropertyTypeFilter from "./PropertyTypeFilter";
-import SKYBACKGROUND from "../../assets/SKYBACKGROUND.png";
+import gemback from "../../assets/gemback.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -233,7 +233,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
     <section className="relative flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${SKYBACKGROUND})` }}
+        style={{ backgroundImage: `url(${gemback})` }}
       ></div>
 
       {/* Dark overlay for better text visibility */}
@@ -246,19 +246,19 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
           <span className="text-red-500">Directly from Owners</span>
         </h1>
 
-        <p className="text-lg sm:text-xl lg:text-2xl text-gray-200 max-w-3xl">
+        <p className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-200 max-w-3xl">
           No middleman. No commission fees.
           <br />
-          <span className="font-semibold text-white">
+          <span className="font-bold text-white">
             Deal directly with property owners
           </span>
         </p>
 
-        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-3xl p-6 sm:p-8 mt-6 w-full max-w-5xl border border-gray-100">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1" ref={searchInputRef}>
+        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-2 sm:p-3 mt-4 w-full max-w-5xl">
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
+            <div className="relative flex-1 w-full" ref={searchInputRef}>
               <div className="relative flex items-center">
-                <AiOutlineSearch className="absolute left-5 text-gray-500 text-2xl" />
+                <AiOutlineSearch className="absolute left-5 text-gray-400 text-2xl" />
                 <input
                   type="text"
                   placeholder="Search by Project, Locality, or City"
@@ -271,7 +271,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                   onFocus={() => {
                     if (suggestions.length > 0) setShowSuggestions(true);
                   }}
-                  className="w-full border border-gray-300 rounded-xl pl-14 pr-24 py-5 text-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-500 outline-none"
+                  className="w-full bg-transparent rounded-full pl-14 pr-24 py-4 text-lg text-gray-900 placeholder-gray-400 focus:outline-none"
                 />
                 <div className="absolute right-5 flex items-center gap-4">
                   <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800 text-xl" />
@@ -283,7 +283,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50"
                 >
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-gray-500">
@@ -318,7 +318,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               )}
             </div>
 
-            <button className="bg-red-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
+            <button className="bg-red-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
               <AiOutlineSearch className="text-xl" />
               Search
             </button>

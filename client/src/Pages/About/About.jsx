@@ -23,18 +23,21 @@ export default function About() {
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 mb-6 px-5 py-2 rounded-full border border-blue-400/30 bg-blue-500/10 backdrop-blur-md text-blue-300 text-sm font-semibold tracking-wide uppercase">
             <FaBuilding className="text-blue-400" />
-            <span>A Venture by IshiSoftTech Pvt Ltd</span>
+            <span>A Venture by IshiSoft  Pvt Ltd</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
-            Real Estate, <br />
+            Real Estate Simplified, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
-              Simplified & Direct.
+              Direct Connect with Owners
             </span>
           </h1>
           <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
-            We are India's fastest-growing "PropTech" platform. We combine deep real estate expertise with cutting-edge technology to eliminate brokerage fees and bring transparency to every deal.
-          </p>
+  <strong>
+    We are India's fastest-growing "PropTech" platform. We combine deep real estate expertise with cutting-edge technology to eliminate brokerage fees and bring transparency to every deal.
+  </strong>
+</p>
+
           
           {/* Trust Metrics (Business Focused) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
@@ -86,7 +89,7 @@ export default function About() {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Leadership Team</h2>
             <p className="text-slate-400 text-lg">
-                The visionaries driving innovation at <span className="text-blue-400 font-semibold">IshiSoftTech Pvt Ltd</span>
+                The visionaries driving innovation at <span className="text-blue-400 font-semibold">IshiSoft Pvt Ltd</span>
             </p>
           </div>
 
@@ -101,7 +104,7 @@ export default function About() {
                     <div>
                         <h3 className="text-2xl font-bold text-white">Chirag </h3>
                         <p className="text-blue-400 font-medium tracking-wide">Chief Technology Officer (CTO)</p>
-                        <p className="text-xs text-slate-500 uppercase mt-1">IshiSoftTech Pvt Ltd</p>
+                        <p className="text-xs text-slate-500 uppercase mt-1">IshiSoft Pvt Ltd</p>
                     </div>
                 </div>
                 <p className="text-slate-300 leading-relaxed mb-6">
@@ -122,7 +125,7 @@ export default function About() {
                     <div>
                         <h3 className="text-2xl font-bold text-white">Roshni Bhoi</h3>
                         <p className="text-pink-400 font-medium tracking-wide">Head of Product & Design</p>
-                        <p className="text-xs text-slate-500 uppercase mt-1">IshiSoftTech Pvt Ltd</p>
+                        <p className="text-xs text-slate-500 uppercase mt-1">IshiSoft Pvt Ltd</p>
                     </div>
                 </div>
                 <p className="text-slate-300 leading-relaxed mb-6">

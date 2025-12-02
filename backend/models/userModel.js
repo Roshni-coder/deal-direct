@@ -7,9 +7,29 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["user", "agent"],
+      enum: ["user", "agent", "owner"],
       default: "user",
     },
+    // Profile fields
+    phone: { type: String },
+    alternatePhone: { type: String },
+    address: {
+      line1: { type: String },
+      line2: { type: String },
+      city: { type: String },
+      state: { type: String },
+      pincode: { type: String },
+    },
+    profileImage: { type: String },
+    dateOfBirth: { type: Date },
+    gender: { type: String, enum: ["Male", "Female", "Other", ""] },
+    bio: { type: String },
+    // Preferences
+    preferences: {
+      emailNotifications: { type: Boolean, default: true },
+      smsNotifications: { type: Boolean, default: false },
+    },
+    // OTP fields
     otp: { type: String },
     otpExpires: { type: Date },
     isVerified: { type: Boolean, default: false },

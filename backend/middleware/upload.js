@@ -26,10 +26,17 @@ if (cloudinaryUrl) {
 
 const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: "dealdirect",
-    allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
-    transformation: [{ width: 1200, height: 800, crop: "limit", quality: "auto" }],
+  params: async (req, file) => {
+    // Use different folders for different upload types
+    const isProfileImage = file.fieldname === 'profileImage';
+    
+    return {
+      folder: isProfileImage ? "dealdirect/profiles" : "dealdirect/properties",
+      allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+      transformation: isProfileImage 
+        ? [{ width: 400, height: 400, crop: "fill", gravity: "face", quality: "auto" }]
+        : [{ width: 1200, height: 800, crop: "limit", quality: "auto" }],
+    };
   },
 });
 

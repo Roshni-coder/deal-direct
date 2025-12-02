@@ -1,9 +1,9 @@
 // src/pages/Auth/Register.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck, RefreshCw } from "lucide-react";
 import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -14,7 +14,20 @@ export default function Register() {
   const [step, setStep] = useState(1); // 1: Details, 2: OTP
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const navigate = useNavigate();
+
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    let interval;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -35,10 +48,29 @@ export default function Register() {
 
       toast.success("OTP sent to your email!");
       setStep(2);
+      setResendTimer(60); // Start 60 second countdown
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send OTP. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return;
+    
+    setResendLoading(true);
+    try {
+      await axios.post(`${API_BASE}/api/users/resend-otp`, {
+        email: formData.email
+      });
+      toast.success("New OTP sent to your email!");
+      setResendTimer(60); // Reset countdown
+      setOtp(""); // Clear old OTP input
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend OTP. Please try again.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -269,6 +301,38 @@ export default function Register() {
                       "Verify & Register"
                     )}
                   </button>
+
+                  {/* Resend OTP Section */}
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-slate-500">Didn't receive the code?</p>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={resendTimer > 0 || resendLoading}
+                      className={`inline-flex items-center text-sm font-medium transition-colors ${
+                        resendTimer > 0 
+                          ? 'text-slate-400 cursor-not-allowed' 
+                          : 'text-blue-900 hover:text-blue-700 hover:underline cursor-pointer'
+                      }`}
+                    >
+                      {resendLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                          Sending...
+                        </>
+                      ) : resendTimer > 0 ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-1.5" />
+                          Resend in {resendTimer}s
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-1.5" />
+                          Resend OTP
+                        </>
+                      )}
+                    </button>
+                  </div>
 
                   <button
                     type="button"
