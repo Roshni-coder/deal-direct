@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch, AiOutlineHome, AiOutlineInfoCircle, AiOutlinePhone, AiOutlineFileText, AiOutlinePlusCircle, AiOutlineLogin, AiOutlineLogout } from "react-icons/ai";
+import { AiOutlineUser, AiOutlineMenu, AiOutlineClose, AiOutlineSearch, AiOutlineHome, AiOutlineInfoCircle, AiOutlinePhone, AiOutlineFileText, AiOutlinePlusCircle, AiOutlineLogin, AiOutlineLogout, AiOutlineSetting, AiOutlineHeart } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone } from "react-icons/fa";
-import { BsBuilding } from "react-icons/bs";
+import { BsBuilding, BsHouseDoor, BsPersonCircle } from "react-icons/bs";
+import { HiOutlineHome, HiOutlineDocumentText } from "react-icons/hi";
 import logo from "../../assets/dealdirect_logo.png";
 import AuthModal from "../AuthModal/AuthModal";
+import EmailVerificationModal from "../EmailVerificationModal/EmailVerificationModal";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -39,6 +41,9 @@ function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef(null);
 
   // Search Suggestions State
   const [suggestions, setSuggestions] = useState([]);
@@ -167,6 +172,13 @@ function Navbar() {
       ) {
         setShowSuggestions(false);
       }
+      // Close user dropdown when clicking outside
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target)
+      ) {
+        setIsUserDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -258,10 +270,23 @@ function Navbar() {
 
   const handleRegisterProperty = () => {
     if (user) {
-      navigate("/add-property");
+      // Check if user is a buyer (user role) - needs email verification to list property
+      const userRole = user.role || "user";
+      if (userRole === "user") {
+        // Buyer needs to verify email first
+        setIsVerificationModalOpen(true);
+      } else {
+        // Owner or agent - can directly add property
+        navigate("/add-property");
+      }
     } else {
       setIsAuthModalOpen(true);
     }
+  };
+
+  const handleVerificationSuccess = () => {
+    // After successful verification, navigate to add property
+    navigate("/add-property");
   };
 
   // Classes that adapt: white background always
@@ -277,6 +302,12 @@ function Navbar() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+      <EmailVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        user={user}
+        onVerified={handleVerificationSuccess}
       />
       <nav className={navWrapperClass}>
         <div className="mx-auto flex items-center justify-between px-6 lg:px-8 max-w-[1400px]">
@@ -554,17 +585,126 @@ function Navbar() {
             </div>
 
             {user ? (
-              <div className="flex items-center space-x-3">
-                <Link 
-                  to="/profile" 
-                  className={`${navTextClass} font-medium text-sm hover:text-red-600 transition-colors flex items-center gap-1`}
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
                 >
-                  <AiOutlineUser className="text-lg" />
-                  Hi, {user.name?.split(" ")[0] || "User"}
-                </Link>
-                <button onClick={handleLogout} className="text-sm text-red-400 hover:underline">
-                  Logout
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
+                  <svg className={`w-4 h-4 text-gray-600 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+
+                {/* User Dropdown Menu */}
+                {isUserDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        {user.profileImage ? (
+                          <img
+                            src={user.profileImage}
+                            alt={user.name}
+                            className="w-11 h-11 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-lg">
+                            {user.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{user.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                            user.role === 'agent' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {user.role === 'owner' ? '🏠 Property Owner' : user.role === 'agent' ? '👔 Agent' : '👤 Buyer'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <AiOutlineUser className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium">My Profile</span>
+                      </Link>
+
+                      {(user.role === 'owner' || user.role === 'agent') && (
+                        <Link
+                          to="/my-properties"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <BsHouseDoor className="w-5 h-5 text-gray-500" />
+                          <span className="font-medium">My Properties</span>
+                        </Link>
+                      )}
+
+                      <Link
+                        to="/saved-properties"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <AiOutlineHeart className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium">Saved Properties</span>
+                      </Link>
+
+                      <Link
+                        to="/agreements"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <HiOutlineDocumentText className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium">My Agreements</span>
+                      </Link>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 my-1"></div>
+
+                    {/* Settings & Logout */}
+                    <div className="py-1">
+                      <Link
+                        to="/profile?tab=settings"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <AiOutlineSetting className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium">Settings</span>
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsUserDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <AiOutlineLogout className="w-5 h-5" />
+                        <span className="font-medium">Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <Link to="/login" className={`flex items-center space-x-1 ${navTextClass} hover:text-red-600 transition-colors duration-200`}>
@@ -684,37 +824,71 @@ function Navbar() {
             {/* Footer / User Section */}
             <div className="p-5 border-t bg-slate-50">
               {user ? (
-                <div className="flex flex-col gap-4">
-                  <Link
-                    to="/profile"
-                    onClick={toggleMenu}
-                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition"
-                  >
-                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-lg">
-                      {user.name?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                    <div>
+                <div className="flex flex-col gap-3">
+                  {/* User Info */}
+                  <div className="flex items-center gap-3 p-2">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    )}
+                    <div className="flex-1">
                       <p className="font-semibold text-slate-800">{user.name || "User"}</p>
-                      <p className="text-xs text-slate-500">{user.email}</p>
+                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                        user.role === 'agent' ? 'bg-purple-100 text-purple-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {user.role === 'owner' ? 'Owner' : user.role === 'agent' ? 'Agent' : 'Buyer'}
+                      </span>
                     </div>
-                  </Link>
-                  <div className="flex gap-2">
+                  </div>
+
+                  {/* Quick Links */}
+                  <div className="space-y-1">
                     <Link
                       to="/profile"
                       onClick={toggleMenu}
-                      className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg font-medium hover:bg-red-700 transition"
+                      className="flex items-center gap-3 px-3 py-2.5 text-slate-700 font-medium rounded-lg hover:bg-white transition"
                     >
                       <AiOutlineUser size={18} />
-                      Profile
+                      My Profile
                     </Link>
-                    <button
-                      onClick={() => { handleLogout(); toggleMenu(); }}
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-200 text-red-600 py-2.5 rounded-lg font-medium hover:bg-red-50 transition"
+                    {(user.role === 'owner' || user.role === 'agent') && (
+                      <Link
+                        to="/my-properties"
+                        onClick={toggleMenu}
+                        className="flex items-center gap-3 px-3 py-2.5 text-slate-700 font-medium rounded-lg hover:bg-white transition"
+                      >
+                        <BsHouseDoor size={18} />
+                        My Properties
+                      </Link>
+                    )}
+                    <Link
+                      to="/saved-properties"
+                      onClick={toggleMenu}
+                      className="flex items-center gap-3 px-3 py-2.5 text-slate-700 font-medium rounded-lg hover:bg-white transition"
                     >
-                      <AiOutlineLogout size={18} />
-                      Logout
-                    </button>
+                      <AiOutlineHeart size={18} />
+                      Saved Properties
+                    </Link>
                   </div>
+
+                  {/* Logout Button */}
+                  <button
+                    onClick={() => { handleLogout(); toggleMenu(); }}
+                    className="w-full flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 py-2.5 rounded-lg font-medium hover:bg-red-50 transition mt-2"
+                  >
+                    <AiOutlineLogout size={18} />
+                    Logout
+                  </button>
                 </div>
               ) : (
                 <Link

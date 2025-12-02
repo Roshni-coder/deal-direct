@@ -12,6 +12,8 @@ import Contact from "./Pages/Contact/Contact.jsx";
 import SampleAgreement from "./Components/SampleAgreement/SampleAgreement.jsx";
 import AddProperty from "./Pages/AddProperty/AddProperty.jsx";
 import Profile from "./Pages/Profile/Profile.jsx";
+import MyProperties from "./Pages/MyProperties/MyProperties.jsx";
+import SavedProperties from "./Pages/SavedProperties/SavedProperties.jsx";
 import ScrollToTop from "./Components/ScrollToTop/ScrollToTop.jsx";
 
 function App() {
@@ -31,6 +33,8 @@ function App() {
           <Route path="/agreements" element={<SampleAgreement />} />
           <Route path="/add-property" element={<AddProperty />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-properties" element={<MyProperties />} />
+          <Route path="/saved-properties" element={<SavedProperties />} />
         </Routes>
         <Footer />
       </Router>

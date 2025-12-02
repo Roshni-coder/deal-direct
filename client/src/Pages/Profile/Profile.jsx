@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ReactCrop, { centerCrop, makeAspectCrop } from "react-image-crop";
@@ -24,6 +24,13 @@ import {
   RotateCw,
   ZoomIn,
   ZoomOut,
+  Settings,
+  Shield,
+  Trash2,
+  LogOut,
+  HelpCircle,
+  FileText,
+  Heart,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -47,13 +54,20 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "profile");
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Image cropping states
   const [showCropModal, setShowCropModal] = useState(false);
@@ -486,7 +500,7 @@ const Profile = () => {
               {/* Navigation Tabs */}
               <nav className="p-4 space-y-1">
                 <button
-                  onClick={() => setActiveTab("profile")}
+                  onClick={() => handleTabChange("profile")}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
                     activeTab === "profile"
                       ? "bg-red-50 text-red-600"
@@ -497,7 +511,7 @@ const Profile = () => {
                   <span className="font-medium">Profile Info</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("security")}
+                  onClick={() => handleTabChange("security")}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
                     activeTab === "security"
                       ? "bg-red-50 text-red-600"
@@ -508,7 +522,7 @@ const Profile = () => {
                   <span className="font-medium">Security</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("preferences")}
+                  onClick={() => handleTabChange("preferences")}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
                     activeTab === "preferences"
                       ? "bg-red-50 text-red-600"
@@ -516,15 +530,39 @@ const Profile = () => {
                   }`}
                 >
                   <Bell size={18} />
-                  <span className="font-medium">Preferences</span>
+                  <span className="font-medium">Notifications</span>
                 </button>
                 <button
-                  onClick={() => navigate("/properties")}
+                  onClick={() => handleTabChange("settings")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
+                    activeTab === "settings"
+                      ? "bg-red-50 text-red-600"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Settings size={18} />
+                  <span className="font-medium">Settings</span>
+                </button>
+                
+                {/* Divider */}
+                <div className="border-t border-slate-100 my-2"></div>
+                
+                {(user?.role === 'owner' || user?.role === 'agent') && (
+                  <Link
+                    to="/my-properties"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition"
+                  >
+                    <Building2 size={18} />
+                    <span className="font-medium">My Properties</span>
+                  </Link>
+                )}
+                <Link
+                  to="/saved-properties"
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition"
                 >
-                  <Building2 size={18} />
-                  <span className="font-medium">My Properties</span>
-                </button>
+                  <Heart size={18} />
+                  <span className="font-medium">Saved Properties</span>
+                </Link>
               </nav>
             </div>
           </div>
@@ -1006,6 +1044,196 @@ const Profile = () => {
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === "settings" && (
+              <div className="space-y-6">
+                {/* Account Settings */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  <div className="p-6 border-b border-slate-100">
+                    <h3 className="text-xl font-bold text-slate-800">Account Settings</h3>
+                    <p className="text-slate-500 text-sm mt-1">
+                      Manage your account preferences and data
+                    </p>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    {/* Account Type */}
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 rounded-xl">
+                          <Shield size={20} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-slate-800">Account Type</h4>
+                          <p className="text-sm text-slate-500">
+                            {user?.role === 'owner' ? 'Property Owner - Can list properties' : 
+                             user?.role === 'agent' ? 'Agent - Full access' : 
+                             'Buyer - Browse and save properties'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                        user?.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                        user?.role === 'agent' ? 'bg-purple-100 text-purple-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {user?.role === 'owner' ? '🏠 Owner' : user?.role === 'agent' ? '👔 Agent' : '👤 Buyer'}
+                      </span>
+                    </div>
+
+                    {/* Email Verification */}
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-green-100 rounded-xl">
+                          <Mail size={20} className="text-green-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-slate-800">Email Verification</h4>
+                          <p className="text-sm text-slate-500">{formData.email}</p>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                        ✓ Verified
+                      </span>
+                    </div>
+
+                    {/* Member Since */}
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-100 rounded-xl">
+                          <Calendar size={20} className="text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-slate-800">Member Since</h4>
+                          <p className="text-sm text-slate-500">
+                            {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            }) : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  <div className="p-6 border-b border-slate-100">
+                    <h3 className="text-xl font-bold text-slate-800">Quick Links</h3>
+                    <p className="text-slate-500 text-sm mt-1">
+                      Helpful resources and support
+                    </p>
+                  </div>
+
+                  <div className="p-4 space-y-2">
+                    <Link
+                      to="/about"
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition">
+                          <HelpCircle size={18} className="text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-700">About DealDirect</span>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </Link>
+
+                    <Link
+                      to="/contact"
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition">
+                          <Phone size={18} className="text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-700">Contact Support</span>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </Link>
+
+                    <Link
+                      to="/agreements"
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition">
+                          <FileText size={18} className="text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-700">Rent Agreements</span>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </Link>
+
+                    <a
+                      href="#"
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition">
+                          <Shield size={18} className="text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-700">Privacy Policy</span>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </a>
+
+                    <a
+                      href="#"
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition">
+                          <FileText size={18} className="text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-700">Terms of Service</span>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Danger Zone */}
+                <div className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+                  <div className="p-6 border-b border-red-100 bg-red-50">
+                    <h3 className="text-xl font-bold text-red-800">Danger Zone</h3>
+                    <p className="text-red-600 text-sm mt-1">
+                      Irreversible actions - proceed with caution
+                    </p>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl">
+                      <div>
+                        <h4 className="font-medium text-slate-800">Log out of all devices</h4>
+                        <p className="text-sm text-slate-500">
+                          This will log you out from all active sessions
+                        </p>
+                      </div>
+                      <button className="px-4 py-2 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 font-medium text-sm transition">
+                        Log Out All
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border border-red-200 rounded-xl bg-red-50/50">
+                      <div>
+                        <h4 className="font-medium text-red-800">Delete Account</h4>
+                        <p className="text-sm text-red-600">
+                          Permanently delete your account and all data
+                        </p>
+                      </div>
+                      <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm transition flex items-center gap-2">
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

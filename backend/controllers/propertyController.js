@@ -1,5 +1,6 @@
 import Property from "../models/Property.js";
 import { cloudinary } from "../middleware/upload.js";
+import mongoose from "mongoose";
 
 const isCloudinaryUrl = (img = "") => typeof img === "string" && img.includes("cloudinary.com");
 
@@ -144,6 +145,11 @@ export const addProperty = async (req, res) => {
 
     // Explicitly set isApproved to true for all new properties (Auto-publish)
     data.isApproved = true;
+    
+    // Set owner from auth token if available
+    if (req.user?._id) {
+      data.owner = req.user._id;
+    }
 
     console.log("Final data being saved:", JSON.stringify(data, null, 2)); // Debug log
 
@@ -173,10 +179,16 @@ export const getProperties = async (req, res) => {
 // Get by ID
 export const getPropertyById = async (req, res) => {
   try {
-    const prop = await Property.findById(req.params.id)
+    // Increment view count
+    const prop = await Property.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    )
       .populate("category")
       .populate("subcategory")
-      .populate("propertyType");
+      .populate("propertyType")
+      .populate("owner", "name email phone profileImage");
 
     if (!prop) return res.status(404).json({ message: "Not found" });
 
@@ -346,6 +358,239 @@ export const getAllPropertiesList = async (req, res) => {
 
     res.status(200).json({ success: true, data: properties.map((item) => withPublicImages(req, item)) });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Get User's Own Properties (Owner Dashboard)
+export const getMyProperties = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    console.log("Fetching properties for user:", userId);
+    
+    // Convert to ObjectId if it's a valid string
+    let ownerQuery = userId;
+    if (typeof userId === 'string' && mongoose.Types.ObjectId.isValid(userId)) {
+      ownerQuery = new mongoose.Types.ObjectId(userId);
+    }
+    
+    const properties = await Property.find({ owner: ownerQuery })
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("propertyType", "name")
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${properties.length} properties for user ${userId}`);
+
+    res.status(200).json({ 
+      success: true, 
+      data: properties.map((item) => withPublicImages(req, item)),
+      count: properties.length
+    });
+  } catch (error) {
+    console.error("Error in getMyProperties:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Delete User's Own Property
+export const deleteMyProperty = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const propertyId = req.params.id;
+
+    const property = await Property.findOne({ _id: propertyId, owner: userId });
+    
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found or you don't have permission to delete it" });
+    }
+
+    // Delete images from Cloudinary if they exist
+    const allImages = [
+      ...(property.images || []),
+      ...Object.values(property.categorizedImages?.residential || {}).flat(),
+      ...Object.values(property.categorizedImages?.commercial || {}).flat()
+    ];
+
+    for (const imageUrl of allImages) {
+      if (isCloudinaryUrl(imageUrl)) {
+        try {
+          // Extract public_id from Cloudinary URL
+          const urlParts = imageUrl.split('/');
+          const publicIdWithExtension = urlParts.slice(-2).join('/');
+          const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, '');
+          await cloudinary.uploader.destroy(publicId);
+        } catch (e) {
+          console.error("Error deleting image from Cloudinary:", e);
+        }
+      }
+    }
+
+    await Property.findByIdAndDelete(propertyId);
+
+    res.status(200).json({ success: true, message: "Property deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Mark Interest in a Property (Buyer)
+export const markInterested = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const propertyId = req.params.id;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+      return res.status(400).json({ success: false, message: "Invalid property ID" });
+    }
+
+    const property = await Property.findById(propertyId);
+    
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    // Check if user is the owner (can't be interested in own property)
+    if (property.owner && property.owner.toString() === userId.toString()) {
+      return res.status(400).json({ success: false, message: "You cannot express interest in your own property" });
+    }
+
+    // Check if user already expressed interest
+    const alreadyInterested = property.interestedUsers?.some(
+      (item) => item.user && item.user.toString() === userId.toString()
+    );
+
+    if (alreadyInterested) {
+      return res.status(400).json({ success: false, message: "You have already expressed interest in this property" });
+    }
+
+    // Add user to interestedUsers and increment likes count
+    await Property.findByIdAndUpdate(propertyId, {
+      $push: { interestedUsers: { user: userId, interestedAt: new Date() } },
+      $inc: { likes: 1 }
+    });
+
+    console.log(`User ${userId} expressed interest in property ${propertyId}`);
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Interest registered successfully! The owner will be notified." 
+    });
+  } catch (error) {
+    console.error("Error in markInterested:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Check if user is interested in a property
+export const checkInterested = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const propertyId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+      return res.status(400).json({ success: false, isInterested: false });
+    }
+
+    const property = await Property.findById(propertyId);
+    
+    if (!property) {
+      return res.status(404).json({ success: false, isInterested: false });
+    }
+
+    const isInterested = property.interestedUsers?.some(
+      (item) => item.user && item.user.toString() === userId.toString()
+    );
+
+    res.status(200).json({ success: true, isInterested });
+  } catch (error) {
+    res.status(500).json({ success: false, isInterested: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Get User's Saved/Interested Properties
+export const getSavedProperties = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Convert to ObjectId if it's a valid string
+    let userQuery = userId;
+    if (typeof userId === 'string' && mongoose.Types.ObjectId.isValid(userId)) {
+      userQuery = new mongoose.Types.ObjectId(userId);
+    }
+
+    // Find all properties where user is in interestedUsers
+    const properties = await Property.find({
+      "interestedUsers.user": userQuery
+    })
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("propertyType", "name")
+      .sort({ createdAt: -1 });
+
+    // Add the interestedAt date to each property
+    const propertiesWithDate = properties.map(prop => {
+      const plain = prop.toObject ? prop.toObject() : prop;
+      const userInterest = plain.interestedUsers?.find(
+        item => item.user && item.user.toString() === userQuery.toString()
+      );
+      plain.interestedAt = userInterest?.interestedAt;
+      // Process images
+      plain.images = (plain.images || []).map(img => {
+        if (!img) return "";
+        if (img.startsWith("http://") || img.startsWith("https://")) return img;
+        return img;
+      });
+      return plain;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: propertiesWithDate,
+      count: propertiesWithDate.length
+    });
+  } catch (error) {
+    console.error("Error in getSavedProperties:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 🔒 Protected: Remove from Saved/Interested Properties
+export const removeSavedProperty = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const propertyId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+      return res.status(400).json({ success: false, message: "Invalid property ID" });
+    }
+
+    const property = await Property.findById(propertyId);
+    
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    // Check if user is in interestedUsers
+    const isInterested = property.interestedUsers?.some(
+      (item) => item.user && item.user.toString() === userId.toString()
+    );
+
+    if (!isInterested) {
+      return res.status(400).json({ success: false, message: "Property not in your saved list" });
+    }
+
+    // Remove user from interestedUsers and decrement likes
+    await Property.findByIdAndUpdate(propertyId, {
+      $pull: { interestedUsers: { user: userId } },
+      $inc: { likes: -1 }
+    });
+
+    res.status(200).json({ success: true, message: "Property removed from saved" });
+  } catch (error) {
+    console.error("Error in removeSavedProperty:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

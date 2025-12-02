@@ -10,21 +10,42 @@ import {
   disapproveProperty,
   searchProperties,
   filterProperties,
+  getMyProperties,
+  deleteMyProperty,
+  markInterested,
+  checkInterested,
+  getSavedProperties,
+  removeSavedProperty,
 } from "../controllers/propertyController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
+import { authMiddleware } from "../middleware/authUser.js";
 import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
 // ✅ Routes - Using Cloudinary upload middleware
 // Handle both legacy images and categorized images
-router.post("/add", upload.fields([
+router.post("/add", authMiddleware, upload.fields([
   { name: "images", maxCount: 15 },
   { name: "categorizedImages", maxCount: 50 }
 ]), addProperty);
+
+// Public listing routes
 router.get("/list", getProperties);
 router.get("/property-list", getAllPropertiesList); // 🟢 For frontend home page
-router.get("/:id", getPropertyById);
+
+// Public search & filter (MUST be before /:id)
+router.get("/search", searchProperties);
+router.get("/filter", filterProperties);
+
+// 🔒 Protected Routes - User's Own Properties (MUST be before /:id)
+router.get("/my-properties", authMiddleware, getMyProperties);
+
+// 🔒 Protected: Saved/Interested Properties routes (MUST be before /:id)
+router.get("/saved", authMiddleware, getSavedProperties);
+router.delete("/saved/:id", authMiddleware, removeSavedProperty);
+
+// Admin routes (with specific paths before /:id)
 router.put("/edit/:id", protectAdmin, upload.fields([
   { name: "images", maxCount: 15 },
   { name: "categorizedImages", maxCount: 50 }
@@ -32,7 +53,13 @@ router.put("/edit/:id", protectAdmin, upload.fields([
 router.delete("/delete/:id", protectAdmin, deleteProperty);
 router.put("/approve/:id", protectAdmin, approveProperty);
 router.put("/disapprove/:id", protectAdmin, disapproveProperty);
-// Public search endpoint
-router.get("/search", searchProperties);
-router.get("/filter", filterProperties);
+
+// 🔒 Protected: Interest routes (MUST be before /:id)
+router.post("/interested/:id", authMiddleware, markInterested);
+router.get("/interested/:id/check", authMiddleware, checkInterested);
+
+// Dynamic ID routes (MUST be last)
+router.get("/:id", getPropertyById);
+router.delete("/:id", authMiddleware, deleteMyProperty);
+
 export default router;

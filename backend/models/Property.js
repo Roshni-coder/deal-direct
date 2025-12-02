@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 
 const propertySchema = new mongoose.Schema(
   {
+    // Owner reference
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    
     propertyType: { type: mongoose.Schema.Types.ObjectId, ref: "PropertyType" },
     propertyTypeName: { type: String }, // Stores exact property type name like "Apartment / Flat", "Office Space"
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
@@ -92,6 +95,18 @@ const propertySchema = new mongoose.Schema(
     },
     
     isApproved: { type: Boolean, default: true },
+    
+    // Property Status & Analytics
+    status: { type: String, enum: ["active", "pending", "sold", "rented", "inactive"], default: "active" },
+    views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+    inquiries: { type: Number, default: 0 },
+    
+    // Track users who expressed interest
+    interestedUsers: [{
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      interestedAt: { type: Date, default: Date.now }
+    }],
 
     // Listing Details
     listingType: { type: String, enum: ["Rent", "Sell"], default: "Rent" },

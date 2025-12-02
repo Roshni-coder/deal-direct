@@ -3,15 +3,16 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck, RefreshCw } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck, RefreshCw, Home, Search } from "lucide-react";
 import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function Register() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "", agree: false });
+  const [userType, setUserType] = useState("buyer"); // "buyer" or "owner"
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1: Details, 2: OTP
+  const [step, setStep] = useState(1); // 1: Details, 2: OTP (only for owners)
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -34,23 +35,44 @@ export default function Register() {
     setFormData((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSendOtp = async (e) => {
+  // Handle registration - different flow for buyer vs owner
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (!formData.agree) return toast.error("Please accept the Terms & Privacy Policy");
 
     setIsLoading(true);
     try {
-      await axios.post(`${API_BASE}/api/users/register`, {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
+      if (userType === "buyer") {
+        // Buyers: Direct registration without OTP
+        const res = await axios.post(`${API_BASE}/api/users/register-direct`, {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: "user"
+        });
 
-      toast.success("OTP sent to your email!");
-      setStep(2);
-      setResendTimer(60); // Start 60 second countdown
+        const { token, user } = res.data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        window.dispatchEvent(new Event("auth-change"));
+
+        toast.success("Registration successful! Welcome to DealDirect.");
+        navigate("/");
+      } else {
+        // Owners: Require OTP verification
+        await axios.post(`${API_BASE}/api/users/register`, {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: "owner"
+        });
+
+        toast.success("OTP sent to your email! Please verify to complete registration.");
+        setStep(2);
+        setResendTimer(60);
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send OTP. Please try again.");
+      toast.error(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +174,46 @@ export default function Register() {
                   <p className="text-slate-500 mt-2">Join us to unlock exclusive property deals.</p>
                 </div>
 
-                <form onSubmit={handleSendOtp} className="space-y-5">
+                {/* User Type Selector */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-slate-700 block mb-3">I want to</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setUserType("buyer")}
+                      className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                        userType === "buyer"
+                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                      }`}
+                    >
+                      <Search className={`w-6 h-6 mb-2 ${userType === "buyer" ? "text-blue-600" : "text-slate-400"}`} />
+                      <span className="font-semibold text-sm">Find Property</span>
+                      <span className="text-xs mt-1 opacity-70">Browse & Buy</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserType("owner")}
+                      className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                        userType === "owner"
+                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                      }`}
+                    >
+                      <Home className={`w-6 h-6 mb-2 ${userType === "owner" ? "text-blue-600" : "text-slate-400"}`} />
+                      <span className="font-semibold text-sm">List Property</span>
+                      <span className="text-xs mt-1 opacity-70">Sell or Rent</span>
+                    </button>
+                  </div>
+                  {userType === "owner" && (
+                    <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Email verification required to list properties
+                    </p>
+                  )}
+                </div>
+
+                <form onSubmit={handleRegister} className="space-y-5">
                   {/* Name Input */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700 block">Full Name</label>
@@ -245,10 +306,10 @@ export default function Register() {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Sending OTP...
+                        {userType === "owner" ? "Sending OTP..." : "Creating Account..."}
                       </>
                     ) : (
-                      "Create Account"
+                      userType === "owner" ? "Verify & Create Account" : "Create Account"
                     )}
                   </button>
                 </form>

@@ -83,7 +83,7 @@ const sendOTPEmail = async (email, otp, name = "User") => {
   return getTransporter().sendMail(mailOptions);
 };
 
-// ✅ Register User (Step 1: Send OTP)
+// ✅ Register User (Step 1: Send OTP) - For owners who need verification
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -98,7 +98,8 @@ export const registerUser = async (req, res) => {
     console.log("Generated OTP for " + email + ":", otp); // For debugging/dev
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     const hashedPassword = await bcrypt.hash(password, 10);
-    const normalizedRole = role === "agent" ? "agent" : "user";
+    // Set role - owner if specified, otherwise user
+    const normalizedRole = role === "owner" ? "owner" : role === "agent" ? "agent" : "user";
 
     if (!user) {
       // Create new unverified user
@@ -138,6 +139,63 @@ export const registerUser = async (req, res) => {
     res.status(200).json({
       message: "OTP sent to your email. Please verify to complete registration.",
       email: email,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ Register User Directly (For Buyers - No OTP Required)
+export const registerUserDirect = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        return res.status(400).json({ message: "User already exists. Please login." });
+      } else {
+        // If unverified user exists, they might be trying to re-register
+        // Delete the old unverified account
+        await User.deleteOne({ _id: existingUser._id });
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create verified user directly (buyers don't need OTP)
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "user", // Buyers are always "user" role
+      isVerified: true, // Auto-verify buyers
+    });
+
+    // Generate Token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    console.log("✅ Buyer registered directly (no OTP):", email);
+
+    res.status(201).json({
+      message: "Registration successful! Welcome to DealDirect.",
+      token,
+      user: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -224,9 +282,12 @@ export const verifyOtp = async (req, res) => {
       message: "Email verified and registration successful",
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
         role: user.role,
         createdAt: user.createdAt,
       },
@@ -343,9 +404,12 @@ export const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
         role: user.role || "user",
         createdAt: user.createdAt,
       },
@@ -542,4 +606,154 @@ export const changePassword = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to change password", error: err.message });
   }
+};
+
+// ✅ Send Upgrade OTP (For buyers who want to become owners)
+export const sendUpgradeOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user is already an owner
+    if (user.role === "owner") {
+      return res.status(400).json({ message: "You are already registered as a property owner" });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    console.log("Upgrade OTP for " + email + ":", otp);
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    // Send OTP Email
+    try {
+      await sendUpgradeOTPEmail(email, otp, user.name);
+      console.log("✅ Upgrade OTP sent to:", email);
+    } catch (emailError) {
+      console.error("❌ Error sending upgrade OTP:", emailError.message);
+      return res.status(500).json({ message: "Failed to send OTP. Please try again." });
+    }
+
+    res.status(200).json({
+      message: "Verification OTP sent to your email",
+      email: email,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ Verify Upgrade OTP (Upgrade buyer to owner)
+export const verifyUpgradeOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "owner") {
+      return res.status(400).json({ message: "You are already a property owner" });
+    }
+
+    if (user.otp !== otp || user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Upgrade user to owner
+    user.role = "owner";
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    console.log("✅ User upgraded to owner:", email);
+
+    res.status(200).json({
+      message: "Email verified! You can now list properties.",
+      token,
+      user: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Send Upgrade OTP Email helper function
+const sendUpgradeOTPEmail = async (email, otp, name = "User") => {
+  const mailOptions = {
+    from: `"DealDirect" <${process.env.SENDER_EMAIL || process.env.SMTP_EMAIL}>`,
+    to: email,
+    subject: "🏠 DealDirect - Verify to List Your Property",
+    html: `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">DealDirect</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0;">Property Owner Verification</p>
+        </div>
+        
+        <div style="background: #ffffff; padding: 40px 30px; border: 1px solid #e5e7eb; border-top: none;">
+          <h2 style="color: #1f2937; margin: 0 0 20px;">Hello ${name}! 🏠</h2>
+          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            You're one step away from listing your property on DealDirect! Please verify your email to become a property owner.
+          </p>
+          
+          <div style="background: #eff6ff; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0; border: 1px solid #bfdbfe;">
+            <p style="color: #1e40af; font-size: 14px; margin: 0 0 10px; font-weight: 600;">Your Verification Code</p>
+            <div style="font-size: 36px; font-weight: bold; color: #2563eb; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+              ${otp}
+            </div>
+          </div>
+          
+          <div style="background: #fef3c7; border-radius: 8px; padding: 15px; margin: 25px 0;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">
+              <strong>🎉 Benefits of becoming an owner:</strong><br>
+              • List unlimited properties for free<br>
+              • Connect directly with genuine buyers<br>
+              • Access owner dashboard & analytics
+            </p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin: 25px 0 0;">
+            ⏰ This OTP is valid for <strong>10 minutes</strong>. Please do not share this code with anyone.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          
+          <p style="color: #9ca3af; font-size: 12px; margin: 0; text-align: center;">
+            If you didn't request this verification, please ignore this email.<br>
+            © ${new Date().getFullYear()} DealDirect. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `,
+    text: `Hello ${name}!\n\nYour verification code to become a property owner on DealDirect is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
+  };
+
+  return getTransporter().sendMail(mailOptions);
 };

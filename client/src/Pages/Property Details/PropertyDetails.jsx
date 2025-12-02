@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   HeartIcon,
@@ -23,9 +23,12 @@ import VisitModal from "../../Components/VisitModal/VisitModal";
 const PropertyDetails = () => {
   const { state } = useLocation();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [property, setProperty] = useState(state?.property || null);
   const [loading, setLoading] = useState(!state?.property);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isInterested, setIsInterested] = useState(false);
+  const [interestLoading, setInterestLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
@@ -41,6 +44,26 @@ const PropertyDetails = () => {
   // ---- Scroll to top on page load ----
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [id]);
+
+  // ---- Check if user is already interested ----
+  useEffect(() => {
+    const checkUserInterest = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || !id) return;
+
+      try {
+        const res = await axios.get(`${API_BASE}/api/properties/interested/${id}/check`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          setIsInterested(res.data.isInterested);
+        }
+      } catch (error) {
+        console.error("Error checking interest status:", error);
+      }
+    };
+    checkUserInterest();
   }, [id]);
 
   // ---- Fetch property ----
@@ -171,8 +194,44 @@ const PropertyDetails = () => {
   const isResidential = property.category?.name === "Residential" || property.category === "Residential";
   const isCommercial = property.category?.name === "Commercial" || property.category === "Commercial";
 
-  const handleInterest = () => {
-    toast.success("Interest registered! The owner will contact you shortly.");
+  const handleInterest = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    
+    if (!token || !user) {
+      toast.info("Please login to express interest in this property");
+      navigate("/login", { state: { from: `/properties/${id}` } });
+      return;
+    }
+
+    // Check if already interested
+    if (isInterested) {
+      toast.info("You have already expressed interest in this property");
+      return;
+    }
+
+    setInterestLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE}/api/properties/interested/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        setIsInterested(true);
+        toast.success("Interest registered! The owner will be notified.");
+      } else {
+        toast.error(res.data.message || "Failed to register interest");
+      }
+    } catch (error) {
+      console.error("Error registering interest:", error);
+      const errorMsg = error.response?.data?.message || "Failed to register interest";
+      toast.error(errorMsg);
+    } finally {
+      setInterestLoading(false);
+    }
   };
 
   return (
@@ -321,9 +380,30 @@ const PropertyDetails = () => {
           <div className="mt-auto">
             <button
               onClick={handleInterest}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95"
+              disabled={interestLoading || isInterested}
+              className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed ${
+                isInterested 
+                  ? "bg-green-600 text-white" 
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
             >
-              <HeartIcon className="w-5 h-5" /> I'm Interested
+              {interestLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Registering...
+                </>
+              ) : isInterested ? (
+                <>
+                  <CheckCircleIcon className="w-5 h-5" /> Interest Registered
+                </>
+              ) : (
+                <>
+                  <HeartIcon className="w-5 h-5" /> I'm Interested
+                </>
+              )}
             </button>
           </div>
         </div>

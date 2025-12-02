@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllUsers, loginUser, registerUser, verifyOtp, resendOtp, getProfile, updateProfile, changePassword } from "../controllers/userController.js";
+import { getAllUsers, loginUser, registerUser, registerUserDirect, verifyOtp, resendOtp, getProfile, updateProfile, changePassword, sendUpgradeOtp, verifyUpgradeOtp } from "../controllers/userController.js";
 import multer from "multer";
 import { addProperty } from "../controllers/propertyController.js";
 import { authMiddleware } from "../middleware/authUser.js";
@@ -15,10 +15,15 @@ const localStorage = multer.diskStorage({
 const localUpload = multer({ storage: localStorage });
 
 // ✅ Auth Routes
-router.post("/register", registerUser);
+router.post("/register", registerUser);           // Owner registration (with OTP)
+router.post("/register-direct", registerUserDirect); // Buyer registration (no OTP)
 router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", resendOtp);
 router.post("/login", loginUser);
+
+// ✅ Upgrade Routes (Buyer to Owner)
+router.post("/send-upgrade-otp", authMiddleware, sendUpgradeOtp);
+router.post("/verify-upgrade-otp", authMiddleware, verifyUpgradeOtp);
 
 // ✅ Profile Routes (Protected)
 router.get("/profile", authMiddleware, getProfile);
