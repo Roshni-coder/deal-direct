@@ -120,8 +120,8 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans pt-20 pb-10 px-4">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row md:min-h-[600px]">
 
         {/* LEFT SIDE - IMAGE & BRANDING */}
         <div className="md:w-1/2 relative hidden md:flex flex-col justify-between p-12 text-white">
