@@ -66,12 +66,11 @@ const PropertyDetails = () => {
     checkUserInterest();
   }, [id]);
 
-  // ---- Fetch property ----
+  // ---- Fetch property and increment view ----
   useEffect(() => {
-    if (property) return;
-
     const fetchProperty = async () => {
       try {
+        // Always call the API to increment view count
         const res = await axios.get(`${API_BASE}/api/properties/${id}`);
         if (res.data) {
           setProperty(res.data);
@@ -80,13 +79,16 @@ const PropertyDetails = () => {
         }
       } catch (error) {
         console.error(error);
-        setError("Error fetching property details");
+        // Only set error if we don't have property from state
+        if (!property) {
+          setError("Error fetching property details");
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchProperty();
-  }, [id, property]);
+  }, [id]);
 
   const buildImageUrl = (img) => {
     if (!img) return "";

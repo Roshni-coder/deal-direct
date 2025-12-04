@@ -1,14 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
     Home, MapPin, IndianRupee, Layers, Image as ImageIcon, Calendar,
     ChevronLeft, Upload, Check, X, Building2, Users, Utensils, Car, Zap,
-    Shield, Store, ArrowRight, FileText, Tag, Wifi, LandPlot, Plus, AlertTriangle
+    Shield, Store, ArrowRight, FileText, Tag, Wifi, LandPlot, Plus, AlertTriangle, Navigation
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmailVerificationModal from "../../Components/EmailVerificationModal/EmailVerificationModal";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix for default marker icon in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+// Custom marker icon
+const customIcon = new L.Icon({
+    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Map click handler component
+function LocationMarker({ position, setPosition, setFormData }) {
+    useMapEvents({
+        click(e) {
+            const { lat, lng } = e.latlng;
+            setPosition([lat, lng]);
+            setFormData(prev => ({
+                ...prev,
+                latitude: lat.toFixed(6),
+                longitude: lng.toFixed(6)
+            }));
+        },
+    });
+
+    return position ? <Marker position={position} icon={customIcon} /> : null;
+}
+
+// Component to recenter map
+function RecenterMap({ position }) {
+    const map = useMap();
+    useEffect(() => {
+        if (position) {
+            map.setView(position, 15);
+        }
+    }, [position, map]);
+    return null;
+}
 
 // API Base URL
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -252,8 +302,22 @@ export default function AddProperty() {
         reraId: "", occupancyCertificate: false, tradeLicense: false, fireNoc: false,
         availableFrom: new Date().toISOString().split('T')[0], petFriendly: "No", allowedFor: "Family", ageOfProperty: "",
         city: "", locality: "", landmark: "", address: "", nearby: [],
+        latitude: "", longitude: "",
         description: "", videoUrl: "", showHelpTips: true
     });
+
+    // Map state
+    const [mapPosition, setMapPosition] = useState(null);
+    const [isLocating, setIsLocating] = useState(false);
+    const defaultCenter = [20.5937, 78.9629]; // Center of India
+
+    // Location autocomplete state
+    const [locationSuggestions, setLocationSuggestions] = useState([]);
+    const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+    const [activeLocationField, setActiveLocationField] = useState(null); // 'city', 'locality', or 'address'
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchTimeoutRef = useRef(null);
+    const suggestionsRef = useRef(null);
 
     // Fetch metadata
     useEffect(() => {
@@ -425,8 +489,24 @@ export default function AddProperty() {
             const areaData = { builtUpSqft: formData.builtUpArea, carpetSqft: formData.carpetArea, superBuiltUpSqft: formData.superBuiltUpArea, plotSqft: formData.plotArea };
             submitData.append("area", JSON.stringify(areaData));
 
-            const addressData = { city: formData.city, area: formData.locality, line: formData.address, landmark: formData.landmark, nearby: formData.nearby || [] };
+            const addressData = { 
+                city: formData.city, 
+                area: formData.locality, 
+                line: formData.address, 
+                landmark: formData.landmark, 
+                nearby: formData.nearby || [],
+                coordinates: formData.latitude && formData.longitude ? {
+                    latitude: parseFloat(formData.latitude),
+                    longitude: parseFloat(formData.longitude)
+                } : null
+            };
             submitData.append("address", JSON.stringify(addressData));
+            
+            // Add coordinates separately for easy access
+            if (formData.latitude && formData.longitude) {
+                submitData.append("latitude", formData.latitude);
+                submitData.append("longitude", formData.longitude);
+            }
 
             let featuresData = {
                 listingType: formData.listingType,
@@ -571,6 +651,210 @@ export default function AddProperty() {
         </div>
     );
 
+    // Get current location using Geolocation API
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setMapPosition([latitude, longitude]);
+                setFormData(prev => ({
+                    ...prev,
+                    latitude: latitude.toFixed(6),
+                    longitude: longitude.toFixed(6)
+                }));
+                setIsLocating(false);
+                toast.success("Location detected successfully!");
+                
+                // Reverse geocode to get address details
+                reverseGeocode(latitude, longitude);
+            },
+            (error) => {
+                setIsLocating(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        toast.error("Location permission denied. Please enable it in your browser settings.");
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        toast.error("Location information is unavailable.");
+                        break;
+                    case error.TIMEOUT:
+                        toast.error("Location request timed out.");
+                        break;
+                    default:
+                        toast.error("An error occurred while getting your location.");
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    };
+
+    // Reverse geocode to get address from coordinates
+    const reverseGeocode = async (lat, lng) => {
+        try {
+            const response = await axios.get(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
+            if (response.data && response.data.address) {
+                const addr = response.data.address;
+                
+                // Extract city (try multiple fields)
+                const city = addr.city || addr.town || addr.village || addr.state_district || addr.county || '';
+                
+                // Extract locality/area
+                const locality = addr.suburb || addr.neighbourhood || addr.hamlet || addr.residential || addr.quarter || '';
+                
+                // Extract landmark (nearby point of interest)
+                const landmark = addr.amenity || addr.building || addr.shop || addr.tourism || addr.leisure || '';
+                
+                // Build a cleaner address line
+                const addressParts = [];
+                if (addr.house_number) addressParts.push(addr.house_number);
+                if (addr.road || addr.street) addressParts.push(addr.road || addr.street);
+                if (locality) addressParts.push(locality);
+                if (city) addressParts.push(city);
+                if (addr.state) addressParts.push(addr.state);
+                if (addr.postcode) addressParts.push(addr.postcode);
+                
+                const formattedAddress = addressParts.length > 0 
+                    ? addressParts.join(', ')
+                    : response.data.display_name;
+
+                setFormData(prev => ({
+                    ...prev,
+                    city: city || prev.city,
+                    locality: locality || prev.locality,
+                    address: formattedAddress || prev.address,
+                    landmark: landmark || prev.landmark
+                }));
+                
+                toast.success("Address details filled from your location!");
+            }
+        } catch (error) {
+            console.error("Reverse geocoding failed:", error);
+            toast.error("Could not fetch address details. Please enter manually.");
+        }
+    };
+
+    // Search locations using Nominatim API
+    const searchLocations = async (query, fieldType) => {
+        if (!query || query.length < 3) {
+            setLocationSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        setIsSearchingLocation(true);
+        setActiveLocationField(fieldType);
+
+        try {
+            // Add India bias to get more relevant results
+            const searchQuery = fieldType === 'city' 
+                ? `${query}, India` 
+                : `${query}${formData.city ? `, ${formData.city}, India` : ', India'}`;
+            
+            const response = await axios.get(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6&addressdetails=1&countrycodes=in`,
+                { headers: { 'Accept-Language': 'en' } }
+            );
+
+            if (response.data && Array.isArray(response.data)) {
+                const suggestions = response.data.map(item => ({
+                    display_name: item.display_name,
+                    lat: parseFloat(item.lat),
+                    lon: parseFloat(item.lon),
+                    address: item.address,
+                    type: item.type,
+                    // Extract useful parts
+                    city: item.address?.city || item.address?.town || item.address?.village || item.address?.county || '',
+                    locality: item.address?.suburb || item.address?.neighbourhood || item.address?.hamlet || '',
+                    state: item.address?.state || '',
+                    shortName: getShortDisplayName(item)
+                }));
+                setLocationSuggestions(suggestions);
+                setShowSuggestions(true);
+            }
+        } catch (error) {
+            console.error("Location search failed:", error);
+            setLocationSuggestions([]);
+        } finally {
+            setIsSearchingLocation(false);
+        }
+    };
+
+    // Get a shorter display name for suggestions
+    const getShortDisplayName = (item) => {
+        const parts = [];
+        const addr = item.address;
+        
+        if (addr?.suburb || addr?.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
+        if (addr?.city || addr?.town || addr?.village) parts.push(addr.city || addr.town || addr.village);
+        if (addr?.state) parts.push(addr.state);
+        
+        return parts.length > 0 ? parts.join(', ') : item.display_name?.split(',').slice(0, 3).join(',');
+    };
+
+    // Handle location input change with debounce
+    const handleLocationInputChange = (e, fieldType) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        
+        // Clear previous timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        
+        // Debounce the search
+        searchTimeoutRef.current = setTimeout(() => {
+            searchLocations(value, fieldType);
+        }, 300);
+    };
+
+    // Handle suggestion selection
+    const handleSuggestionSelect = (suggestion) => {
+        const updates = {
+            latitude: suggestion.lat.toFixed(6),
+            longitude: suggestion.lon.toFixed(6)
+        };
+
+        // Update fields based on which field was being edited
+        if (activeLocationField === 'city') {
+            updates.city = suggestion.city || suggestion.address?.city || suggestion.address?.town || '';
+            if (suggestion.locality) updates.locality = suggestion.locality;
+        } else if (activeLocationField === 'locality') {
+            updates.locality = suggestion.locality || suggestion.address?.suburb || suggestion.address?.neighbourhood || formData.locality;
+            if (!formData.city && suggestion.city) updates.city = suggestion.city;
+        } else if (activeLocationField === 'address') {
+            updates.address = suggestion.display_name;
+            if (!formData.city && suggestion.city) updates.city = suggestion.city;
+            if (!formData.locality && suggestion.locality) updates.locality = suggestion.locality;
+        }
+
+        setFormData(prev => ({ ...prev, ...updates }));
+        setMapPosition([suggestion.lat, suggestion.lon]);
+        setLocationSuggestions([]);
+        setShowSuggestions(false);
+        setActiveLocationField(null);
+    };
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const renderStep2 = () => (
         <div className="space-y-6">
             <div className="text-center">
@@ -579,19 +863,128 @@ export default function AddProperty() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                {/* City Field with Autocomplete */}
+                <div className="relative" ref={activeLocationField === 'city' ? suggestionsRef : null}>
                     <label className={labelStyle}>City</label>
-                    <input name="city" value={formData.city} onChange={handleChange} placeholder="e.g. Mumbai" className={inputStyle} />
+                    <div className="relative">
+                        <input 
+                            name="city" 
+                            value={formData.city} 
+                            onChange={(e) => handleLocationInputChange(e, 'city')} 
+                            onFocus={() => formData.city.length >= 3 && searchLocations(formData.city, 'city')}
+                            placeholder="Start typing city name..." 
+                            className={inputStyle} 
+                            autoComplete="off"
+                        />
+                        {isSearchingLocation && activeLocationField === 'city' && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+                    {/* City Suggestions Dropdown */}
+                    {showSuggestions && activeLocationField === 'city' && locationSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                            {locationSuggestions.map((suggestion, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => handleSuggestionSelect(suggestion)}
+                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <div className="font-medium text-gray-900 text-sm">{suggestion.city || suggestion.shortName?.split(',')[0]}</div>
+                                            <div className="text-xs text-gray-500 truncate">{suggestion.shortName}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div>
+
+                {/* Locality Field with Autocomplete */}
+                <div className="relative" ref={activeLocationField === 'locality' ? suggestionsRef : null}>
                     <label className={labelStyle}>Locality / Society</label>
-                    <input name="locality" value={formData.locality} onChange={handleChange} placeholder="e.g. Bandra West" className={inputStyle} />
+                    <div className="relative">
+                        <input 
+                            name="locality" 
+                            value={formData.locality} 
+                            onChange={(e) => handleLocationInputChange(e, 'locality')} 
+                            onFocus={() => formData.locality.length >= 3 && searchLocations(formData.locality, 'locality')}
+                            placeholder="Start typing locality..." 
+                            className={inputStyle} 
+                            autoComplete="off"
+                        />
+                        {isSearchingLocation && activeLocationField === 'locality' && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+                    {/* Locality Suggestions Dropdown */}
+                    {showSuggestions && activeLocationField === 'locality' && locationSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                            {locationSuggestions.map((suggestion, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => handleSuggestionSelect(suggestion)}
+                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <div className="font-medium text-gray-900 text-sm">{suggestion.locality || suggestion.shortName?.split(',')[0]}</div>
+                                            <div className="text-xs text-gray-500 truncate">{suggestion.shortName}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div>
+            {/* Full Address Field with Autocomplete */}
+            <div className="relative" ref={activeLocationField === 'address' ? suggestionsRef : null}>
                 <label className={labelStyle}>Full Address</label>
-                <textarea name="address" value={formData.address} onChange={handleChange} rows={3} placeholder="Complete address, building name, street..." className={inputStyle}></textarea>
+                <div className="relative">
+                    <textarea 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={(e) => handleLocationInputChange(e, 'address')} 
+                        onFocus={() => formData.address.length >= 3 && searchLocations(formData.address, 'address')}
+                        rows={3} 
+                        placeholder="Start typing address for suggestions..." 
+                        className={inputStyle}
+                        autoComplete="off"
+                    ></textarea>
+                    {isSearchingLocation && activeLocationField === 'address' && (
+                        <div className="absolute right-3 top-4">
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
+                </div>
+                {/* Address Suggestions Dropdown */}
+                {showSuggestions && activeLocationField === 'address' && locationSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.map((suggestion, index) => (
+                            <div
+                                key={index}
+                                onClick={() => handleSuggestionSelect(suggestion)}
+                                className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                            >
+                                <div className="flex items-start gap-2">
+                                    <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm text-gray-900 line-clamp-2">{suggestion.display_name}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -603,6 +996,92 @@ export default function AddProperty() {
                     <label className={labelStyle}>Nearby (tags)</label>
                     <input name="nearby" value={(formData.nearby || []).join(", ")} onChange={(e) => setFormData(p => ({ ...p, nearby: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))} placeholder="Metro, School, Hospital (comma separated)" className={inputStyle} />
                 </div>
+            </div>
+
+            {/* Leaflet Map Section */}
+            <div className={cardStyle}>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                        <MapPin size={18} className="text-blue-600" />
+                        Pin Property Location on Map
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={getCurrentLocation}
+                        disabled={isLocating}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Navigation size={16} className={isLocating ? "animate-pulse" : ""} />
+                        {isLocating ? "Detecting..." : "Use My Location"}
+                    </button>
+                </div>
+
+                <p className="text-sm text-gray-500 mb-3">Click on the map to set your property's exact location, or use the "Use My Location" button.</p>
+
+                <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: "350px" }}>
+                    <MapContainer
+                        center={mapPosition || defaultCenter}
+                        zoom={mapPosition ? 15 : 5}
+                        style={{ height: "100%", width: "100%" }}
+                        scrollWheelZoom={true}
+                    >
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <LocationMarker
+                            position={mapPosition}
+                            setPosition={setMapPosition}
+                            setFormData={setFormData}
+                        />
+                        {mapPosition && <RecenterMap position={mapPosition} />}
+                    </MapContainer>
+                </div>
+
+                {/* Coordinates Display */}
+                {(formData.latitude && formData.longitude) && (
+                    <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={labelStyle}>Latitude</label>
+                            <input
+                                name="latitude"
+                                value={formData.latitude}
+                                onChange={(e) => {
+                                    const lat = parseFloat(e.target.value);
+                                    handleChange(e);
+                                    if (!isNaN(lat) && formData.longitude) {
+                                        setMapPosition([lat, parseFloat(formData.longitude)]);
+                                    }
+                                }}
+                                placeholder="e.g. 19.0760"
+                                className={inputStyle}
+                            />
+                        </div>
+                        <div>
+                            <label className={labelStyle}>Longitude</label>
+                            <input
+                                name="longitude"
+                                value={formData.longitude}
+                                onChange={(e) => {
+                                    const lng = parseFloat(e.target.value);
+                                    handleChange(e);
+                                    if (!isNaN(lng) && formData.latitude) {
+                                        setMapPosition([parseFloat(formData.latitude), lng]);
+                                    }
+                                }}
+                                placeholder="e.g. 72.8777"
+                                className={inputStyle}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {mapPosition && (
+                    <div className="mt-3 flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                        <Check size={16} />
+                        <span>Location pinned: {mapPosition[0].toFixed(4)}, {mapPosition[1].toFixed(4)}</span>
+                    </div>
+                )}
             </div>
         </div>
     );

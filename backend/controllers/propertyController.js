@@ -1,6 +1,8 @@
 import Property from "../models/Property.js";
 import { cloudinary } from "../middleware/upload.js";
 import mongoose from "mongoose";
+import Lead from "../models/Lead.js";
+import User from "../models/userModel.js";
 
 const isCloudinaryUrl = (img = "") => typeof img === "string" && img.includes("cloudinary.com");
 
@@ -435,6 +437,246 @@ export const deleteMyProperty = async (req, res) => {
   }
 };
 
+// 🔒 Protected: Update User's Own Property
+export const updateMyProperty = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const propertyId = req.params.id;
+
+    // Check if property exists and belongs to user
+    const existingProperty = await Property.findOne({ _id: propertyId, owner: userId });
+    
+    if (!existingProperty) {
+      return res.status(404).json({ success: false, message: "Property not found or you don't have permission to edit it" });
+    }
+
+    let data = req.body;
+
+    // Parse JSON fields that might be stringified
+    ["area", "parking", "address", "flooring", "features", "legal", "extras", "imageCategoryMap", "existingCategorizedImages", "imagesToRemove", "amenities"].forEach((key) => {
+      if (data[key]) {
+        try {
+          data[key] = typeof data[key] === 'string' ? JSON.parse(data[key]) : data[key];
+        } catch (e) {
+          console.error(`Error parsing ${key}:`, e);
+        }
+      }
+    });
+
+    // Map form fields to schema fields
+    // Price fields
+    if (data.expectedPrice) {
+      data.price = Number(data.expectedPrice);
+      delete data.expectedPrice;
+    }
+    if (data.expectedDeposit) {
+      data.deposit = data.expectedDeposit;
+      delete data.expectedDeposit;
+    }
+    
+    // Area fields - map to area object
+    data.area = {
+      ...(existingProperty.area || {}),
+      builtUpSqft: data.builtUpArea ? Number(data.builtUpArea) : existingProperty.area?.builtUpSqft,
+      carpetSqft: data.carpetArea ? Number(data.carpetArea) : existingProperty.area?.carpetSqft,
+      superBuiltUpSqft: data.superBuiltUpArea ? Number(data.superBuiltUpArea) : existingProperty.area?.superBuiltUpSqft,
+      plotSqft: data.plotArea ? Number(data.plotArea) : existingProperty.area?.plotSqft,
+    };
+    // Also keep top-level for convenience
+    if (data.builtUpArea) data.builtUpArea = Number(data.builtUpArea);
+    if (data.carpetArea) data.carpetArea = Number(data.carpetArea);
+    if (data.superBuiltUpArea) data.superBuiltUpArea = Number(data.superBuiltUpArea);
+    if (data.plotArea) data.plotArea = Number(data.plotArea);
+    
+    // Extras - map boolean fields
+    data.extras = {
+      servantRoom: data.servantRoom === true || data.servantRoom === 'true',
+      poojaRoom: data.poojaRoom === true || data.poojaRoom === 'true',
+      studyRoom: data.studyRoom === true || data.studyRoom === 'true',
+      storeRoom: data.storeRoom === true || data.storeRoom === 'true',
+    };
+    delete data.servantRoom;
+    delete data.poojaRoom;
+    delete data.studyRoom;
+    delete data.storeRoom;
+    
+    // Legal - map reraId
+    if (data.reraId) {
+      data.legal = {
+        ...(existingProperty.legal || {}),
+        reraId: data.reraId
+      };
+      delete data.reraId;
+    }
+    
+    // BHK type
+    if (data.bhkType) {
+      data.bhk = data.bhkType;
+      delete data.bhkType;
+    }
+    
+    // Parking - already handled or map from parkingCovered/parkingOpen
+    if (data.parkingCovered !== undefined || data.parkingOpen !== undefined) {
+      data.parking = {
+        covered: String(data.parkingCovered || 0),
+        open: String(data.parkingOpen || 0)
+      };
+      delete data.parkingCovered;
+      delete data.parkingOpen;
+    }
+    
+    // Price negotiable
+    if (data.priceNegotiable !== undefined) {
+      data.negotiable = data.priceNegotiable === true || data.priceNegotiable === 'true';
+      delete data.priceNegotiable;
+    }
+    
+    // Address fields
+    if (data.city || data.locality || data.landmark || data.address) {
+      data.address = {
+        ...(existingProperty.address || {}),
+        city: data.city || existingProperty.address?.city,
+        area: data.locality || existingProperty.address?.area,
+        landmark: data.landmark || existingProperty.address?.landmark,
+        full: data.address || existingProperty.address?.full,
+        latitude: data.latitude ? parseFloat(data.latitude) : existingProperty.address?.latitude,
+        longitude: data.longitude ? parseFloat(data.longitude) : existingProperty.address?.longitude,
+      };
+      // Keep top-level convenience fields too
+      data.city = data.city || existingProperty.city;
+      data.locality = data.locality || existingProperty.locality;
+    }
+    
+    // Location coordinates for geo queries
+    if (data.latitude && data.longitude) {
+      data.location = {
+        type: "Point",
+        coordinates: [parseFloat(data.longitude), parseFloat(data.latitude)]
+      };
+    }
+
+    // Spread features into top-level data if it exists
+    if (data.features && typeof data.features === 'object') {
+      const { parking: featuresParking, extras: featuresExtras, ...restFeatures } = data.features;
+      
+      data = { ...data, ...restFeatures };
+      
+      if (featuresParking) {
+        data.parking = {
+          covered: String(featuresParking.covered || 0),
+          open: String(featuresParking.open || 0)
+        };
+      }
+      
+      if (featuresExtras) {
+        data.extras = { ...data.extras, ...featuresExtras };
+      }
+      
+      delete data.features;
+    }
+
+    // Determine if property is residential or commercial
+    const isResidential = data.propertyCategory === 'Residential' || 
+                         existingProperty.categoryName === 'Residential';
+
+    // Initialize categorizedImages structure from existing images sent from frontend
+    data.categorizedImages = {
+      residential: {},
+      commercial: {}
+    };
+    
+    // Keep existing categorized images (that weren't removed)
+    if (data.existingCategorizedImages) {
+      const existingCat = data.existingCategorizedImages;
+      Object.entries(existingCat).forEach(([categoryKey, images]) => {
+        if (Array.isArray(images) && images.length > 0) {
+          if (isResidential) {
+            data.categorizedImages.residential[categoryKey] = images;
+          } else {
+            data.categorizedImages.commercial[categoryKey] = images;
+          }
+        }
+      });
+      delete data.existingCategorizedImages;
+    }
+    
+    // Process new images with category map
+    if (req.files?.images?.length > 0 && data.imageCategoryMap) {
+      const newImageUrls = extractCloudinaryUrls(req.files.images);
+      const categoryMap = data.imageCategoryMap;
+      
+      // categoryMap format: [{index: 0, category: 'exterior'}, {index: 1, category: 'livingRoom'}, ...]
+      categoryMap.forEach((mapping, idx) => {
+        if (idx < newImageUrls.length) {
+          const { category } = mapping;
+          const url = newImageUrls[idx];
+          
+          if (isResidential) {
+            if (!data.categorizedImages.residential[category]) {
+              data.categorizedImages.residential[category] = [];
+            }
+            data.categorizedImages.residential[category].push(url);
+          } else {
+            if (!data.categorizedImages.commercial[category]) {
+              data.categorizedImages.commercial[category] = [];
+            }
+            data.categorizedImages.commercial[category].push(url);
+          }
+        }
+      });
+    }
+    
+    // Build flat images array for backwards compatibility
+    const allImages = [];
+    const catImages = isResidential ? data.categorizedImages.residential : data.categorizedImages.commercial;
+    Object.values(catImages).forEach(imgs => {
+      if (Array.isArray(imgs)) {
+        allImages.push(...imgs);
+      }
+    });
+    data.images = allImages;
+    
+    delete data.imageCategoryMap;
+    delete data.imagesToRemove;
+
+    // Don't allow changing owner
+    delete data.owner;
+    
+    // Handle propertyType - it's sent as name string, not ObjectId
+    // Store the name in propertyTypeName and remove propertyType to avoid ObjectId cast error
+    if (data.propertyType && typeof data.propertyType === 'string' && !mongoose.Types.ObjectId.isValid(data.propertyType)) {
+      data.propertyTypeName = data.propertyType;
+      delete data.propertyType;
+    }
+    
+    // Handle category - it's sent as name string "Residential" or "Commercial"
+    if (data.propertyCategory && typeof data.propertyCategory === 'string') {
+      data.categoryName = data.propertyCategory;
+      delete data.propertyCategory;
+      delete data.category; // Remove category ObjectId reference if it's invalid
+    }
+    
+    // Remove subcategory if it's not a valid ObjectId
+    if (data.subcategory && !mongoose.Types.ObjectId.isValid(data.subcategory)) {
+      delete data.subcategory;
+    }
+
+    const updated = await Property.findByIdAndUpdate(propertyId, data, { new: true })
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("propertyType", "name");
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Property updated successfully",
+      data: withPublicImages(req, updated)
+    });
+  } catch (error) {
+    console.error("Error in updateMyProperty:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // 🔒 Protected: Mark Interest in a Property (Buyer)
 export const markInterested = async (req, res) => {
   try {
@@ -466,11 +708,53 @@ export const markInterested = async (req, res) => {
       return res.status(400).json({ success: false, message: "You have already expressed interest in this property" });
     }
 
+    // Get user details for creating lead
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
     // Add user to interestedUsers and increment likes count
     await Property.findByIdAndUpdate(propertyId, {
       $push: { interestedUsers: { user: userId, interestedAt: new Date() } },
       $inc: { likes: 1 }
     });
+
+    // Create a lead for the property owner
+    if (property.owner) {
+      try {
+        const existingLead = await Lead.findOne({ user: userId, property: propertyId });
+        
+        if (!existingLead) {
+          await Lead.create({
+            property: propertyId,
+            propertyOwner: property.owner,
+            user: userId,
+            userSnapshot: {
+              name: user.name,
+              email: user.email,
+              phone: user.phone || "",
+              profileImage: user.profileImage || ""
+            },
+            propertySnapshot: {
+              title: property.title,
+              price: property.price || property.expectedPrice,
+              listingType: property.listingType,
+              city: property.city || property.address?.city,
+              locality: property.locality || property.address?.area,
+              propertyType: property.propertyTypeName,
+              bhk: property.bhk
+            },
+            status: "new",
+            source: "website"
+          });
+          console.log(`Lead created for user ${userId} on property ${propertyId}`);
+        }
+      } catch (leadError) {
+        console.error("Error creating lead:", leadError);
+        // Don't fail the interest registration if lead creation fails
+      }
+    }
 
     console.log(`User ${userId} expressed interest in property ${propertyId}`);
 

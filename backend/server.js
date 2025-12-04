@@ -10,7 +10,8 @@ import adminRoutes from "./routes/adminRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 import propertyRoutes from "./routes/propertyRoutes.js";
-import propertyTypeRoutes from './routes/propertyTypeRoutes.js'
+import propertyTypeRoutes from './routes/propertyTypeRoutes.js';
+import leadRoutes from './routes/leadRoutes.js';
 
 connectDB();
 
@@ -26,6 +27,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subcategoryRoutes);
 app.use("/api/properties", propertyRoutes);
+app.use("/api/leads", leadRoutes);
 
 const PORT = process.env.PORT || 9000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

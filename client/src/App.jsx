@@ -11,6 +11,7 @@ import About from "./Pages/About/About.jsx";
 import Contact from "./Pages/Contact/Contact.jsx";
 import SampleAgreement from "./Components/SampleAgreement/SampleAgreement.jsx";
 import AddProperty from "./Pages/AddProperty/AddProperty.jsx";
+import EditProperty from "./Pages/EditProperty/EditProperty.jsx";
 import Profile from "./Pages/Profile/Profile.jsx";
 import MyProperties from "./Pages/MyProperties/MyProperties.jsx";
 import SavedProperties from "./Pages/SavedProperties/SavedProperties.jsx";
@@ -32,6 +33,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/agreements" element={<SampleAgreement />} />
           <Route path="/add-property" element={<AddProperty />} />
+          <Route path="/edit-property/:id" element={<EditProperty />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-properties" element={<MyProperties />} />
           <Route path="/saved-properties" element={<SavedProperties />} />

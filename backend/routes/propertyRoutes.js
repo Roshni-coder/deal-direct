@@ -12,6 +12,7 @@ import {
   filterProperties,
   getMyProperties,
   deleteMyProperty,
+  updateMyProperty,
   markInterested,
   checkInterested,
   getSavedProperties,
@@ -40,6 +41,10 @@ router.get("/filter", filterProperties);
 
 // 🔒 Protected Routes - User's Own Properties (MUST be before /:id)
 router.get("/my-properties", authMiddleware, getMyProperties);
+router.put("/my-properties/:id", authMiddleware, upload.fields([
+  { name: "images", maxCount: 15 },
+  { name: "categorizedImages", maxCount: 50 }
+]), updateMyProperty);
 
 // 🔒 Protected: Saved/Interested Properties routes (MUST be before /:id)
 router.get("/saved", authMiddleware, getSavedProperties);

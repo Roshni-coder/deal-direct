@@ -29,8 +29,35 @@ import {
   Users,
   Layers,
   RefreshCw,
+  Mail,
+  User,
+  ChevronRight,
+  TrendingDown,
+  Target,
+  UserCheck,
+  UserX,
+  MessageCircle,
+  PhoneCall,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+} from "recharts";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -55,27 +82,48 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+// Lead Status Badge
+const LeadStatusBadge = ({ status }) => {
+  const statusConfig = {
+    new: { bg: "bg-blue-100", text: "text-blue-700", label: "New" },
+    contacted: { bg: "bg-yellow-100", text: "text-yellow-700", label: "Contacted" },
+    interested: { bg: "bg-purple-100", text: "text-purple-700", label: "Interested" },
+    negotiating: { bg: "bg-orange-100", text: "text-orange-700", label: "Negotiating" },
+    converted: { bg: "bg-green-100", text: "text-green-700", label: "Converted" },
+    lost: { bg: "bg-red-100", text: "text-red-700", label: "Lost" },
+  };
+
+  const config = statusConfig[status] || statusConfig.new;
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      {config.label}
+    </span>
+  );
+};
+
 // Stats Card component
-const StatsCard = ({ icon: Icon, label, value, trend, color }) => (
+const StatsCard = ({ icon: Icon, label, value, trend, color, subLabel }) => (
   <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
     <div className="flex items-center justify-between">
       <div className={`p-3 rounded-xl ${color}`}>
         <Icon className="w-6 h-6 text-white" />
       </div>
-      {trend && (
-        <span className={`text-xs font-medium flex items-center gap-1 ${trend > 0 ? "text-green-600" : "text-red-600"}`}>
-          <TrendingUp className={`w-3.5 h-3.5 ${trend < 0 ? "rotate-180" : ""}`} />
+      {trend !== undefined && (
+        <span className={`text-xs font-medium flex items-center gap-1 ${trend >= 0 ? "text-green-600" : "text-red-600"}`}>
+          {trend >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
           {Math.abs(trend)}%
         </span>
       )}
     </div>
     <p className="mt-4 text-2xl font-bold text-gray-900">{value}</p>
     <p className="text-sm text-gray-500">{label}</p>
+    {subLabel && <p className="text-xs text-gray-400 mt-1">{subLabel}</p>}
   </div>
 );
 
 // Property Card component
-const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
+const PropertyCard = ({ property, onEdit, onDelete, onViewDetails, onViewLeads }) => {
   const [showMenu, setShowMenu] = useState(false);
 
   const formatPrice = (price) => {
@@ -86,9 +134,7 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
   };
 
   const getMainImage = () => {
-    // Check categorized images first (residential or commercial)
     if (property.categorizedImages) {
-      // Check residential categories
       if (property.categorizedImages.residential) {
         const residentialCategories = ['exterior', 'livingRoom', 'bedroom', 'hall', 'balcony', 'kitchen'];
         for (const cat of residentialCategories) {
@@ -97,7 +143,6 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
           }
         }
       }
-      // Check commercial categories
       if (property.categorizedImages.commercial) {
         const commercialCategories = ['facade', 'reception', 'workArea', 'cabin', 'shopFloor'];
         for (const cat of commercialCategories) {
@@ -107,7 +152,6 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
         }
       }
     }
-    // Fallback to legacy images
     if (property.images?.length > 0) {
       return property.images[0];
     }
@@ -144,13 +188,19 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10"
+                  className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10"
                 >
                   <button
                     onClick={() => { onViewDetails(property); setShowMenu(false); }}
                     className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
                     <ExternalLink className="w-4 h-4" /> View Details
+                  </button>
+                  <button
+                    onClick={() => { onViewLeads(property); setShowMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                  >
+                    <Users className="w-4 h-4" /> View Leads
                   </button>
                   <button
                     onClick={() => { onEdit(property); setShowMenu(false); }}
@@ -191,17 +241,17 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
 
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xl font-bold text-gray-900">{formatPrice(property.expectedPrice)}</p>
+            <p className="text-xl font-bold text-gray-900">{formatPrice(property.price || property.expectedPrice)}</p>
             {property.listingType === "Rent" && (
               <p className="text-xs text-gray-500">per month</p>
             )}
           </div>
           <div className="text-right">
-            {property.builtUpArea && (
-              <p className="text-sm font-medium text-gray-700">{property.builtUpArea} sq.ft</p>
+            {(property.builtUpArea || property.area?.builtUpSqft) && (
+              <p className="text-sm font-medium text-gray-700">{property.builtUpArea || property.area?.builtUpSqft} sq.ft</p>
             )}
-            {property.bhkType && (
-              <p className="text-xs text-gray-500">{property.bhkType}</p>
+            {property.bhk && (
+              <p className="text-xs text-gray-500">{property.bhk}</p>
             )}
           </div>
         </div>
@@ -217,9 +267,9 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
               <Heart className="w-4 h-4" />
               <span className="text-sm font-medium">{property.likes || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-gray-500">
+            <div className="flex items-center gap-1.5 text-blue-600">
               <Users className="w-4 h-4" />
-              <span className="text-sm font-medium">{property.interested || property.likes || 0}</span>
+              <span className="text-sm font-medium">{property.interestedUsers?.length || 0}</span>
             </div>
           </div>
           <p className="text-xs text-gray-400">
@@ -231,12 +281,141 @@ const PropertyCard = ({ property, onEdit, onDelete, onViewDetails }) => {
   );
 };
 
+// Lead Card Component
+const LeadCard = ({ lead, onUpdateStatus, onContact }) => {
+  const [showActions, setShowActions] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all"
+    >
+      <div className="flex items-start gap-4">
+        {/* User Avatar */}
+        <div className="flex-shrink-0">
+          {lead.userSnapshot?.profileImage ? (
+            <img
+              src={lead.userSnapshot.profileImage}
+              alt={lead.userSnapshot.name}
+              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+              {lead.userSnapshot?.name?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+          )}
+        </div>
+
+        {/* Lead Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <h4 className="font-semibold text-gray-900">{lead.userSnapshot?.name || "Unknown User"}</h4>
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Mail className="w-3.5 h-3.5" />
+                {lead.userSnapshot?.email}
+              </p>
+              {lead.userSnapshot?.phone && (
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5" />
+                  {lead.userSnapshot.phone}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <LeadStatusBadge status={lead.status} />
+              {!lead.isViewed && (
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New lead"></span>
+              )}
+            </div>
+          </div>
+
+          {/* Property Info */}
+          <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+            <p className="text-sm font-medium text-gray-700 line-clamp-1">
+              {lead.propertySnapshot?.title || "Property"}
+            </p>
+            <p className="text-xs text-gray-500">
+              {lead.propertySnapshot?.locality}, {lead.propertySnapshot?.city} • ₹{(lead.propertySnapshot?.price || 0).toLocaleString()}
+            </p>
+          </div>
+
+          {/* Timestamp */}
+          <p className="text-xs text-gray-400 mt-2">
+            Interested on {new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+          </p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-4 flex items-center gap-2 flex-wrap">
+        <a
+          href={`tel:${lead.userSnapshot?.phone}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition"
+        >
+          <PhoneCall className="w-4 h-4" /> Call
+        </a>
+        <a
+          href={`mailto:${lead.userSnapshot?.email}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition"
+        >
+          <Mail className="w-4 h-4" /> Email
+        </a>
+        <a
+          href={`https://wa.me/${lead.userSnapshot?.phone?.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200 transition"
+        >
+          <MessageCircle className="w-4 h-4" /> WhatsApp
+        </a>
+        <div className="relative ml-auto">
+          <button
+            onClick={() => setShowActions(!showActions)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+          >
+            Update Status <ChevronDown className="w-4 h-4" />
+          </button>
+          <AnimatePresence>
+            {showActions && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-20"
+              >
+                {["contacted", "interested", "negotiating", "converted", "lost"].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => { onUpdateStatus(lead._id, status); setShowActions(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 capitalize"
+                  >
+                    {status}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Chart Colors
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
 export default function MyProperties() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [properties, setProperties] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [leadAnalytics, setLeadAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, active, pending, sold, rented
+  const [activeTab, setActiveTab] = useState("properties"); // 'properties', 'leads', 'analytics'
+  const [filter, setFilter] = useState("all");
+  const [leadFilter, setLeadFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -244,6 +423,7 @@ export default function MyProperties() {
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [selectedPropertyForLeads, setSelectedPropertyForLeads] = useState(null);
 
   // Auth check
   useEffect(() => {
@@ -259,17 +439,16 @@ export default function MyProperties() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    // Check if user is owner
     if (parsedUser.role !== "owner" && parsedUser.role !== "agent") {
       toast.error("Only property owners can access this page");
       navigate("/");
       return;
     }
 
-    fetchProperties();
+    fetchData();
   }, [navigate]);
 
-  const fetchProperties = async (isRefresh = false) => {
+  const fetchData = async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -277,26 +456,52 @@ export default function MyProperties() {
         setLoading(true);
       }
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_BASE}/api/properties/my-properties`, {
+
+      // Fetch properties first
+      const propertiesRes = await axios.get(`${API_BASE}/api/properties/my-properties`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (res.data.success) {
-        setProperties(res.data.data || []);
-        setLastUpdated(new Date());
+      if (propertiesRes.data.success) {
+        setProperties(propertiesRes.data.data || []);
       }
+
+      // Try to fetch leads and analytics (may fail if no leads exist yet)
+      try {
+        const [leadsRes, analyticsRes] = await Promise.all([
+          axios.get(`${API_BASE}/api/leads`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_BASE}/api/leads/analytics`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ]);
+
+        if (leadsRes.data.success) {
+          setLeads(leadsRes.data.data || []);
+        }
+
+        if (analyticsRes.data.success) {
+          setLeadAnalytics(analyticsRes.data.data);
+        }
+      } catch (leadErr) {
+        console.log("No leads data yet:", leadErr.message);
+        setLeads([]);
+        setLeadAnalytics(null);
+      }
+
+      setLastUpdated(new Date());
     } catch (err) {
-      console.error("Error fetching properties:", err);
-      toast.error("Failed to load properties");
+      console.error("Error fetching data:", err);
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Manual refresh handler
   const handleRefresh = () => {
-    fetchProperties(true);
+    fetchData(true);
   };
 
   // Calculate stats
@@ -304,10 +509,29 @@ export default function MyProperties() {
     total: properties.length,
     active: properties.filter((p) => p.status === "active" || !p.status).length,
     totalViews: properties.reduce((sum, p) => sum + (p.views || 0), 0),
-    totalInterested: properties.reduce((sum, p) => sum + (p.likes || 0), 0),
+    totalLeads: leadAnalytics?.totalLeads || leads.length,
+    newLeads: leadAnalytics?.newLeadsThisWeek || leads.filter(l => l.status === "new").length,
+    conversionRate: leadAnalytics?.conversionRate || 0,
   };
 
-  // Filter and sort properties
+  // Prepare chart data
+  const leadStatusData = leadAnalytics?.statusStats 
+    ? Object.entries(leadAnalytics.statusStats)
+        .filter(([name, value]) => value > 0)
+        .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }))
+    : [];
+
+  const dailyLeadsData = leadAnalytics?.dailyLeads?.map(d => ({
+    date: new Date(d._id).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    leads: d.count
+  })) || [];
+
+  const propertyLeadsData = leadAnalytics?.leadsByProperty?.map(p => ({
+    name: p.propertyTitle?.substring(0, 20) + (p.propertyTitle?.length > 20 ? '...' : '') || 'Property',
+    leads: p.count
+  })) || [];
+
+  // Filter properties
   const filteredProperties = properties
     .filter((p) => {
       if (filter === "all") return true;
@@ -326,24 +550,31 @@ export default function MyProperties() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        case "price-high":
-          return (b.expectedPrice || 0) - (a.expectedPrice || 0);
-        case "price-low":
-          return (a.expectedPrice || 0) - (b.expectedPrice || 0);
-        case "views":
-          return (b.views || 0) - (a.views || 0);
-        default:
-          return 0;
+        case "newest": return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest": return new Date(a.createdAt) - new Date(b.createdAt);
+        case "price-high": return (b.expectedPrice || b.price || 0) - (a.expectedPrice || a.price || 0);
+        case "price-low": return (a.expectedPrice || a.price || 0) - (b.expectedPrice || b.price || 0);
+        case "views": return (b.views || 0) - (a.views || 0);
+        case "leads": return (b.interestedUsers?.length || 0) - (a.interestedUsers?.length || 0);
+        default: return 0;
       }
     });
 
+  // Filter leads
+  const filteredLeads = leads
+    .filter((l) => {
+      if (leadFilter === "all") return true;
+      return l.status === leadFilter;
+    })
+    .filter((l) => {
+      if (selectedPropertyForLeads) {
+        return l.property?._id === selectedPropertyForLeads._id || l.property === selectedPropertyForLeads._id;
+      }
+      return true;
+    });
+
   const handleEdit = (property) => {
-    // Navigate to edit page (you can create this later)
-    toast.info("Edit functionality coming soon!");
+    navigate(`/edit-property/${property._id}`);
   };
 
   const handleDelete = (property) => {
@@ -353,7 +584,6 @@ export default function MyProperties() {
 
   const confirmDelete = async () => {
     if (!propertyToDelete) return;
-
     setDeleting(true);
     try {
       const token = localStorage.getItem("token");
@@ -375,12 +605,38 @@ export default function MyProperties() {
     navigate(`/properties/${property._id}`);
   };
 
+  const handleViewLeads = (property) => {
+    setSelectedPropertyForLeads(property);
+    setActiveTab("leads");
+  };
+
+  const handleUpdateLeadStatus = async (leadId, status) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API_BASE}/api/leads/${leadId}/status`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Lead status updated to ${status}`);
+      // Refresh leads
+      const res = await axios.get(`${API_BASE}/api/leads`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.success) {
+        setLeads(res.data.data || []);
+      }
+    } catch (err) {
+      toast.error("Failed to update lead status");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-24 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 text-red-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading your properties...</p>
+          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -393,8 +649,8 @@ export default function MyProperties() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Properties</h1>
-              <p className="text-gray-500 mt-1">Manage and track your property listings</p>
+              <h1 className="text-2xl font-bold text-gray-900">My Dashboard</h1>
+              <p className="text-gray-500 mt-1">Manage properties, track leads & analytics</p>
               {lastUpdated && (
                 <p className="text-xs text-gray-400 mt-1">
                   Last updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
@@ -412,133 +668,367 @@ export default function MyProperties() {
               </button>
               <Link
                 to="/add-property"
-                className="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-red-700 transition shadow-md"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition shadow-md"
               >
                 <Plus className="w-5 h-5" />
-                Add New Property
+                Add Property
               </Link>
             </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-6 bg-gray-100 p-1 rounded-xl w-fit">
+            {[
+              { key: "properties", label: "Properties", icon: Home },
+              { key: "leads", label: "Leads", icon: Users, badge: stats.newLeads },
+              { key: "analytics", label: "Analytics", icon: BarChart3 },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => { setActiveTab(tab.key); setSelectedPropertyForLeads(null); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  activeTab === tab.key
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+                {tab.badge > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{tab.badge}</span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatsCard
-            icon={Layers}
-            label="Total Properties"
-            value={stats.total}
-            color="bg-blue-600"
-          />
-          <StatsCard
-            icon={CheckCircle}
-            label="Active Listings"
-            value={stats.active}
-            color="bg-green-600"
-          />
-          <StatsCard
-            icon={Eye}
-            label="Total Views"
-            value={stats.totalViews}
-            color="bg-purple-600"
-          />
-          <StatsCard
-            icon={Heart}
-            label="Total Interested"
-            value={stats.totalInterested}
-            color="bg-pink-600"
-          />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <StatsCard icon={Layers} label="Total Properties" value={stats.total} color="bg-blue-600" />
+          <StatsCard icon={CheckCircle} label="Active Listings" value={stats.active} color="bg-green-600" />
+          <StatsCard icon={Eye} label="Total Views" value={stats.totalViews} color="bg-purple-600" />
+          <StatsCard icon={Users} label="Total Leads" value={stats.totalLeads} color="bg-pink-600" />
+          <StatsCard icon={UserCheck} label="New This Week" value={stats.newLeads} color="bg-orange-500" />
+          <StatsCard icon={Target} label="Conversion Rate" value={`${stats.conversionRate}%`} color="bg-teal-600" />
         </div>
 
-        {/* Filters & Search */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by title, locality, or city..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
-              />
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {[
-                { key: "all", label: "All" },
-                { key: "active", label: "Active" },
-                { key: "pending", label: "Pending" },
-                { key: "sold", label: "Sold" },
-                { key: "rented", label: "Rented" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilter(tab.key)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                    filter === tab.key
-                      ? "bg-red-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+        {/* Properties Tab */}
+        {activeTab === "properties" && (
+          <>
+            {/* Filters */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by title, locality, or city..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {[
+                    { key: "all", label: "All" },
+                    { key: "active", label: "Active" },
+                    { key: "pending", label: "Pending" },
+                    { key: "sold", label: "Sold" },
+                    { key: "rented", label: "Rented" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setFilter(tab.key)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
+                        filter === tab.key
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                  {tab.label}
-                </button>
-              ))}
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="views">Most Viewed</option>
+                  <option value="leads">Most Leads</option>
+                </select>
+              </div>
             </div>
 
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="views">Most Viewed</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Properties Grid */}
-        {filteredProperties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <PropertyCard
-                key={property._id}
-                property={property}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onViewDetails={handleViewDetails}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Home className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchQuery || filter !== "all" ? "No properties found" : "No properties yet"}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchQuery || filter !== "all"
-                ? "Try adjusting your search or filter criteria"
-                : "Start by listing your first property on DealDirect"}
-            </p>
-            {!searchQuery && filter === "all" && (
-              <Link
-                to="/add-property"
-                className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition"
-              >
-                <Plus className="w-5 h-5" />
-                List Your First Property
-              </Link>
+            {/* Properties Grid */}
+            {filteredProperties.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProperties.map((property) => (
+                  <PropertyCard
+                    key={property._id}
+                    property={property}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onViewDetails={handleViewDetails}
+                    onViewLeads={handleViewLeads}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Home className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {searchQuery || filter !== "all" ? "No properties found" : "No properties yet"}
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {searchQuery || filter !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "Start by listing your first property"}
+                </p>
+                {!searchQuery && filter === "all" && (
+                  <Link
+                    to="/add-property"
+                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
+                  >
+                    <Plus className="w-5 h-5" />
+                    List Your First Property
+                  </Link>
+                )}
+              </div>
             )}
+          </>
+        )}
+
+        {/* Leads Tab */}
+        {activeTab === "leads" && (
+          <>
+            {/* Lead Filters */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                {selectedPropertyForLeads && (
+                  <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-blue-700">Showing leads for:</span>
+                    <span className="font-medium text-blue-900">{selectedPropertyForLeads.title}</span>
+                    <button
+                      onClick={() => setSelectedPropertyForLeads(null)}
+                      className="ml-2 text-blue-500 hover:text-blue-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 flex-1">
+                  {[
+                    { key: "all", label: "All Leads" },
+                    { key: "new", label: "New" },
+                    { key: "contacted", label: "Contacted" },
+                    { key: "interested", label: "Interested" },
+                    { key: "negotiating", label: "Negotiating" },
+                    { key: "converted", label: "Converted" },
+                    { key: "lost", label: "Lost" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setLeadFilter(tab.key)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
+                        leadFilter === tab.key
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Leads List */}
+            {filteredLeads.length > 0 ? (
+              <div className="space-y-4">
+                {filteredLeads.map((lead) => (
+                  <LeadCard
+                    key={lead._id}
+                    lead={lead}
+                    onUpdateStatus={handleUpdateLeadStatus}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No leads yet</h3>
+                <p className="text-gray-500">
+                  When users express interest in your properties, they'll appear here.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === "analytics" && (
+          <div className="space-y-6">
+            {/* Charts Row 1 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Leads Over Time */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Leads Over Time</h3>
+                {dailyLeadsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={dailyLeadsData}>
+                      <defs>
+                        <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="leads" 
+                        stroke="#3B82F6" 
+                        fillOpacity={1} 
+                        fill="url(#colorLeads)" 
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center text-gray-400">
+                    No data available yet
+                  </div>
+                )}
+              </div>
+
+              {/* Lead Status Distribution */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Lead Status Distribution</h3>
+                {leadStatusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={leadStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {leadStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center text-gray-400">
+                    No data available yet
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Charts Row 2 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Leads by Property */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Top Properties by Leads</h3>
+                {propertyLeadsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={propertyLeadsData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis type="number" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9CA3AF" width={120} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
+                      />
+                      <Bar dataKey="leads" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center text-gray-400">
+                    No data available yet
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Stats */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Users className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Total Leads</p>
+                        <p className="text-xl font-bold text-gray-900">{leadAnalytics?.totalLeads || 0}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <UserCheck className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Converted</p>
+                        <p className="text-xl font-bold text-gray-900">{leadAnalytics?.convertedLeads || 0}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Target className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Conversion Rate</p>
+                        <p className="text-xl font-bold text-gray-900">{leadAnalytics?.conversionRate || 0}%</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <AlertCircle className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Unread Leads</p>
+                        <p className="text-xl font-bold text-gray-900">{leadAnalytics?.unreadLeads || 0}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
