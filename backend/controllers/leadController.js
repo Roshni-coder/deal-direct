@@ -2,12 +2,13 @@ import Lead from "../models/Lead.js";
 import Property from "../models/Property.js";
 import User from "../models/userModel.js";
 import mongoose from "mongoose";
+import { sendNewLeadNotification } from "../utils/emailService.js";
 
 // Create a new lead when user expresses interest
 export const createLead = async (userId, propertyId, userDetails) => {
   try {
-    // Get property details
-    const property = await Property.findById(propertyId);
+    // Get property details with owner info
+    const property = await Property.findById(propertyId).populate("owner", "name email");
     if (!property) {
       throw new Error("Property not found");
     }
@@ -21,7 +22,7 @@ export const createLead = async (userId, propertyId, userDetails) => {
     // Create lead with snapshots
     const lead = await Lead.create({
       property: propertyId,
-      propertyOwner: property.owner,
+      propertyOwner: property.owner._id || property.owner,
       user: userId,
       userSnapshot: {
         name: userDetails.name,
@@ -41,6 +42,37 @@ export const createLead = async (userId, propertyId, userDetails) => {
       status: "new",
       source: "website"
     });
+
+    // Send email notification to property owner
+    if (property.owner && property.owner.email) {
+      const ownerName = property.owner.name || "Property Owner";
+      const ownerEmail = property.owner.email;
+      
+      const leadData = {
+        name: userDetails.name,
+        email: userDetails.email,
+        phone: userDetails.phone || ""
+      };
+      
+      const propertyData = {
+        title: property.title,
+        price: property.price || property.expectedPrice,
+        listingType: property.listingType,
+        city: property.city || property.address?.city,
+        locality: property.locality || property.address?.area,
+        propertyType: property.propertyTypeName,
+        bhk: property.bhk
+      };
+      
+      // Send email asynchronously (don't await to avoid blocking)
+      sendNewLeadNotification(ownerEmail, ownerName, leadData, propertyData)
+        .then(result => {
+          if (result.success) {
+            console.log(`📧 Lead notification email sent to ${ownerEmail}`);
+          }
+        })
+        .catch(err => console.error("Email send error:", err));
+    }
 
     return lead;
   } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
@@ -8,8 +8,42 @@ import {
   FaBed,
   FaBath,
   FaRulerCombined,
-  FaRegHeart
+  FaRegHeart,
+  FaList,
+  FaMap
 } from "react-icons/fa";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix for default marker icon in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+// Custom marker icon for properties
+const propertyIcon = new L.Icon({
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Custom red marker for highlighted property
+const highlightedIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -45,6 +79,8 @@ const PropertyPage = () => {
   const [filters, setFilters] = useState(initialFilters);
   const [propertyTypes, setPropertyTypes] = useState([]);
   const [cities, setCities] = useState([]);
+  const [viewMode, setViewMode] = useState("list"); // "list" or "map"
+  const [hoveredProperty, setHoveredProperty] = useState(null);
 
   const resolveImageSrc = (img) => {
     if (!img) return "";
@@ -127,6 +163,43 @@ const PropertyPage = () => {
 
     return matchesSearch && matchType && matchCity && matchPrice;
   });
+
+  // Get properties with valid coordinates for map
+  const propertiesWithCoords = useMemo(() => {
+    return filteredProperties.filter(p => {
+      const lat = p.address?.latitude || p.location?.coordinates?.[1];
+      const lng = p.address?.longitude || p.location?.coordinates?.[0];
+      return lat && lng && !isNaN(lat) && !isNaN(lng);
+    }).map(p => ({
+      ...p,
+      lat: p.address?.latitude || p.location?.coordinates?.[1],
+      lng: p.address?.longitude || p.location?.coordinates?.[0]
+    }));
+  }, [filteredProperties]);
+
+  // Get map center based on properties or default to India center
+  const getMapCenter = () => {
+    if (propertiesWithCoords.length > 0) {
+      const avgLat = propertiesWithCoords.reduce((sum, p) => sum + p.lat, 0) / propertiesWithCoords.length;
+      const avgLng = propertiesWithCoords.reduce((sum, p) => sum + p.lng, 0) / propertiesWithCoords.length;
+      return [avgLat, avgLng];
+    }
+    return [20.5937, 78.9629]; // India center
+  };
+
+  // Component to fit map bounds to markers
+  const MapBoundsUpdater = ({ properties }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (properties.length > 0) {
+        const bounds = L.latLngBounds(properties.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      }
+    }, [properties, map]);
+    
+    return null;
+  };
 
   const viewDetails = (property) =>
     navigate(`/properties/${property._id}`, { state: { property } });
@@ -214,21 +287,49 @@ const PropertyPage = () => {
                   Reset
                 </button>
               )}
+
+              {/* View Toggle */}
+              <div className="flex items-center bg-slate-100 rounded-xl p-1 ml-2">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === "list"
+                      ? "bg-white text-slate-800 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <FaList size={14} />
+                  <span className="hidden sm:inline">List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("map")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === "map"
+                      ? "bg-white text-slate-800 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <FaMap size={14} />
+                  <span className="hidden sm:inline">Map</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content Grid */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Real Estate Listings</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {loading ? "Searching..." : `Showing ${filteredProperties.length} properties`}
-            </p>
+      <main className={viewMode === "map" ? "h-[calc(100vh-180px)]" : "max-w-7xl mx-auto px-6 py-8"}>
+        {viewMode === "list" && (
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Real Estate Listings</h1>
+              <p className="text-slate-500 text-sm mt-1">
+                {loading ? "Searching..." : `Showing ${filteredProperties.length} properties`}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -245,7 +346,110 @@ const PropertyPage = () => {
               Clear All Filters
             </button>
           </div>
+        ) : viewMode === "map" ? (
+          /* Map View */
+          <div className="flex h-full">
+            {/* Property List Sidebar */}
+            <div className="w-96 h-full overflow-y-auto bg-white border-r border-slate-200 hidden lg:block">
+              <div className="p-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+                <h2 className="font-bold text-slate-800">{filteredProperties.length} Properties</h2>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {filteredProperties.map((p) => (
+                  <div
+                    key={p._id}
+                    onClick={() => viewDetails(p)}
+                    onMouseEnter={() => setHoveredProperty(p._id)}
+                    onMouseLeave={() => setHoveredProperty(null)}
+                    className={`p-4 cursor-pointer transition-colors ${
+                      hoveredProperty === p._id ? "bg-red-50" : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex gap-3">
+                      <img
+                        src={resolveImageSrc(p.images?.[0]) || FALLBACK_IMG}
+                        alt={p.title}
+                        className="w-24 h-20 object-cover rounded-lg flex-shrink-0"
+                        onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-slate-800 text-sm line-clamp-1">{p.title}</h3>
+                        <p className="text-slate-500 text-xs flex items-center gap-1 mt-1">
+                          <FaMapMarkerAlt className="text-red-500" size={10} />
+                          {p.address?.city}, {p.address?.state}
+                        </p>
+                        <p className="text-red-600 font-bold mt-2">
+                          ₹{p.price?.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Map Container */}
+            <div className="flex-1 h-full relative">
+              <MapContainer
+                center={getMapCenter()}
+                zoom={11}
+                className="w-full h-full z-0"
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapBoundsUpdater properties={propertiesWithCoords} />
+                {propertiesWithCoords.map((p) => (
+                  <Marker
+                    key={p._id}
+                    position={[p.lat, p.lng]}
+                    icon={hoveredProperty === p._id ? highlightedIcon : propertyIcon}
+                    eventHandlers={{
+                      click: () => viewDetails(p),
+                      mouseover: () => setHoveredProperty(p._id),
+                      mouseout: () => setHoveredProperty(null)
+                    }}
+                  >
+                    <Popup>
+                      <div className="min-w-[200px]">
+                        <img
+                          src={resolveImageSrc(p.images?.[0]) || FALLBACK_IMG}
+                          alt={p.title}
+                          className="w-full h-28 object-cover rounded-lg mb-2"
+                          onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                        />
+                        <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{p.title}</h3>
+                        <p className="text-slate-500 text-xs mt-1">{p.address?.city}</p>
+                        <p className="text-red-600 font-bold text-lg mt-1">₹{p.price?.toLocaleString()}</p>
+                        <button
+                          onClick={() => viewDetails(p)}
+                          className="w-full mt-2 bg-red-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+
+              {/* Map Legend */}
+              <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000]">
+                <p className="text-xs text-slate-600 font-medium">
+                  📍 {propertiesWithCoords.length} properties on map
+                </p>
+                {filteredProperties.length - propertiesWithCoords.length > 0 && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {filteredProperties.length - propertiesWithCoords.length} without location
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
+          /* List View */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProperties.map((p) => (
               <div
@@ -288,16 +492,16 @@ const PropertyPage = () => {
                   <div className="flex items-center gap-4 border-t border-slate-100 pt-4 text-slate-600 text-sm font-medium">
                     <div className="flex items-center gap-1.5">
                       <FaBed className="text-slate-400" />
-                      <span>3 Beds</span>
+                      <span>{p.bedrooms || 3} Beds</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <FaBath className="text-slate-400" />
-                      <span>2 Baths</span>
+                      <span>{p.bathrooms || 2} Baths</span>
                     </div>
-                    {p.size && (
+                    {(p.area?.builtUpSqft || p.size) && (
                       <div className="flex items-center gap-1.5">
                         <FaRulerCombined className="text-slate-400" />
-                        <span>{p.size} {p.sizeUnit}</span>
+                        <span>{p.area?.builtUpSqft || p.size} {p.sizeUnit || 'sqft'}</span>
                       </div>
                     )}
                   </div>
