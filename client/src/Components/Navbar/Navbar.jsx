@@ -520,8 +520,7 @@ function Navbar() {
                           <ul className="space-y-2">
                             <li><button onClick={handleRegisterProperty} className="text-gray-700 hover:text-red-600 text-sm text-left w-full">Post Property Free</button></li>
                             <li><Link to="/properties" className="text-gray-700 hover:text-red-600 text-sm">Browse Properties</Link></li>
-                            <li><Link to="/agreements" className="text-gray-700 hover:text-red-600 text-sm">Rent Agreement</Link></li>
-                          </ul>
+                                                      </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Company</h3>

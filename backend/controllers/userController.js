@@ -757,3 +757,169 @@ const sendUpgradeOTPEmail = async (email, otp, name = "User") => {
 
   return getTransporter().sendMail(mailOptions);
 };
+
+// Send Password Reset OTP Email helper function
+const sendPasswordResetOTPEmail = async (email, otp, name = "User") => {
+  const mailOptions = {
+    from: `"DealDirect" <${process.env.SENDER_EMAIL || process.env.SMTP_EMAIL}>`,
+    to: email,
+    subject: "🔑 DealDirect - Reset Your Password",
+    html: `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">DealDirect</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0;">Password Reset Request</p>
+        </div>
+        
+        <div style="background: #ffffff; padding: 40px 30px; border: 1px solid #e5e7eb; border-top: none;">
+          <h2 style="color: #1f2937; margin: 0 0 20px;">Hello ${name}! 🔐</h2>
+          <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            We received a request to reset your password. Use the following OTP to reset your password:
+          </p>
+          
+          <div style="background: #fef2f2; border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0; border: 1px solid #fecaca;">
+            <p style="color: #991b1b; font-size: 14px; margin: 0 0 10px; font-weight: 600;">Your Reset Code</p>
+            <div style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+              ${otp}
+            </div>
+          </div>
+          
+          <div style="background: #fef3c7; border-radius: 8px; padding: 15px; margin: 25px 0;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">
+              <strong>⚠️ Security Notice:</strong><br>
+              • Never share this code with anyone<br>
+              • DealDirect staff will never ask for this code<br>
+              • If you didn't request this, your account is still secure
+            </p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin: 25px 0 0;">
+            ⏰ This OTP is valid for <strong>10 minutes</strong>.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          
+          <p style="color: #9ca3af; font-size: 12px; margin: 0; text-align: center;">
+            If you didn't request a password reset, please ignore this email.<br>
+            © ${new Date().getFullYear()} DealDirect. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `,
+    text: `Hello ${name}!\n\nYour password reset OTP for DealDirect is: ${otp}\n\nThis OTP is valid for 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
+  };
+
+  return getTransporter().sendMail(mailOptions);
+};
+
+// ✅ Forgot Password - Send OTP
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      // For security, don't reveal if email exists or not
+      return res.status(200).json({
+        message: "If an account exists with this email, you will receive a password reset OTP.",
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({
+        message: "This account is not verified. Please complete registration first.",
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    console.log("Password Reset OTP for " + email + ":", otp);
+    
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    // Send OTP Email
+    try {
+      await sendPasswordResetOTPEmail(email, otp, user.name);
+      console.log("✅ Password reset OTP sent successfully to:", email);
+    } catch (emailError) {
+      console.error("❌ Error sending password reset OTP:", emailError.message);
+      return res.status(500).json({
+        message: "Failed to send reset email. Please try again later.",
+      });
+    }
+
+    res.status(200).json({
+      message: "Password reset OTP sent to your email.",
+      email: email,
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+
+// ✅ Reset Password - Verify OTP and Update Password
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        message: "Email, OTP, and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or OTP" });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordOtpExpires) {
+      return res.status(400).json({
+        message: "No password reset request found. Please request a new OTP.",
+      });
+    }
+
+    if (user.resetPasswordOtp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (user.resetPasswordOtpExpires < Date.now()) {
+      return res.status(400).json({
+        message: "OTP has expired. Please request a new one.",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset fields
+    user.password = hashedPassword;
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpires = undefined;
+    await user.save();
+
+    console.log("✅ Password reset successful for:", email);
+
+    res.status(200).json({
+      message: "Password reset successful! You can now login with your new password.",
+    });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};

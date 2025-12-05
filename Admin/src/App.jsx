@@ -16,6 +16,7 @@ import AddSubCategory from "./pages/AddSubCategory";
 import AllClients from "./pages/AllClients";
 import AllProperty from "./pages/AllProperty";
 import AllCategory from "./pages/AllCategory";
+import AllLeads from "./pages/AllLeads";
 import AdminLogin from "./pages/AdminLogin";
 
 const getStoredAdminInfo = () => {
@@ -152,6 +153,14 @@ function App() {
             element={
               <ProtectedRoute allowEnvAgent={false}>
                 <AllProperty />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/all-leads"
+            element={
+              <ProtectedRoute allowEnvAgent={false}>
+                <AllLeads />
               </ProtectedRoute>
             }
           />

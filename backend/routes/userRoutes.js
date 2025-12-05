@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllUsers, loginUser, registerUser, registerUserDirect, verifyOtp, resendOtp, getProfile, updateProfile, changePassword, sendUpgradeOtp, verifyUpgradeOtp } from "../controllers/userController.js";
+import { getAllUsers, loginUser, registerUser, registerUserDirect, verifyOtp, resendOtp, getProfile, updateProfile, changePassword, sendUpgradeOtp, verifyUpgradeOtp, forgotPassword, resetPassword } from "../controllers/userController.js";
 import multer from "multer";
 import { addProperty } from "../controllers/propertyController.js";
 import { authMiddleware } from "../middleware/authUser.js";
@@ -20,6 +20,10 @@ router.post("/register-direct", registerUserDirect); // Buyer registration (no O
 router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", resendOtp);
 router.post("/login", loginUser);
+
+// ✅ Password Reset Routes
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // ✅ Upgrade Routes (Buyer to Owner)
 router.post("/send-upgrade-otp", authMiddleware, sendUpgradeOtp);

@@ -659,8 +659,25 @@ export default function AddProperty() {
         }
 
         setIsLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
+        
+        // First try with high accuracy (GPS)
+        const tryGetLocation = (highAccuracy, timeout) => {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: highAccuracy,
+                    timeout: timeout,
+                    maximumAge: 60000 // Allow cached position up to 1 minute old
+                });
+            });
+        };
+
+        // Try high accuracy first, then fall back to low accuracy
+        tryGetLocation(true, 15000)
+            .catch(() => {
+                console.log("High accuracy failed, trying low accuracy...");
+                return tryGetLocation(false, 20000);
+            })
+            .then((position) => {
                 const { latitude, longitude } = position.coords;
                 setMapPosition([latitude, longitude]);
                 setFormData(prev => ({
@@ -673,25 +690,24 @@ export default function AddProperty() {
                 
                 // Reverse geocode to get address details
                 reverseGeocode(latitude, longitude);
-            },
-            (error) => {
+            })
+            .catch((error) => {
                 setIsLocating(false);
+                console.error("Geolocation error:", error);
                 switch (error.code) {
-                    case error.PERMISSION_DENIED:
+                    case 1: // PERMISSION_DENIED
                         toast.error("Location permission denied. Please enable it in your browser settings.");
                         break;
-                    case error.POSITION_UNAVAILABLE:
-                        toast.error("Location information is unavailable.");
+                    case 2: // POSITION_UNAVAILABLE
+                        toast.error("Location unavailable. Please check your GPS/network settings.");
                         break;
-                    case error.TIMEOUT:
-                        toast.error("Location request timed out.");
+                    case 3: // TIMEOUT
+                        toast.error("Location request timed out. Please try again or enter location manually.");
                         break;
                     default:
-                        toast.error("An error occurred while getting your location.");
+                        toast.error("Could not get your location. Please enter it manually.");
                 }
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+            });
     };
 
     // Reverse geocode to get address from coordinates
@@ -744,7 +760,7 @@ export default function AddProperty() {
 
     // Search locations using Nominatim API
     const searchLocations = async (query, fieldType) => {
-        if (!query || query.length < 3) {
+        if (!query || query.length < 2) {
             setLocationSuggestions([]);
             setShowSuggestions(false);
             return;
@@ -752,6 +768,7 @@ export default function AddProperty() {
 
         setIsSearchingLocation(true);
         setActiveLocationField(fieldType);
+        setShowSuggestions(true);
 
         try {
             // Add India bias to get more relevant results
@@ -760,8 +777,14 @@ export default function AddProperty() {
                 : `${query}${formData.city ? `, ${formData.city}, India` : ', India'}`;
             
             const response = await axios.get(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=6&addressdetails=1&countrycodes=in`,
-                { headers: { 'Accept-Language': 'en' } }
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8&addressdetails=1&countrycodes=in`,
+                { 
+                    headers: { 
+                        'Accept-Language': 'en',
+                        'User-Agent': 'DealDirect Property App'
+                    },
+                    timeout: 10000
+                }
             );
 
             if (response.data && Array.isArray(response.data)) {
@@ -772,17 +795,25 @@ export default function AddProperty() {
                     address: item.address,
                     type: item.type,
                     // Extract useful parts
-                    city: item.address?.city || item.address?.town || item.address?.village || item.address?.county || '',
-                    locality: item.address?.suburb || item.address?.neighbourhood || item.address?.hamlet || '',
+                    city: item.address?.city || item.address?.town || item.address?.village || item.address?.county || item.address?.state_district || '',
+                    locality: item.address?.suburb || item.address?.neighbourhood || item.address?.hamlet || item.address?.residential || '',
                     state: item.address?.state || '',
                     shortName: getShortDisplayName(item)
                 }));
-                setLocationSuggestions(suggestions);
-                setShowSuggestions(true);
+                
+                // Only update if we're still on the same field
+                if (fieldType === activeLocationField || !activeLocationField) {
+                    setLocationSuggestions(suggestions);
+                    setShowSuggestions(suggestions.length > 0);
+                }
+            } else {
+                setLocationSuggestions([]);
+                setShowSuggestions(false);
             }
         } catch (error) {
             console.error("Location search failed:", error);
             setLocationSuggestions([]);
+            setShowSuggestions(false);
         } finally {
             setIsSearchingLocation(false);
         }
@@ -804,16 +835,39 @@ export default function AddProperty() {
     const handleLocationInputChange = (e, fieldType) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        setActiveLocationField(fieldType);
         
         // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
         
+        // Clear suggestions if input is too short
+        if (value.length < 2) {
+            setLocationSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        
         // Debounce the search
         searchTimeoutRef.current = setTimeout(() => {
             searchLocations(value, fieldType);
-        }, 300);
+        }, 400);
+    };
+
+    // Handle input focus
+    const handleLocationFocus = (fieldType, value) => {
+        setActiveLocationField(fieldType);
+        if (value && value.length >= 2) {
+            searchLocations(value, fieldType);
+        }
+    };
+
+    // Handle input blur - delay to allow click on suggestions
+    const handleLocationBlur = () => {
+        setTimeout(() => {
+            setShowSuggestions(false);
+        }, 200);
     };
 
     // Handle suggestion selection
@@ -864,14 +918,15 @@ export default function AddProperty() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* City Field with Autocomplete */}
-                <div className="relative" ref={activeLocationField === 'city' ? suggestionsRef : null}>
+                <div className="relative">
                     <label className={labelStyle}>City</label>
                     <div className="relative">
                         <input 
                             name="city" 
                             value={formData.city} 
                             onChange={(e) => handleLocationInputChange(e, 'city')} 
-                            onFocus={() => formData.city.length >= 3 && searchLocations(formData.city, 'city')}
+                            onFocus={() => handleLocationFocus('city', formData.city)}
+                            onBlur={handleLocationBlur}
                             placeholder="Start typing city name..." 
                             className={inputStyle} 
                             autoComplete="off"
@@ -884,10 +939,11 @@ export default function AddProperty() {
                     </div>
                     {/* City Suggestions Dropdown */}
                     {showSuggestions && activeLocationField === 'city' && locationSuggestions.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                             {locationSuggestions.map((suggestion, index) => (
                                 <div
                                     key={index}
+                                    onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => handleSuggestionSelect(suggestion)}
                                     className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                                 >
@@ -905,14 +961,15 @@ export default function AddProperty() {
                 </div>
 
                 {/* Locality Field with Autocomplete */}
-                <div className="relative" ref={activeLocationField === 'locality' ? suggestionsRef : null}>
+                <div className="relative">
                     <label className={labelStyle}>Locality / Society</label>
                     <div className="relative">
                         <input 
                             name="locality" 
                             value={formData.locality} 
                             onChange={(e) => handleLocationInputChange(e, 'locality')} 
-                            onFocus={() => formData.locality.length >= 3 && searchLocations(formData.locality, 'locality')}
+                            onFocus={() => handleLocationFocus('locality', formData.locality)}
+                            onBlur={handleLocationBlur}
                             placeholder="Start typing locality..." 
                             className={inputStyle} 
                             autoComplete="off"
@@ -925,10 +982,11 @@ export default function AddProperty() {
                     </div>
                     {/* Locality Suggestions Dropdown */}
                     {showSuggestions && activeLocationField === 'locality' && locationSuggestions.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                             {locationSuggestions.map((suggestion, index) => (
                                 <div
                                     key={index}
+                                    onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => handleSuggestionSelect(suggestion)}
                                     className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                                 >
@@ -947,14 +1005,15 @@ export default function AddProperty() {
             </div>
 
             {/* Full Address Field with Autocomplete */}
-            <div className="relative" ref={activeLocationField === 'address' ? suggestionsRef : null}>
+            <div className="relative">
                 <label className={labelStyle}>Full Address</label>
                 <div className="relative">
                     <textarea 
                         name="address" 
                         value={formData.address} 
                         onChange={(e) => handleLocationInputChange(e, 'address')} 
-                        onFocus={() => formData.address.length >= 3 && searchLocations(formData.address, 'address')}
+                        onFocus={() => handleLocationFocus('address', formData.address)}
+                        onBlur={handleLocationBlur}
                         rows={3} 
                         placeholder="Start typing address for suggestions..." 
                         className={inputStyle}
@@ -968,10 +1027,11 @@ export default function AddProperty() {
                 </div>
                 {/* Address Suggestions Dropdown */}
                 {showSuggestions && activeLocationField === 'address' && locationSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                         {locationSuggestions.map((suggestion, index) => (
                             <div
                                 key={index}
+                                onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => handleSuggestionSelect(suggestion)}
                                 className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                             >

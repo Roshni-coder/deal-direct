@@ -3,6 +3,9 @@ import {
   registerAdmin,
   loginAdmin,
   getAdminProfile,
+  getDashboardStats,
+  getAdminLeads,
+  updateAdminLeadStatus,
 } from "../controllers/adminController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
 
@@ -11,5 +14,12 @@ const router = express.Router();
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 router.get("/profile", protectAdmin, getAdminProfile);
+
+// Dashboard & Analytics
+router.get("/dashboard/stats", protectAdmin, getDashboardStats);
+
+// Leads Management
+router.get("/leads", protectAdmin, getAdminLeads);
+router.put("/leads/:id", protectAdmin, updateAdminLeadStatus);
 
 export default router;

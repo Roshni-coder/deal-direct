@@ -9,6 +9,7 @@ import {
   Settings,
   Menu,
   X,
+  TrendingUp,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
@@ -34,12 +35,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       path: "/all-clients",
       name: "All Clients",
-      icon: <BarChart3 className="h-5 w-5" />,
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      path: "/all-leads",
+      name: "All Leads",
+      icon: <TrendingUp className="h-5 w-5" />,
     },
     {
       path: "/all-properties",
       name: "All Properties",
-      icon: <Settings className="h-5 w-5" />,
+      icon: <Home className="h-5 w-5" />,
     },
     {
       path: "/all-category",
@@ -49,12 +55,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       path: "/add-category",
       name: "Add Category",
-      icon: <Users className="h-5 w-5" />,
+      icon: <Briefcase className="h-5 w-5" />,
     },
     {
       path: "/add-subcategory",
       name: "Add SubCategory",
-      icon: <Briefcase className="h-5 w-5" />,
+      icon: <Settings className="h-5 w-5" />,
     },
     {
       path: "/add-property",
