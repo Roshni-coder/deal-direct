@@ -420,29 +420,29 @@ export const loginUser = async (req, res) => {
 };
 
 // ✅ Get All Users (Admin Only)
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
+// export const getAllUsers = async (req, res) => {
+//   try {
+//     const users = await User.find()
+//       .select("-password")
+//       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      message: "All users fetched successfully",
-      count: users.length,
-      users: users.map((u) => ({
-        id: u._id,
-        name: u.name,
-        email: u.email,
-        role: u.role || "user",
-        createdAt: u.createdAt,
-      })),
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch users", error: err.message });
-  }
-};
+//     res.status(200).json({
+//       message: "All users fetched successfully",
+//       count: users.length,
+//       users: users.map((u) => ({
+//         id: u._id,
+//         name: u.name,
+//         email: u.email,
+//         role: u.role || "user",
+//         createdAt: u.createdAt,
+//       })),
+//     });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ message: "Failed to fetch users", error: err.message });
+//   }
+// };
 
 // ✅ Get User Profile
 export const getProfile = async (req, res) => {
@@ -922,4 +922,78 @@ export const resetPassword = async (req, res) => {
     console.error("Reset password error:", err);
     res.status(500).json({ message: "Server error. Please try again." });
   }
+};
+
+
+export const getAllUsers = async (req, res) => {
+  try {
+    // Get role filter from query parameters (e.g., /list?role=Buyer)
+    const { role } = req.query;
+
+    // Build query filter
+    const filter = {};
+    // Assuming 'Buyer' refers to the 'user' role in the schema
+    if (role === "Buyer") { 
+      filter.role = "user";
+    } else if (role) {
+      // If you want to filter other roles, handle them here
+      filter.role = role;
+    }
+
+    const users = await User.find(filter) // Apply the filter
+      .select("-password -otp -otpExpires")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: "Users fetched",
+      count: users.length,
+      users: users.map((u) => ({
+        id: u._id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        alternatePhone: u.alternatePhone,
+        address: u.address,
+        profileImage: u.profileImage,
+        role: u.role,
+        isBlocked: u.isBlocked, // IMPORTANT: Return this status
+
+        // ADD FULL FIELDS
+        gender: u.gender,
+        dateOfBirth: u.dateOfBirth,
+        bio: u.bio,
+        preferences: u.preferences,
+
+        createdAt: u.createdAt,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch users",
+      error: err.message,
+    });
+  }
+};
+
+// ✅ Block or Unblock User - ALREADY CORRECT
+export const toggleBlockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    res.status(200).json({
+      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
+      isBlocked: user.isBlocked, // IMPORTANT: Return final status
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to update user", error: err.message });
+  }
 };

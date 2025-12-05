@@ -9,7 +9,6 @@ import {
   Settings,
   Menu,
   X,
-  TrendingUp,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
@@ -35,38 +34,43 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       path: "/all-clients",
       name: "All Clients",
-      icon: <Users className="h-5 w-5" />,
+      icon: <BarChart3 className="h-5 w-5" />,
     },
     {
-      path: "/all-leads",
-      name: "All Leads",
-      icon: <TrendingUp className="h-5 w-5" />,
+      path: "/all-owners",
+      name: "All Owners",
+      icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
+      path: "/owners-projects",
+      name: "Owner's Project",
+      icon: <BarChart3 className="h-5 w-5" />,
     },
     {
       path: "/all-properties",
       name: "All Properties",
-      icon: <Home className="h-5 w-5" />,
+      icon: <Settings className="h-5 w-5" />,
+    },
+    {
+      path: "/lead-monitoring",
+      name: "Lead-Monitoring",
+      icon: <BarChart3 className="h-5 w-5" />,
     },
     {
       path: "/all-category",
       name: "All Category",
       icon: <BarChart3 className="h-5 w-5" />,
     },
-    {
-      path: "/add-category",
-      name: "Add Category",
-      icon: <Briefcase className="h-5 w-5" />,
-    },
-    {
-      path: "/add-subcategory",
-      name: "Add SubCategory",
-      icon: <Settings className="h-5 w-5" />,
-    },
-    {
-      path: "/add-property",
-      name: "Upload Property",
-      icon: <Home className="h-5 w-5" />,
-    },
+    // {
+    //   path: "/add-category",
+    //   name: "Add Category",
+    //   icon: <Users className="h-5 w-5" />,
+    // },
+    // {
+    //   path: "/add-subcategory",
+    //   name: "Add SubCategory",
+    //   icon: <Briefcase className="h-5 w-5" />,
+    // },
   ];
 
   const filteredMenu = isEnvAgent

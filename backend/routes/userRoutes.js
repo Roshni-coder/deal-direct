@@ -1,10 +1,10 @@
 import express from "express";
-import { getAllUsers, loginUser, registerUser, registerUserDirect, verifyOtp, resendOtp, getProfile, updateProfile, changePassword, sendUpgradeOtp, verifyUpgradeOtp, forgotPassword, resetPassword } from "../controllers/userController.js";
+import { getAllUsers, loginUser, registerUser, registerUserDirect, verifyOtp, resendOtp, getProfile, updateProfile, changePassword, sendUpgradeOtp, verifyUpgradeOtp, forgotPassword, resetPassword, toggleBlockUser } from "../controllers/userController.js";
 import multer from "multer";
-import { addProperty } from "../controllers/propertyController.js";
+import { addProperty, getOwnersWithProjects } from "../controllers/propertyController.js";
 import { authMiddleware } from "../middleware/authUser.js";
 import { upload } from "../middleware/upload.js";
-
+import {protectAdmin} from "../middleware/authAdmin.js"
 const router = express.Router();
 
 // 🖼️ Multer config for local storage (legacy)
@@ -38,6 +38,7 @@ router.put("/change-password", authMiddleware, changePassword);
 router.post("/add-property", authMiddleware, localUpload.array("images", 10), addProperty);
 
 // ✅ Admin Routes
-router.get("/list", getAllUsers);
-
+router.get("/list", protectAdmin, getAllUsers);
+router.put("/block/:id", protectAdmin, toggleBlockUser);
+router.get("/owners-projects", protectAdmin, getOwnersWithProjects);
 export default router;

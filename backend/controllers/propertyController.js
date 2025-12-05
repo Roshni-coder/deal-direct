@@ -997,3 +997,48 @@ export const filterProperties = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+export const getOwnersWithProjects = async (req, res) => {
+    try {
+        // 1. Fetch all users with the 'owner' role
+        const owners = await User.find({ role: 'owner' })
+            .select('name email phone company profileImage'); // Assuming 'company' field exists in User model
+
+        // 2. Extract owner IDs
+        const ownerIds = owners.map(o => o._id);
+
+        // 3. Fetch all properties belonging to these owners
+        const properties = await Property.find({ owner: { $in: ownerIds } })
+            .populate("category")
+            .sort({ createdAt: -1 });
+
+        // 4. Group properties by owner ID
+        const projectsByOwner = properties.reduce((acc, prop) => {
+            const ownerId = prop.owner.toString();
+            if (!acc[ownerId]) {
+                acc[ownerId] = [];
+            }
+            acc[ownerId].push(withPublicImages(req, prop)); // Use the image utility
+            return acc;
+        }, {});
+
+        // 5. Merge owners with their properties
+        const ownersWithProjects = owners.map(owner => {
+            const ownerObj = owner.toObject();
+            return {
+                ...ownerObj,
+                id: ownerObj._id,
+                projects: projectsByOwner[ownerObj._id.toString()] || []
+            };
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            data: ownersWithProjects
+        });
+
+    } catch (error) {
+        console.error("Error fetching owners with projects:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

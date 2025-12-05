@@ -30,7 +30,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-100 p-5 flex justify-between items-center shadow-md">
+    <header className="bg-white border-b border-gray-100 p-6 flex justify-between items-center shadow-md">
       {/* Logo */}
       <div className="flex items-center space-x-3">
         <img src={logoSrc} alt="DealDirect Logo" className="h-10 w-auto" />

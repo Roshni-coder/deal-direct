@@ -16,8 +16,10 @@ import AddSubCategory from "./pages/AddSubCategory";
 import AllClients from "./pages/AllClients";
 import AllProperty from "./pages/AllProperty";
 import AllCategory from "./pages/AllCategory";
-import AllLeads from "./pages/AllLeads";
 import AdminLogin from "./pages/AdminLogin";
+import LeadMonitoring from "./pages/LeadMonitoring";
+import BuilderVerification from "./pages/BuilderVerification";
+import BuilderProjects from "./pages/BuilderProjects";
 
 const getStoredAdminInfo = () => {
   try {
@@ -68,8 +70,7 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
           </aside>
         )}
-
-        {/* Page Content */}
+        
         {/* footer */}
         <main
           className={`transition-all duration-300 ease-in-out overflow-auto p-6`}
@@ -77,20 +78,23 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
         >
           {children}
           {/* Footer */}
-{!isLoginPage && (
-  <footer className="mt-10 border-t border-gray-200 pt-6 pb-4 text-center text-sm text-gray-500">
-    <div className="flex flex-col items-center justify-center space-y-2">
-      <p className="flex items-center space-x-2">
-        <span>© {new Date().getFullYear()} <strong className="text-blue-600">PropDeal</strong> Admin Panel</span>
-      </p>
-      <div className="flex items-center space-x-4 text-gray-400 text-xs">
-        <span>Built with ❤️ using React & Tailwind CSS</span>
-      </div>
-    </div>
-  </footer>
-)}
-
-        </main>
+          {!isLoginPage && (
+            <footer className="mt-10 border-t border-gray-200 pt-6 pb-4 text-center text-sm text-gray-500">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <p className="flex items-center space-x-2">
+                  <span>
+                    © {new Date().getFullYear()}{" "}
+                    <strong className="text-blue-600">PropDeal</strong> Admin
+                    Panel
+                  </span>
+                </p>
+                <div className="flex items-center space-x-4 text-gray-400 text-xs">
+                  <span>Built with ❤️ using React & Tailwind CSS</span>
+                </div>
+              </div>
+            </footer>
+          )}
+        </main> 
       </div>
     </div>
   );
@@ -125,6 +129,14 @@ function App() {
             }
           />
           <Route
+            path="/lead-monitoring"
+            element={
+              <ProtectedRoute allowEnvAgent>
+                <LeadMonitoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/add-category"
             element={
               <ProtectedRoute allowEnvAgent={false}>
@@ -141,6 +153,22 @@ function App() {
             }
           />
           <Route
+            path="/all-owners"
+            element={
+              <ProtectedRoute allowEnvAgent={false}>
+                <BuilderVerification />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owners-projects"
+            element={
+              <ProtectedRoute allowEnvAgent={false}>
+                <BuilderProjects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/all-clients"
             element={
               <ProtectedRoute allowEnvAgent={false}>
@@ -153,14 +181,6 @@ function App() {
             element={
               <ProtectedRoute allowEnvAgent={false}>
                 <AllProperty />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/all-leads"
-            element={
-              <ProtectedRoute allowEnvAgent={false}>
-                <AllLeads />
               </ProtectedRoute>
             }
           />
