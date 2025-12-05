@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { 
   FaMapMarkerAlt, 
   FaPhoneAlt, 
@@ -7,37 +9,91 @@ import {
   FaClock, 
   FaPaperPlane, 
   FaBuilding,
-  FaHeadset
+  FaHeadset,
+  FaLock
 } from "react-icons/fa";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:9000";
+
 export default function Contact() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
+    category: "general"
   });
 
-  // Scroll to top on page load
+  // Check if user is logged in and pre-fill form
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    if (token && user._id) {
+      setIsLoggedIn(true);
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || ""
+      }));
+    }
   }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if logged in
+    if (!isLoggedIn) {
+      toast.info("Please login to submit your inquiry");
+      navigate("/login", { state: { from: "/contact" } });
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate API Call
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${API_BASE}/api/contact`,
+        {
+          subject: formData.subject,
+          message: formData.message,
+          category: formData.category
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Message sent! Our support team will contact you shortly.");
+        setFormData(prev => ({ 
+          ...prev, 
+          subject: "", 
+          message: "", 
+          category: "general" 
+        }));
+      } else {
+        toast.error(response.data.message || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("Contact form error:", error);
+      const errorMsg = error.response?.data?.message || "Failed to send message. Please try again.";
+      toast.error(errorMsg);
+    } finally {
       setLoading(false);
-      toast.success("Message sent! Our support team will contact you shortly.");
-      setFormData({ name: "", email: "", subject: "", message: "" });
-    }, 2000);
+    }
   };
 
   return (
@@ -151,6 +207,23 @@ export default function Contact() {
               Got a question about a property, or want to partner with us? Fill out the form below.
             </p>
 
+            {/* Login Notice */}
+            {!isLoggedIn && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+                <FaLock className="text-amber-500 flex-shrink-0" />
+                <div>
+                  <p className="text-amber-800 text-sm font-medium">Login Required</p>
+                  <p className="text-amber-600 text-xs">Please login to submit your inquiry. This helps us serve you better.</p>
+                </div>
+                <button
+                  onClick={() => navigate("/login", { state: { from: "/contact" } })}
+                  className="ml-auto px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+                >
+                  Login
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -162,7 +235,8 @@ export default function Contact() {
                     onChange={handleChange}
                     placeholder="John Doe"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white"
+                    disabled={isLoggedIn}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white disabled:bg-slate-100 disabled:text-slate-600"
                   />
                 </div>
                 <div className="space-y-2">
@@ -174,22 +248,42 @@ export default function Contact() {
                     onChange={handleChange}
                     placeholder="john@example.com"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white"
+                    disabled={isLoggedIn}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white disabled:bg-slate-100 disabled:text-slate-600"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Subject</label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  placeholder="Regarding Property Listing / Partnership"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Subject</label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    placeholder="Regarding Property Listing / Partnership"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Category</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-slate-50 focus:bg-white"
+                  >
+                    <option value="general">General Inquiry</option>
+                    <option value="property">Property Related</option>
+                    <option value="partnership">Partnership</option>
+                    <option value="support">Technical Support</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="complaint">Complaint</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-2">

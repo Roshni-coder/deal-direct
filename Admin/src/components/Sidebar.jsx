@@ -9,6 +9,7 @@ import {
   Settings,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
@@ -60,6 +61,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       path: "/all-category",
       name: "All Category",
       icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
+      path: "/contact-inquiries",
+      name: "Contact Inquiries",
+      icon: <Mail className="h-5 w-5" />,
     },
     // {
     //   path: "/add-category",

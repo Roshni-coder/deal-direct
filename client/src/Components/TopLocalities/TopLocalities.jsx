@@ -2,6 +2,16 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 
+// Import top locality images
+import bangaloretop from "../../assets/bangaloretop.jpg";
+import bihartop from "../../assets/bihartop.jpg";
+import delhitop from "../../assets/delhitop.jpg";
+import gujarattop from "../../assets/gujarattop.jpg";
+import gurgaontop from "../../assets/gurgaontop.jpg";
+import hyderabadtop from "../../assets/Hyderabadtop.jpg";
+import kolkatatop from "../../assets/kolkatatop.jpg";
+import mumbaitop from "../../assets/mumbaitop.jpg";
+
 // --- Internal LogoLoop Component ---
 const LogoLoop = ({ logos, speed = 50, direction = "left", gap = 24 }) => {
   // Duplicate logos to create seamless loop
@@ -53,70 +63,70 @@ const TopLocalities = () => {
       id: 1,
       name: "Whitefield, Bangalore",
       city: "Bangalore",
-      image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=200&h=200&fit=crop&q=80",
+      image: bangaloretop,
       properties: "2,500+",
     },
     {
       id: 2,
       name: "Bandra, Mumbai",
       city: "Mumbai",
-      image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200&h=200&fit=crop&q=80",
+      image: mumbaitop,
       properties: "1,800+",
     },
     {
       id: 3,
       name: "Gurgaon Sector 54, Delhi NCR",
       city: "Gurgaon",
-      image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=200&h=200&fit=crop&q=80",
+      image: gurgaontop,
       properties: "1,600+",
     },
     {
       id: 4,
       name: "Koramangala, Bangalore",
       city: "Bangalore",
-      image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=200&h=200&fit=crop&q=80",
+      image: bangaloretop,
       properties: "2,200+",
     },
     {
       id: 5,
       name: "Hitech City, Hyderabad",
       city: "Hyderabad",
-      image: "https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=200&h=200&fit=crop&q=80",
+      image: hyderabadtop,
       properties: "1,900+",
     },
     {
       id: 6,
-      name: "Powai, Mumbai",
-      city: "Mumbai",
-      image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=200&h=200&fit=crop&q=80",
+      name: "Salt Lake, Kolkata",
+      city: "Kolkata",
+      image: kolkatatop,
       properties: "1,400+",
     },
     {
       id: 7,
-      name: "Hinjewadi, Pune",
-      city: "Pune",
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop&q=80",
+      name: "Connaught Place, Delhi",
+      city: "Delhi",
+      image: delhitop,
       properties: "1,700+",
     },
     {
       id: 8,
-      name: "Indiranagar, Bangalore",
-      city: "Bangalore",
-      image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop&q=80",
+      name: "Ahmedabad, Gujarat",
+      city: "Gujarat",
+      image: gujarattop,
       properties: "1,500+",
     },
     {
       id: 9,
-      name: "Andheri, Mumbai",
-      city: "Mumbai",
-      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&h=200&fit=crop&q=80",
+      name: "Patna, Bihar",
+      city: "Bihar",
+      image: bihartop,
       properties: "2,000+",
     },
     {
       id: 10,
       name: "Gachibowli, Hyderabad",
       city: "Hyderabad",
-      image: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=200&h=200&fit=crop&q=80",
+      image: hyderabadtop,
       properties: "1,800+",
     },
   ];

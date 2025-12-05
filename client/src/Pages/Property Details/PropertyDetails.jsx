@@ -12,9 +12,11 @@ import {
   TagIcon,
   CheckCircleIcon,
   ShieldCheckIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
+import { useChat } from "../../context/ChatContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -24,11 +26,13 @@ const PropertyDetails = () => {
   const { state } = useLocation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const { startConversation, openChat } = useChat();
   const [property, setProperty] = useState(state?.property || null);
   const [loading, setLoading] = useState(!state?.property);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInterested, setIsInterested] = useState(false);
   const [interestLoading, setInterestLoading] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
@@ -236,6 +240,51 @@ const PropertyDetails = () => {
     }
   };
 
+  // Handle Chat with Owner
+  const handleChatWithOwner = async () => {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    if (!token || !user._id) {
+      toast.info("Please login to chat with the owner");
+      navigate("/login", { state: { from: `/properties/${id}` } });
+      return;
+    }
+
+    // Get owner ID from property
+    const ownerId = property.owner?._id || property.owner;
+    
+    // Check if property has an owner
+    if (!ownerId) {
+      toast.error("Unable to contact owner - no owner information available");
+      return;
+    }
+
+    // Check if user is the owner
+    if (user._id === ownerId) {
+      toast.info("This is your own property");
+      return;
+    }
+
+    setChatLoading(true);
+    try {
+      console.log("Starting conversation with:", { propertyId: property._id, ownerId });
+      const conversation = await startConversation(property._id, ownerId);
+      if (conversation) {
+        openChat(conversation);
+        toast.success("Chat started! You can now message the owner.");
+      } else {
+        toast.error("Failed to start conversation");
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error);
+      const errorMessage = error.response?.data?.message || "Failed to start conversation";
+      toast.error(errorMessage);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 mt-20 font-sans">
       <VisitModal
@@ -379,7 +428,7 @@ const PropertyDetails = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-auto">
+          <div className="mt-auto space-y-3">
             <button
               onClick={handleInterest}
               disabled={interestLoading || isInterested}
@@ -404,6 +453,27 @@ const PropertyDetails = () => {
               ) : (
                 <>
                   <HeartIcon className="w-5 h-5" /> I'm Interested
+                </>
+              )}
+            </button>
+
+            {/* Chat with Owner Button */}
+            <button
+              onClick={handleChatWithOwner}
+              disabled={chatLoading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {chatLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Starting Chat...
+                </>
+              ) : (
+                <>
+                  <ChatBubbleLeftRightIcon className="w-5 h-5" /> Chat with Owner
                 </>
               )}
             </button>

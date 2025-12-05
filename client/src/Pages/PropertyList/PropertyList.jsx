@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
@@ -10,12 +10,43 @@ import {
   FaRulerCombined,
   FaRegHeart,
   FaList,
-  FaMap
+  FaMap,
+  FaCrosshairs,
+  FaTimes
 } from "react-icons/fa";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// Custom marker styles
+const markerStyles = `
+  .custom-property-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+  .custom-property-marker > div {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .custom-property-marker > div:hover {
+    transform: scale(1.1);
+    z-index: 1000 !important;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-content {
+    margin: 12px !important;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = markerStyles;
+  document.head.appendChild(styleSheet);
+}
 // Fix for default marker icon in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -45,7 +76,80 @@ const highlightedIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Custom pin drop marker (green)
+const pinDropIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Create custom property marker with price label
+const createPropertyMarker = (price, isHighlighted = false) => {
+  const formattedPrice = price >= 10000000 
+    ? `₹${(price / 10000000).toFixed(1)}Cr` 
+    : price >= 100000 
+      ? `₹${(price / 100000).toFixed(0)}L` 
+      : `₹${price?.toLocaleString()}`;
+  
+  return L.divIcon({
+    className: 'custom-property-marker',
+    html: `
+      <div style="
+        background: ${isHighlighted ? '#dc2626' : '#ffffff'};
+        color: ${isHighlighted ? '#ffffff' : '#1e293b'};
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        border: 2px solid ${isHighlighted ? '#dc2626' : '#e2e8f0'};
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      ">
+        <span style="font-size: 14px;">🏠</span>
+        ${formattedPrice}
+        <div style="
+          position: absolute;
+          bottom: -8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-top: 8px solid ${isHighlighted ? '#dc2626' : '#ffffff'};
+        "></div>
+      </div>
+    `,
+    iconSize: [80, 40],
+    iconAnchor: [40, 40],
+    popupAnchor: [0, -35]
+  });
+};
+
+// Calculate distance between two points (Haversine formula)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE;
+
+// Simple in-memory cache for suggestions
+const suggestionsCache = new Map();
+const CACHE_TTL = 60000; // 1 minute cache
 
 const initialFilters = {
   search: "",
@@ -81,6 +185,20 @@ const PropertyPage = () => {
   const [cities, setCities] = useState([]);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
   const [hoveredProperty, setHoveredProperty] = useState(null);
+  
+  // Pin drop states
+  const [pinDropMode, setPinDropMode] = useState(false);
+  const [droppedPin, setDroppedPin] = useState(null); // { lat, lng }
+  const [searchRadius, setSearchRadius] = useState(2); // km
+  
+  // Autocomplete states
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const resolveImageSrc = (img) => {
     if (!img) return "";
@@ -117,6 +235,126 @@ const PropertyPage = () => {
       }
     };
     fetchAllData();
+  }, []);
+
+  // Optimized autocomplete with caching and request cancellation
+  useEffect(() => {
+    const searchTerm = filters.search?.trim() || '';
+    
+    if (searchTerm.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = searchTerm.toLowerCase();
+    const cached = suggestionsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setSuggestions(cached.data);
+      setShowSuggestions(cached.data.length > 0);
+      setSelectedIndex(-1);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await axios.get(
+          `${API_BASE}/api/properties/suggestions`,
+          {
+            params: { q: searchTerm },
+            signal: abortControllerRef.current.signal,
+            timeout: 3000
+          }
+        );
+
+        const data = response.data.suggestions || [];
+        
+        // Cache the result
+        suggestionsCache.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+        setSelectedIndex(-1);
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          console.error('Error fetching suggestions:', error);
+          setSuggestions([]);
+        }
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    // Debounce: 150ms for fast response
+    const debounceTimer = setTimeout(fetchSuggestions, 150);
+    return () => {
+      clearTimeout(debounceTimer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filters.search]);
+
+  // Handle keyboard navigation for suggestions
+  const handleSearchKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        handleFilterChange("search", filters.search);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSuggestionClick(suggestions[selectedIndex]);
+      } else {
+        handleFilterChange("search", filters.search);
+        setShowSuggestions(false);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setFilters(prev => ({ ...prev, search: suggestion.value }));
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+  };
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -166,7 +404,7 @@ const PropertyPage = () => {
 
   // Get properties with valid coordinates for map
   const propertiesWithCoords = useMemo(() => {
-    return filteredProperties.filter(p => {
+    const withCoords = filteredProperties.filter(p => {
       const lat = p.address?.latitude || p.location?.coordinates?.[1];
       const lng = p.address?.longitude || p.location?.coordinates?.[0];
       return lat && lng && !isNaN(lat) && !isNaN(lng);
@@ -175,10 +413,33 @@ const PropertyPage = () => {
       lat: p.address?.latitude || p.location?.coordinates?.[1],
       lng: p.address?.longitude || p.location?.coordinates?.[0]
     }));
+    
+    // Debug log
+    console.log(`Properties: ${filteredProperties.length} total, ${withCoords.length} with coordinates`);
+    if (withCoords.length > 0) {
+      console.log('Sample property with coords:', withCoords[0]?.title, withCoords[0]?.lat, withCoords[0]?.lng);
+    }
+    
+    return withCoords;
   }, [filteredProperties]);
+
+  // Filter properties near dropped pin
+  const nearbyProperties = useMemo(() => {
+    if (!droppedPin) return propertiesWithCoords;
+    return propertiesWithCoords.filter(p => {
+      const distance = calculateDistance(droppedPin.lat, droppedPin.lng, p.lat, p.lng);
+      return distance <= searchRadius;
+    }).map(p => ({
+      ...p,
+      distance: calculateDistance(droppedPin.lat, droppedPin.lng, p.lat, p.lng)
+    })).sort((a, b) => a.distance - b.distance);
+  }, [propertiesWithCoords, droppedPin, searchRadius]);
 
   // Get map center based on properties or default to India center
   const getMapCenter = () => {
+    if (droppedPin) {
+      return [droppedPin.lat, droppedPin.lng];
+    }
     if (propertiesWithCoords.length > 0) {
       const avgLat = propertiesWithCoords.reduce((sum, p) => sum + p.lat, 0) / propertiesWithCoords.length;
       const avgLng = propertiesWithCoords.reduce((sum, p) => sum + p.lng, 0) / propertiesWithCoords.length;
@@ -187,16 +448,31 @@ const PropertyPage = () => {
     return [20.5937, 78.9629]; // India center
   };
 
+  // Map click handler component
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: (e) => {
+        if (pinDropMode) {
+          setDroppedPin({ lat: e.latlng.lat, lng: e.latlng.lng });
+          setPinDropMode(false);
+        }
+      }
+    });
+    return null;
+  };
+
   // Component to fit map bounds to markers
   const MapBoundsUpdater = ({ properties }) => {
     const map = useMap();
     
     useEffect(() => {
-      if (properties.length > 0) {
+      if (droppedPin) {
+        map.setView([droppedPin.lat, droppedPin.lng], 14);
+      } else if (properties.length > 0) {
         const bounds = L.latLngBounds(properties.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
       }
-    }, [properties, map]);
+    }, [properties, map, droppedPin]);
     
     return null;
   };
@@ -215,18 +491,80 @@ const PropertyPage = () => {
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between mb-4">
             <div className="relative w-full lg:w-2/5 flex gap-2">
               <div className="relative flex-1">
-                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Search project, locality..."
                   className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:border-red-500 rounded-xl outline-none transition-all text-sm"
                   value={filters.search}
                   onChange={(e) => handleFilterChange("search", e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleFilterChange("search", filters.search)}
+                  onKeyDown={handleSearchKeyDown}
+                  onFocus={() => filters.search?.trim().length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
                 />
+                
+                {/* Autocomplete Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto"
+                  >
+                    {isLoadingSuggestions && (
+                      <div className="px-4 py-2 text-sm text-slate-400">Loading...</div>
+                    )}
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={`${suggestion.type}-${suggestion.value}`}
+                        className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${
+                          index === selectedIndex ? 'bg-red-50' : 'hover:bg-slate-50'
+                        }`}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        {suggestion.type === 'city' ? (
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0">
+                            <FaMapMarkerAlt className="text-white text-lg" />
+                          </div>
+                        ) : suggestion.image ? (
+                          <img 
+                            src={suggestion.image} 
+                            alt="" 
+                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
+                            'bg-green-100 text-green-600'
+                          }`}>
+                            {suggestion.type === 'project' ? '🏠' : '📍'}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-slate-800 truncate">
+                            {suggestion.value}
+                          </div>
+                          {suggestion.subtitle && suggestion.type !== 'city' && (
+                            <div className="text-xs text-slate-500 truncate">{suggestion.subtitle}</div>
+                          )}
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
+                          suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
+                          'bg-orange-50 text-orange-600'
+                        }`}>
+                          {suggestion.type}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <button
-                onClick={() => handleFilterChange("search", filters.search)}
+                onClick={() => {
+                  handleFilterChange("search", filters.search);
+                  setShowSuggestions(false);
+                }}
                 className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium text-sm shadow-sm flex items-center gap-2 whitespace-nowrap"
               >
                 <FaSearch className="text-sm" />
@@ -352,10 +690,19 @@ const PropertyPage = () => {
             {/* Property List Sidebar */}
             <div className="w-96 h-full overflow-y-auto bg-white border-r border-slate-200 hidden lg:block">
               <div className="p-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-                <h2 className="font-bold text-slate-800">{filteredProperties.length} Properties</h2>
+                {droppedPin ? (
+                  <div>
+                    <h2 className="font-bold text-green-600">
+                      🎯 {nearbyProperties.length} Nearby Properties
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">Within {searchRadius} km of pin</p>
+                  </div>
+                ) : (
+                  <h2 className="font-bold text-slate-800">{filteredProperties.length} Properties</h2>
+                )}
               </div>
               <div className="divide-y divide-slate-100">
-                {filteredProperties.map((p) => (
+                {(droppedPin ? nearbyProperties : filteredProperties).map((p) => (
                   <div
                     key={p._id}
                     onClick={() => viewDetails(p)}
@@ -378,6 +725,11 @@ const PropertyPage = () => {
                           <FaMapMarkerAlt className="text-red-500" size={10} />
                           {p.address?.city}, {p.address?.state}
                         </p>
+                        {p.distance !== undefined && (
+                          <p className="text-green-600 text-xs font-medium mt-1">
+                            📍 {p.distance.toFixed(1)} km away
+                          </p>
+                        )}
                         <p className="text-red-600 font-bold mt-2">
                           ₹{p.price?.toLocaleString()}
                         </p>
@@ -390,22 +742,124 @@ const PropertyPage = () => {
 
             {/* Map Container */}
             <div className="flex-1 h-full relative">
+              {/* Pin Drop Controls */}
+              <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    if (droppedPin) {
+                      setDroppedPin(null);
+                      setPinDropMode(false);
+                    } else {
+                      setPinDropMode(!pinDropMode);
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all ${
+                    pinDropMode 
+                      ? 'bg-green-600 text-white animate-pulse' 
+                      : droppedPin 
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {droppedPin ? (
+                    <>
+                      <FaTimes /> Clear Pin
+                    </>
+                  ) : pinDropMode ? (
+                    <>
+                      <FaCrosshairs className="animate-ping" /> Click on map...
+                    </>
+                  ) : (
+                    <>
+                      <FaCrosshairs /> Drop Pin
+                    </>
+                  )}
+                </button>
+
+                {/* Radius Selector */}
+                {droppedPin && (
+                  <div className="bg-white rounded-lg shadow-lg p-3">
+                    <label className="text-xs text-slate-600 font-medium block mb-2">
+                      Search Radius: {searchRadius} km
+                    </label>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="10"
+                      step="0.5"
+                      value={searchRadius}
+                      onChange={(e) => setSearchRadius(parseFloat(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-600"
+                    />
+                    <div className="flex justify-between text-xs text-slate-400 mt-1">
+                      <span>0.5 km</span>
+                      <span>10 km</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <MapContainer
                 center={getMapCenter()}
                 zoom={11}
-                className="w-full h-full z-0"
+                className={`w-full h-full z-0 ${pinDropMode ? 'cursor-crosshair' : ''}`}
                 scrollWheelZoom={true}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapBoundsUpdater properties={propertiesWithCoords} />
-                {propertiesWithCoords.map((p) => (
+                <MapClickHandler />
+                <MapBoundsUpdater properties={droppedPin ? nearbyProperties : propertiesWithCoords} />
+                
+                {/* No Properties Message */}
+                {propertiesWithCoords.length === 0 && !droppedPin && (
+                  <div className="leaflet-control absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000]">
+                    <div className="bg-white rounded-xl shadow-lg p-6 text-center max-w-sm">
+                      <div className="text-4xl mb-3">📍</div>
+                      <h3 className="font-bold text-slate-800 mb-2">No Location Data</h3>
+                      <p className="text-sm text-slate-500">
+                        Properties don't have latitude/longitude coordinates saved in the database.
+                      </p>
+                      <p className="text-xs text-slate-400 mt-2">
+                        Add coordinates when creating properties to see them on the map.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Dropped Pin and Search Radius Circle */}
+                {droppedPin && (
+                  <>
+                    <Marker position={[droppedPin.lat, droppedPin.lng]} icon={pinDropIcon}>
+                      <Popup>
+                        <div className="text-center p-2">
+                          <p className="font-bold text-green-600">📍 Your Pin</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {nearbyProperties.length} properties within {searchRadius} km
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                    <Circle
+                      center={[droppedPin.lat, droppedPin.lng]}
+                      radius={searchRadius * 1000}
+                      pathOptions={{
+                        color: '#22c55e',
+                        fillColor: '#22c55e',
+                        fillOpacity: 0.1,
+                        weight: 2
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* Property Markers */}
+                {(droppedPin ? nearbyProperties : propertiesWithCoords).map((p) => (
                   <Marker
                     key={p._id}
                     position={[p.lat, p.lng]}
-                    icon={hoveredProperty === p._id ? highlightedIcon : propertyIcon}
+                    icon={createPropertyMarker(p.price, hoveredProperty === p._id)}
                     eventHandlers={{
                       click: () => viewDetails(p),
                       mouseover: () => setHoveredProperty(p._id),
@@ -413,19 +867,31 @@ const PropertyPage = () => {
                     }}
                   >
                     <Popup>
-                      <div className="min-w-[200px]">
+                      <div className="min-w-[220px]">
                         <img
                           src={resolveImageSrc(p.images?.[0]) || FALLBACK_IMG}
                           alt={p.title}
-                          className="w-full h-28 object-cover rounded-lg mb-2"
+                          className="w-full h-32 object-cover rounded-lg mb-2"
                           onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
                         />
-                        <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{p.title}</h3>
-                        <p className="text-slate-500 text-xs mt-1">{p.address?.city}</p>
-                        <p className="text-red-600 font-bold text-lg mt-1">₹{p.price?.toLocaleString()}</p>
+                        <h3 className="font-bold text-slate-800 text-sm line-clamp-2">{p.title}</h3>
+                        <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                          <span>📍</span> {p.address?.city}, {p.address?.locality || p.address?.state}
+                        </p>
+                        {p.distance !== undefined && (
+                          <p className="text-green-600 text-xs font-medium mt-1">
+                            🎯 {p.distance.toFixed(1)} km from your pin
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-red-600 font-bold text-lg">₹{p.price?.toLocaleString()}</p>
+                          {p.area?.superBuiltUp && (
+                            <p className="text-slate-500 text-xs">{p.area.superBuiltUp} sq.ft</p>
+                          )}
+                        </div>
                         <button
                           onClick={() => viewDetails(p)}
-                          className="w-full mt-2 bg-red-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors"
+                          className="w-full mt-3 bg-red-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors"
                         >
                           View Details
                         </button>
@@ -437,13 +903,26 @@ const PropertyPage = () => {
 
               {/* Map Legend */}
               <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000]">
-                <p className="text-xs text-slate-600 font-medium">
-                  📍 {propertiesWithCoords.length} properties on map
-                </p>
-                {filteredProperties.length - propertiesWithCoords.length > 0 && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    {filteredProperties.length - propertiesWithCoords.length} without location
-                  </p>
+                {droppedPin ? (
+                  <>
+                    <p className="text-xs text-green-600 font-medium">
+                      🎯 {nearbyProperties.length} properties within {searchRadius} km
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Drag radius slider to adjust
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-600 font-medium">
+                      📍 {propertiesWithCoords.length} properties on map
+                    </p>
+                    {filteredProperties.length - propertiesWithCoords.length > 0 && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        {filteredProperties.length - propertiesWithCoords.length} without location
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -1,5 +1,5 @@
 // src/Components/HeroSection/HeroSection.jsx - Omnibox Style
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -18,27 +18,9 @@ const defaultTabs = [
   { label: "Plot & Land", intent: "plot", icon: FaTree },
 ];
 
-// Omnibox-style relevance scoring
-const calculateRelevanceScore = (query, text) => {
-  if (!text) return 0;
-
-  const queryLower = query.toLowerCase();
-  const textLower = text.toLowerCase();
-
-  if (textLower === queryLower) return 100;
-  if (textLower.startsWith(queryLower)) return 90;
-
-  const words = textLower.split(/\s+/);
-  if (words.some(word => word.startsWith(queryLower))) return 80;
-  if (textLower.includes(queryLower)) return 70;
-
-  // Fuzzy match
-  let queryIndex = 0;
-  for (let i = 0; i < textLower.length && queryIndex < queryLower.length; i++) {
-    if (textLower[i] === queryLower[queryIndex]) queryIndex++;
-  }
-  return queryIndex === queryLower.length ? 50 : 0;
-};
+// Simple in-memory cache for suggestions
+const suggestionsCache = new Map();
+const CACHE_TTL = 60000; // 1 minute cache
 
 const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   const navigate = useNavigate();
@@ -50,84 +32,80 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const dropdownRefs = {
     budget: useRef(null),
     propertyType: useRef(null),
   };
 
-  // Omnibox-style search with debouncing
+  // Optimized autocomplete with dedicated endpoint, caching, and request cancellation
   useEffect(() => {
+    const searchTerm = filters.search?.trim() || '';
+    
+    if (searchTerm.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = searchTerm.toLowerCase();
+    const cached = suggestionsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setSuggestions(cached.data);
+      setShowSuggestions(cached.data.length > 0);
+      setSelectedIndex(-1);
+      return;
+    }
+
     const fetchSuggestions = async () => {
-      if (!filters.search || filters.search.trim().length < 2) {
-        setSuggestions([]);
-        setShowSuggestions(false);
-        return;
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
+      abortControllerRef.current = new AbortController();
 
       setIsLoadingSuggestions(true);
       try {
-        const response = await axios.get(`${API_BASE}/api/properties/property-list`);
-        const properties = response.data.data || [];
-
-        const searchTerm = filters.search.toLowerCase().trim();
-        const scoredSuggestions = [];
-
-        properties.forEach(property => {
-          if (property.title) {
-            const score = calculateRelevanceScore(searchTerm, property.title);
-            if (score > 0) {
-              scoredSuggestions.push({
-                type: 'project',
-                value: property.title,
-                subtitle: `${property.city || ''} ${property.locality ? '• ' + property.locality : ''}`.trim(),
-                score,
-              });
-            }
+        const response = await axios.get(
+          `${API_BASE}/api/properties/suggestions`,
+          {
+            params: { q: searchTerm },
+            signal: abortControllerRef.current.signal,
+            timeout: 3000 // 3 second timeout
           }
+        );
 
-          if (property.locality) {
-            const score = calculateRelevanceScore(searchTerm, property.locality);
-            if (score > 0) {
-              scoredSuggestions.push({
-                type: 'locality',
-                value: property.locality,
-                subtitle: property.city || '',
-                score: score * 0.9,
-              });
-            }
-          }
-
-          if (property.city) {
-            const score = calculateRelevanceScore(searchTerm, property.city);
-            if (score > 0) {
-              scoredSuggestions.push({
-                type: 'city',
-                value: property.city,
-                subtitle: 'City',
-                score: score * 0.8,
-              });
-            }
-          }
+        const data = response.data.suggestions || [];
+        
+        // Cache the result
+        suggestionsCache.set(cacheKey, {
+          data,
+          timestamp: Date.now()
         });
 
-        const uniqueSuggestions = Array.from(
-          new Map(scoredSuggestions.map(item => [`${item.type}-${item.value}`, item])).values()
-        ).sort((a, b) => b.score - a.score).slice(0, 8);
-
-        setSuggestions(uniqueSuggestions);
-        setShowSuggestions(uniqueSuggestions.length > 0);
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
         setSelectedIndex(-1);
       } catch (error) {
-        console.error('Error fetching suggestions:', error);
-        setSuggestions([]);
+        if (!axios.isCancel(error)) {
+          console.error('Error fetching suggestions:', error);
+          setSuggestions([]);
+        }
       } finally {
         setIsLoadingSuggestions(false);
       }
     };
 
-    const debounceTimer = setTimeout(fetchSuggestions, 200);
-    return () => clearTimeout(debounceTimer);
+    // Debounce: 150ms for fast response
+    const debounceTimer = setTimeout(fetchSuggestions, 150);
+    return () => {
+      clearTimeout(debounceTimer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [filters.search]);
 
   // Handle keyboard navigation
@@ -297,19 +275,41 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                           key={index}
                           onClick={() => handleSuggestionClick(suggestion)}
                           onMouseEnter={() => setSelectedIndex(index)}
-                          className={`px-4 py-3 cursor-pointer transition-colors flex items-start gap-3 ${selectedIndex === index ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 ${selectedIndex === index ? 'bg-gray-100' : 'hover:bg-gray-50'
                             }`}
                         >
-                          <AiOutlineSearch className="text-gray-400 flex-shrink-0 mt-0.5" />
+                          {suggestion.type === 'city' ? (
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0">
+                              <FaMapMarkerAlt className="text-white text-lg" />
+                            </div>
+                          ) : suggestion.image ? (
+                            <img 
+                              src={suggestion.image} 
+                              alt="" 
+                              className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
+                              'bg-green-100 text-green-600'
+                            }`}>
+                              {suggestion.type === 'project' ? '🏠' : '📍'}
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-gray-900 font-medium">
                               {highlightMatch(suggestion.value, filters.search)}
                             </p>
-                            {suggestion.subtitle && (
+                            {suggestion.subtitle && suggestion.type !== 'city' && (
                               <p className="text-xs text-gray-500 truncate">{suggestion.subtitle}</p>
                             )}
                           </div>
-                          <span className="text-xs text-gray-400 capitalize flex-shrink-0">{suggestion.type}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
+                            suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
+                            'bg-orange-50 text-orange-600'
+                          }`}>{suggestion.type}</span>
                         </li>
                       ))}
                     </ul>

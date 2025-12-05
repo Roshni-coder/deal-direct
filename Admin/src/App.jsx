@@ -20,6 +20,7 @@ import AdminLogin from "./pages/AdminLogin";
 import LeadMonitoring from "./pages/LeadMonitoring";
 import BuilderVerification from "./pages/BuilderVerification";
 import BuilderProjects from "./pages/BuilderProjects";
+import ContactInquiries from "./pages/ContactInquiries";
 
 const getStoredAdminInfo = () => {
   try {
@@ -189,6 +190,14 @@ function App() {
             element={
               <ProtectedRoute allowEnvAgent={false}>
                 <AllCategory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contact-inquiries"
+            element={
+              <ProtectedRoute allowEnvAgent={false}>
+                <ContactInquiries />
               </ProtectedRoute>
             }
           />
