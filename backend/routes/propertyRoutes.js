@@ -17,6 +17,7 @@ import {
   checkInterested,
   getSavedProperties,
   removeSavedProperty,
+  getSuggestions,
 } from "../controllers/propertyController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
 import { authMiddleware } from "../middleware/authUser.js";
@@ -37,6 +38,7 @@ router.get("/property-list", getAllPropertiesList); // 🟢 For frontend home pa
 
 // Public search & filter (MUST be before /:id)
 router.get("/search", searchProperties);
+router.get("/suggestions", getSuggestions); // Fast autocomplete
 router.get("/filter", filterProperties);
 
 // 🔒 Protected Routes - User's Own Properties (MUST be before /:id)

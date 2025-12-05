@@ -954,6 +954,102 @@ export const searchProperties = async (req, res) => {
   }
 };
 
+// Fast autocomplete suggestions - lightweight endpoint
+export const getSuggestions = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim().length < 2) {
+      return res.json({ suggestions: [] });
+    }
+
+    const searchTerm = q.trim();
+    const regex = new RegExp(searchTerm, "i");
+
+    // Use aggregation for better performance - only fetch needed fields including first image
+    const suggestions = await Property.aggregate([
+      { $match: { isApproved: true } },
+      {
+        $facet: {
+          // Match by title (projects)
+          titles: [
+            { $match: { title: regex } },
+            { 
+              $project: { 
+                title: 1, 
+                city: "$address.city", 
+                locality: "$address.locality",
+                image: { $arrayElemAt: ["$images", 0] }
+              } 
+            },
+            { $limit: 5 }
+          ],
+          // Match by locality
+          localities: [
+            { $match: { "address.locality": regex } },
+            { $group: { _id: "$address.locality", city: { $first: "$address.city" } } },
+            { $limit: 5 }
+          ],
+          // Match by city
+          cities: [
+            { $match: { "address.city": regex } },
+            { $group: { _id: "$address.city" } },
+            { $limit: 3 }
+          ]
+        }
+      }
+    ]);
+
+    const result = [];
+    const seen = new Set();
+
+    // Process titles (projects)
+    suggestions[0].titles.forEach(item => {
+      const key = `project-${item.title}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push({
+          type: 'project',
+          value: item.title,
+          subtitle: `${item.city || ''}${item.locality ? ' • ' + item.locality : ''}`.trim(),
+          image: item.image || null
+        });
+      }
+    });
+
+    // Process localities
+    suggestions[0].localities.forEach(item => {
+      const key = `locality-${item._id}`;
+      if (!seen.has(key) && item._id) {
+        seen.add(key);
+        result.push({
+          type: 'locality',
+          value: item._id,
+          subtitle: item.city || ''
+        });
+      }
+    });
+
+    // Process cities
+    suggestions[0].cities.forEach(item => {
+      const key = `city-${item._id}`;
+      if (!seen.has(key) && item._id) {
+        seen.add(key);
+        result.push({
+          type: 'city',
+          value: item._id,
+          subtitle: 'City'
+        });
+      }
+    });
+
+    res.json({ suggestions: result.slice(0, 8) });
+  } catch (err) {
+    console.error("Error in getSuggestions:", err);
+    res.status(500).json({ suggestions: [], error: err.message });
+  }
+};
+
 export const filterProperties = async (req, res) => {
   try {
     const { search = "", sort = "newest" } = req.query;
