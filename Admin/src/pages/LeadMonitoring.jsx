@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 import {
   Mail,
   PhoneCall,
@@ -7,57 +9,120 @@ import {
   User,
   X,
   Sparkles,
+  Loader2,
+  RefreshCw,
+  ChevronDown,
 } from "lucide-react";
+
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Helper function to safely format date
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    return new Date(dateString).toLocaleDateString("en-GB");
+  } catch {
+    return "Invalid Date";
+  }
+};
 
 export default function LeadMonitoring() {
   const [selectedLead, setSelectedLead] = useState(null);
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    new: 0,
+    contacted: 0,
+    interested: 0,
+    negotiating: 0,
+    converted: 0,
+    lost: 0,
+  });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showFilter, setShowFilter] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
 
-  const leads = [
-    {
-      id: 1,
-      buyer: "Riya Shah",
-      property: "2BHK in Mumbai – Powai",
-      date: "2025-01-12",
-      status: "Seen",
-      unread: true,
-      conversation: [
-        { sender: "Buyer", msg: "Is this property still available?" },
-        { sender: "Owner", msg: "Yes, available. When can we connect?" },
-      ],
-    },
-    {
-      id: 2,
-      buyer: "Amit Verma",
-      property: "3BHK in Surat – Adajan",
-      date: "2025-01-11",
-      status: "Contacted",
-      unread: false,
-      conversation: [
-        { sender: "Buyer", msg: "Can I schedule a site visit?" },
-        { sender: "Owner", msg: "Sure! I will call you shortly." },
-      ],
-    },
-    {
-      id: 3,
-      buyer: "Neha Patil",
-      property: "Plot in Pune – Hinjewadi",
-      date: "2025-01-10",
-      status: "Ignored",
-      unread: false,
-      conversation: [{ sender: "Buyer", msg: "Please share more photos" }],
-    },
-  ];
+  const token = localStorage.getItem("adminToken");
 
-  const statusColors = {
-    Seen: "bg-blue-100 text-blue-700 border-blue-300",
-    Contacted: "bg-green-100 text-green-700 border-green-300",
-    Ignored: "bg-yellow-100 text-yellow-700 border-yellow-300",
-    Spam: "bg-red-100 text-red-700 border-red-300",
+  // Fetch leads from backend
+  const fetchLeads = async () => {
+    if (!token) {
+      setLoading(false);
+      toast.error("Authentication token missing. Please log in.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_URL}/api/admin/leads`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { status: statusFilter },
+      });
+
+      if (data.success) {
+        setLeads(data.data || []);
+        setStats(data.stats || stats);
+      }
+    } catch (error) {
+      console.error("Failed to fetch leads:", error);
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        localStorage.removeItem("adminToken");
+      } else {
+        toast.error("Failed to fetch leads");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="p-4 min-h-screen ">
+  useEffect(() => {
+    fetchLeads();
+  }, [statusFilter]);
 
+  // Update lead status
+  const updateLeadStatus = async (leadId, newStatus) => {
+    try {
+      setUpdatingStatus(leadId);
+      const { data } = await axios.put(
+        `${API_URL}/api/admin/leads/${leadId}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success("Lead status updated");
+        fetchLeads(); // Refresh leads
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const statusColors = {
+    new: "bg-blue-100 text-blue-700 border-blue-300",
+    contacted: "bg-green-100 text-green-700 border-green-300",
+    interested: "bg-purple-100 text-purple-700 border-purple-300",
+    negotiating: "bg-orange-100 text-orange-700 border-orange-300",
+    converted: "bg-emerald-100 text-emerald-700 border-emerald-300",
+    lost: "bg-red-100 text-red-700 border-red-300",
+  };
+
+  const statusOptions = [
+    { value: "all", label: "All Leads" },
+    { value: "new", label: "New" },
+    { value: "contacted", label: "Contacted" },
+    { value: "interested", label: "Interested" },
+    { value: "negotiating", label: "Negotiating" },
+    { value: "converted", label: "Converted" },
+    { value: "lost", label: "Lost" },
+  ];
+
+  return (
+    <div className="p-4 min-h-screen">
       {/* Page Title */}
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
@@ -65,93 +130,221 @@ export default function LeadMonitoring() {
           Lead Monitoring
         </h1>
 
-        <button className="flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl shadow hover:shadow-xl transition-all">
-          <Filter className="text-gray-700" size={20} />
-          <span className="font-medium text-gray-800">Filter</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Stats badges */}
+          <div className="hidden md:flex items-center gap-2 mr-4">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              New: {stats.new}
+            </span>
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              Contacted: {stats.contacted}
+            </span>
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+              Converted: {stats.converted}
+            </span>
+          </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={fetchLeads}
+            disabled={loading}
+            className="p-3 bg-white/80 backdrop-blur-xl rounded-xl shadow hover:shadow-xl transition-all"
+          >
+            <RefreshCw className={`w-5 h-5 text-gray-700 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* Filter dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilter(!showFilter)}
+              className="flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl shadow hover:shadow-xl transition-all"
+            >
+              <Filter className="text-gray-700" size={20} />
+              <span className="font-medium text-gray-800">
+                {statusOptions.find((s) => s.value === statusFilter)?.label}
+              </span>
+              <ChevronDown size={16} />
+            </button>
+
+            {showFilter && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setStatusFilter(option.value);
+                      setShowFilter(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                      statusFilter === option.value
+                        ? "bg-purple-50 text-purple-700"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Card */}
       <div className="bg-white/70 backdrop-blur-xl rounded shadow-2xl overflow-hidden border border-white/40">
-
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-purple-200 via-blue-200 to-pink-200">
-            <tr className="text-gray-800">
-              <th className="py-4 px-6 text-left font-semibold">Buyer</th>
-              <th className="py-4 px-6 text-left font-semibold">Property</th>
-              <th className="py-4 px-6 text-left font-semibold">Date</th>
-              <th className="py-4 px-6 text-left font-semibold">Status</th>
-              <th className="py-4 px-6 text-center font-semibold">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {leads.map((lead) => (
-              <tr
-                key={lead.id}
-                className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all border-b last:border-none"
-              >
-                {/* Buyer */}
-                <td className="py-4 px-6 flex items-center gap-3 text-gray-900 font-medium">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center shadow-inner">
-                    <User size={19} className="text-gray-800" />
-                  </div>
-                  {lead.buyer}
-
-                  {lead.unread && (
-                    <span className="ml-3 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
-                      NEW
-                    </span>
-                  )}
-                </td>
-
-                <td className="py-4 px-6 text-gray-700">{lead.property}</td>
-                <td className="py-4 px-6 text-gray-700">{lead.date}</td>
-
-                {/* Status */}
-                <td className="py-4 px-6">
-                  <span
-                    className={`px-4 py-1.5 border rounded-full text-xs font-semibold shadow-sm ${statusColors[lead.status]}`}
-                  >
-                    {lead.status}
-                  </span>
-                </td>
-
-                {/* Actions */}
-                <td className="py-4 px-6 text-center">
-                  <div className="flex justify-center gap-5">
-                    <button
-                      onClick={() => setSelectedLead(lead)}
-                      className="text-blue-600 hover:scale-125 transition-transform"
-                    >
-                      <MessageSquare size={22} />
-                    </button>
-
-                    <button className="text-green-600 hover:scale-125 transition-transform">
-                      <PhoneCall size={22} />
-                    </button>
-
-                    <button className="text-gray-700 hover:scale-125 transition-transform">
-                      <Mail size={22} />
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+          </div>
+        ) : leads.length === 0 ? (
+          <div className="text-center py-20 text-gray-500">
+            <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-xl font-medium">No leads found</p>
+            <p className="text-sm mt-2">Leads will appear here when users show interest in properties</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-purple-200 via-blue-200 to-pink-200">
+              <tr className="text-gray-800">
+                <th className="py-4 px-6 text-left font-semibold">Buyer</th>
+                <th className="py-4 px-6 text-left font-semibold">Property</th>
+                <th className="py-4 px-6 text-left font-semibold">Owner</th>
+                <th className="py-4 px-6 text-left font-semibold">Date</th>
+                <th className="py-4 px-6 text-left font-semibold">Status</th>
+                <th className="py-4 px-6 text-center font-semibold">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
 
+            <tbody>
+              {leads.map((lead) => (
+                <tr
+                  key={lead._id}
+                  className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all border-b last:border-none"
+                >
+                  {/* Buyer */}
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center shadow-inner overflow-hidden">
+                        {lead.user?.profileImage ? (
+                          <img
+                            src={lead.user.profileImage}
+                            alt={lead.user?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User size={19} className="text-gray-800" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {lead.user?.name || lead.userSnapshot?.name || "Unknown"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {lead.user?.email || lead.userSnapshot?.email || ""}
+                        </p>
+                      </div>
+                      {lead.status === "new" && (
+                        <span className="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Property */}
+                  <td className="py-4 px-6">
+                    <div>
+                      <p className="text-gray-900 font-medium">
+                        {lead.property?.title || lead.propertySnapshot?.title || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {lead.property?.address?.city || lead.propertySnapshot?.city || ""}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* Owner */}
+                  <td className="py-4 px-6">
+                    <div>
+                      <p className="text-gray-900">
+                        {lead.propertyOwner?.name || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {lead.propertyOwner?.phone || ""}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* Date */}
+                  <td className="py-4 px-6 text-gray-700">
+                    {formatDate(lead.createdAt)}
+                  </td>
+
+                  {/* Status */}
+                  <td className="py-4 px-6">
+                    <select
+                      value={lead.status}
+                      onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
+                      disabled={updatingStatus === lead._id}
+                      className={`px-3 py-1.5 border rounded-lg text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                        statusColors[lead.status] || "bg-gray-100"
+                      }`}
+                    >
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="interested">Interested</option>
+                      <option value="negotiating">Negotiating</option>
+                      <option value="converted">Converted</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center gap-5">
+                      <button
+                        onClick={() => setSelectedLead(lead)}
+                        className="text-blue-600 hover:scale-125 transition-transform"
+                        title="View Details"
+                      >
+                        <MessageSquare size={22} />
+                      </button>
+
+                      {lead.user?.phone && (
+                        <a
+                          href={`tel:${lead.user.phone}`}
+                          className="text-green-600 hover:scale-125 transition-transform"
+                          title="Call Buyer"
+                        >
+                          <PhoneCall size={22} />
+                        </a>
+                      )}
+
+                      {lead.user?.email && (
+                        <a
+                          href={`mailto:${lead.user.email}`}
+                          className="text-gray-700 hover:scale-125 transition-transform"
+                          title="Email Buyer"
+                        >
+                          <Mail size={22} />
+                        </a>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {/* Chat Modal */}
+      {/* Lead Details Modal */}
       {selectedLead && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center p-4 z-50 animate-fadeIn">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
-
             {/* Header */}
             <div className="p-5 bg-gradient-to-r from-purple-600 to-blue-600 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">Chat with {selectedLead.buyer}</h2>
-
+              <h2 className="text-xl font-bold">Lead Details</h2>
               <button
                 onClick={() => setSelectedLead(null)}
                 className="hover:scale-125 transition"
@@ -160,37 +353,131 @@ export default function LeadMonitoring() {
               </button>
             </div>
 
-            {/* Chat Messages */}
-            <div className="p-6 space-y-4 max-h-80 overflow-y-auto">
-              {selectedLead.conversation.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`p-4 rounded-2xl shadow-sm ${
-                    msg.sender === "Buyer"
-                      ? "bg-gray-100 text-gray-800"
-                      : "bg-green-100 text-green-900"
-                  }`}
-                >
-                  <strong>{msg.sender}: </strong>
-                  {msg.msg}
+            {/* Lead Info */}
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Buyer Info */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-800 mb-3">Buyer Information</h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <span className="text-gray-500">Name:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.user?.name || selectedLead.userSnapshot?.name || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Email:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.user?.email || selectedLead.userSnapshot?.email || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Phone:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.user?.phone || selectedLead.userSnapshot?.phone || "N/A"}
+                    </span>
+                  </p>
                 </div>
-              ))}
+              </div>
+
+              {/* Property Info */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-800 mb-3">Property Information</h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <span className="text-gray-500">Title:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.property?.title || selectedLead.propertySnapshot?.title || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Location:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.property?.address?.city || selectedLead.propertySnapshot?.city || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Price:</span>{" "}
+                    <span className="font-medium">
+                      ₹{selectedLead.property?.price || selectedLead.propertySnapshot?.price || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Type:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.property?.listingType || selectedLead.propertySnapshot?.listingType || "N/A"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Owner Info */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-800 mb-3">Property Owner</h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <span className="text-gray-500">Name:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.propertyOwner?.name || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Email:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.propertyOwner?.email || "N/A"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Phone:</span>{" "}
+                    <span className="font-medium">
+                      {selectedLead.propertyOwner?.phone || "N/A"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Lead Status & Notes */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-800 mb-3">Lead Status</h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <span className="text-gray-500">Status:</span>{" "}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        statusColors[selectedLead.status] || "bg-gray-100"
+                      }`}
+                    >
+                      {selectedLead.status}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Created:</span>{" "}
+                    <span className="font-medium">
+                      {formatDate(selectedLead.createdAt)}
+                    </span>
+                  </p>
+                  {selectedLead.notes && (
+                    <p>
+                      <span className="text-gray-500">Notes:</span>{" "}
+                      <span className="font-medium">{selectedLead.notes}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Close */}
-            <div className="p-6">
+            <div className="p-6 border-t">
               <button
                 onClick={() => setSelectedLead(null)}
                 className="w-full py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition-all shadow-md"
               >
-                Close Chat
+                Close
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

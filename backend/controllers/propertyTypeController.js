@@ -20,3 +20,27 @@ export const getPropertyTypes = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const deletePropertyType = async (req, res) => {
+  try {
+    const propertyType = await PropertyType.findByIdAndDelete(req.params.id);
+    if (!propertyType) return res.status(404).json({ message: "Property type not found" });
+    res.json({ message: "Property type deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const updatePropertyType = async (req, res) => {
+  try {
+    const updated = await PropertyType.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Property type not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

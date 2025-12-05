@@ -24,6 +24,8 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: { type: Date },
     gender: { type: String, enum: ["Male", "Female", "Other", ""] },
     bio: { type: String },
+    // Block status
+    isBlocked: { type: Boolean, default: false },
     // Preferences
     preferences: {
       emailNotifications: { type: Boolean, default: true },

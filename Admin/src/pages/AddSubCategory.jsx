@@ -5,10 +5,26 @@ import { toast } from "react-toastify";
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AddSubCategory = () => {
+  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [selectedPropertyType, setSelectedPropertyType] = useState("");
   const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [subName, setSubName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 🧠 Fetch property types for dropdown
+  useEffect(() => {
+    const fetchPropertyTypes = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/propertyTypes/list-propertytype`);
+        setPropertyTypes(res.data);
+      } catch (error) {
+        toast.error("Failed to load property types");
+      }
+    };
+    fetchPropertyTypes();
+  }, []);
 
   // 🧠 Fetch categories for dropdown
   useEffect(() => {
@@ -23,22 +39,42 @@ const AddSubCategory = () => {
     fetchCategories();
   }, []);
 
+  // Filter categories when property type changes
+  useEffect(() => {
+    if (selectedPropertyType) {
+      const filtered = categories.filter(
+        (cat) => (cat.propertyType?._id || cat.propertyType) === selectedPropertyType
+      );
+      setFilteredCategories(filtered);
+      setSelectedCategory(""); // Reset category selection when property type changes
+    } else {
+      setFilteredCategories([]);
+      setSelectedCategory("");
+    }
+  }, [selectedPropertyType, categories]);
+
   // 💾 Add Subcategory
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedCategory || !subName.trim())
-      return toast.warn("Please fill all fields");
+    if (!selectedPropertyType) return toast.warn("Please select a property type");
+    if (!selectedCategory) return toast.warn("Please select a category");
+    if (!subName.trim()) return toast.warn("Please enter subcategory name");
 
     try {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
       const { data } = await axios.post(
         `${API_URL}/api/subcategories/add`,
-        { name: subName, category: selectedCategory },
+        { 
+          name: subName, 
+          category: selectedCategory,
+          propertyType: selectedPropertyType 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success(data.message || "Subcategory added successfully");
+      setSelectedPropertyType("");
       setSelectedCategory("");
       setSubName("");
     } catch (error) {
@@ -56,6 +92,25 @@ const AddSubCategory = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Property Type Dropdown */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Select Property Type
+            </label>
+            <select
+              value={selectedPropertyType}
+              onChange={(e) => setSelectedPropertyType(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">-- Select Property Type --</option>
+              {propertyTypes.map((pt) => (
+                <option key={pt._id} value={pt._id}>
+                  {pt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Category Dropdown */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">
@@ -64,15 +119,21 @@ const AddSubCategory = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={!selectedPropertyType}
+              className={`w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                !selectedPropertyType ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
             >
               <option value="">-- Select Category --</option>
-              {categories.map((cat) => (
+              {filteredCategories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
                   {cat.name}
                 </option>
               ))}
             </select>
+            {!selectedPropertyType && (
+              <p className="text-sm text-gray-500 mt-1">Select a property type first</p>
+            )}
           </div>
 
           {/* Subcategory Input */}

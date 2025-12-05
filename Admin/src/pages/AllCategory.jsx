@@ -46,10 +46,17 @@ const AllCategory = () => {
   const handleDelete = async (id, type) => {
     if (!window.confirm(`Delete this ${type}?`)) return;
     try {
-      await axios.delete(
-        `${API_URL}/api/${type}/delete/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      let endpoint = "";
+      if (type === "propertyTypes") {
+        endpoint = `${API_URL}/api/propertyTypes/delete/${id}`;
+      } else if (type === "categories") {
+        endpoint = `${API_URL}/api/categories/delete/${id}`;
+      } else if (type === "subcategories") {
+        endpoint = `${API_URL}/api/subcategories/delete/${id}`;
+      }
+      await axios.delete(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success(`${type} deleted`);
       fetchAll();
     } catch (err) {
