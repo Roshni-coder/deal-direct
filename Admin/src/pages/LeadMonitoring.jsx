@@ -28,6 +28,7 @@ const formatDate = (dateString) => {
 
 export default function LeadMonitoring() {
   const [selectedLead, setSelectedLead] = useState(null);
+  const [expandedLead, setExpandedLead] = useState(null);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -124,14 +125,14 @@ export default function LeadMonitoring() {
   return (
     <div className="p-4 min-h-screen">
       {/* Page Title */}
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-4xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
+        <h1 className="text-2xl sm:text-4xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
           <Sparkles className="text-purple-600 drop-shadow" />
           Lead Monitoring
         </h1>
 
-        <div className="flex items-center gap-3">
-          {/* Stats badges */}
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* Stats badges - Visible on Desktop, or stacked on mobile if we wanted (keeping hidden md:flex for now as per original code style for space) */}
           <div className="hidden md:flex items-center gap-2 mr-4">
             <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
               New: {stats.new}
@@ -144,48 +145,50 @@ export default function LeadMonitoring() {
             </span>
           </div>
 
-          {/* Refresh button */}
-          <button
-            onClick={fetchLeads}
-            disabled={loading}
-            className="p-3 bg-white/80 backdrop-blur-xl rounded-xl shadow hover:shadow-xl transition-all"
-          >
-            <RefreshCw className={`w-5 h-5 text-gray-700 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-
-          {/* Filter dropdown */}
-          <div className="relative">
+          <div className="flex gap-2 w-full sm:w-auto">
+            {/* Refresh button */}
+            {/* Refresh button */}
             <button
-              onClick={() => setShowFilter(!showFilter)}
-              className="flex items-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl shadow hover:shadow-xl transition-all"
+              onClick={fetchLeads}
+              disabled={loading}
+              className="w-12 h-12 flex justify-center items-center bg-white/80 backdrop-blur-xl rounded-xl shadow hover:shadow-xl transition-all sm:w-auto sm:h-auto sm:p-3"
             >
-              <Filter className="text-gray-700" size={20} />
-              <span className="font-medium text-gray-800">
-                {statusOptions.find((s) => s.value === statusFilter)?.label}
-              </span>
-              <ChevronDown size={16} />
+              <RefreshCw className={`w-5 h-5 text-gray-700 ${loading ? 'animate-spin' : ''}`} />
             </button>
 
-            {showFilter && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                {statusOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setStatusFilter(option.value);
-                      setShowFilter(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
-                      statusFilter === option.value
+            {/* Filter dropdown */}
+            <div className="relative flex-1 sm:flex-none">
+              <button
+                onClick={() => setShowFilter(!showFilter)}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl shadow hover:shadow-xl transition-all"
+              >
+                <Filter className="text-gray-700" size={20} />
+                <span className="font-medium text-gray-800">
+                  {statusOptions.find((s) => s.value === statusFilter)?.label}
+                </span>
+                <ChevronDown size={16} />
+              </button>
+
+              {showFilter && (
+                <div className="absolute right-0 mt-2 w-full sm:w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                  {statusOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setStatusFilter(option.value);
+                        setShowFilter(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${statusFilter === option.value
                         ? "bg-purple-50 text-purple-700"
                         : "text-gray-700"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -206,12 +209,12 @@ export default function LeadMonitoring() {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-purple-200 via-blue-200 to-pink-200">
               <tr className="text-gray-800">
-                <th className="py-4 px-6 text-left font-semibold">Buyer</th>
-                <th className="py-4 px-6 text-left font-semibold">Property</th>
-                <th className="py-4 px-6 text-left font-semibold">Owner</th>
-                <th className="py-4 px-6 text-left font-semibold">Date</th>
-                <th className="py-4 px-6 text-left font-semibold">Status</th>
-                <th className="py-4 px-6 text-center font-semibold">Actions</th>
+                <th className="py-4 px-6 text-left font-semibold whitespace-nowrap">Buyer</th>
+                <th className="py-4 px-6 text-left font-semibold hidden md:table-cell whitespace-nowrap">Property</th>
+                <th className="py-4 px-6 text-left font-semibold hidden md:table-cell whitespace-nowrap">Owner</th>
+                <th className="py-4 px-6 text-left font-semibold hidden md:table-cell whitespace-nowrap">Date</th>
+                <th className="py-4 px-6 text-left font-semibold hidden md:table-cell whitespace-nowrap">Status</th>
+                <th className="py-4 px-6 text-center font-semibold hidden md:table-cell whitespace-nowrap">Actions</th>
               </tr>
             </thead>
 
@@ -222,49 +225,125 @@ export default function LeadMonitoring() {
                   className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all border-b last:border-none"
                 >
                   {/* Buyer */}
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center shadow-inner overflow-hidden">
-                        {lead.user?.profileImage ? (
-                          <img
-                            src={lead.user.profileImage}
-                            alt={lead.user?.name}
-                            className="w-full h-full object-cover"
+                  <td className="py-4 px-6 bg-transparent block md:table-cell w-full md:w-auto">
+                    <div className="flex flex-col gap-2">
+                      {/* Main Row Content */}
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center shadow-inner overflow-hidden flex-shrink-0">
+                            {lead.user?.profileImage ? (
+                              <img
+                                src={lead.user.profileImage}
+                                alt={lead.user?.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User size={19} className="text-gray-800" />
+                            )}
+                          </div>
+                          <div className="flex flex-col overflow-hidden">
+                            <p className="font-medium text-gray-900 truncate max-w-[140px] sm:max-w-none">
+                              {lead.user?.name || lead.userSnapshot?.name || "Unknown"}
+                            </p>
+                            <p className="text-sm text-gray-500 whitespace-nowrap hidden md:block">
+                              {lead.user?.email || lead.userSnapshot?.email || ""}
+                            </p>
+                          </div>
+                          {lead.status === "new" && (
+                            <span className="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse flex-shrink-0">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Mobile Toggle Button */}
+                        <button
+                          onClick={() => setExpandedLead(expandedLead === lead._id ? null : lead._id)}
+                          className="md:hidden p-2 text-gray-400 hover:text-purple-600 transition-colors"
+                        >
+                          <ChevronDown
+                            size={20}
+                            className={`transition-transform duration-200 ${expandedLead === lead._id ? "rotate-180" : ""}`}
                           />
-                        ) : (
-                          <User size={19} className="text-gray-800" />
-                        )}
+                        </button>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {lead.user?.name || lead.userSnapshot?.name || "Unknown"}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {lead.user?.email || lead.userSnapshot?.email || ""}
-                        </p>
-                      </div>
-                      {lead.status === "new" && (
-                        <span className="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
-                          NEW
-                        </span>
+
+                      {/* Mobile Expanded Details */}
+                      {expandedLead === lead._id && (
+                        <div className="md:hidden bg-indigo-50/50 rounded-lg p-3 text-sm space-y-3 mt-2 border border-indigo-100 animate-in fade-in slide-in-from-top-1">
+                          <div className="grid grid-cols-[auto,1fr] gap-2">
+                            <span className="text-gray-500 font-medium">Email:</span>
+                            <span className="text-gray-800 break-all">{lead.user?.email || "N/A"}</span>
+
+                            <span className="text-gray-500 font-medium">Property:</span>
+                            <span className="text-gray-800">{lead.property?.title || "N/A"}</span>
+
+                            <span className="text-gray-500 font-medium">Location:</span>
+                            <span className="text-gray-800">{lead.property?.address?.city || "N/A"}</span>
+
+                            <span className="text-gray-500 font-medium">Owner:</span>
+                            <span className="text-gray-800">
+                              {lead.propertyOwner?.name || "N/A"}
+                              {lead.propertyOwner?.phone ? ` (${lead.propertyOwner.phone})` : ""}
+                            </span>
+
+                            <span className="text-gray-500 font-medium">Date:</span>
+                            <span className="text-gray-800">{formatDate(lead.createdAt)}</span>
+                          </div>
+
+                          {/* Mobile Actions & Status */}
+                          <div className="flex flex-col gap-2 pt-2 border-t border-indigo-200">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500 font-medium">Status:</span>
+                              <select
+                                value={lead.status}
+                                onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
+                                disabled={updatingStatus === lead._id}
+                                className={`px-2 py-1 border rounded-lg text-xs font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 ${statusColors[lead.status] || "bg-gray-100"}`}
+                              >
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="interested">Interested</option>
+                                <option value="negotiating">Negotiating</option>
+                                <option value="converted">Converted</option>
+                                <option value="lost">Lost</option>
+                              </select>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-1">
+                              <button onClick={() => setSelectedLead(lead)} className="text-blue-600 p-1" title="View Details">
+                                <MessageSquare size={20} />
+                              </button>
+                              {lead.user?.phone && (
+                                <a href={`tel:${lead.user.phone}`} className="text-green-600 p-1" title="Call Buyer">
+                                  <PhoneCall size={20} />
+                                </a>
+                              )}
+                              {lead.user?.email && (
+                                <a href={`mailto:${lead.user.email}`} className="text-gray-700 p-1" title="Email Buyer">
+                                  <Mail size={20} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </td>
 
                   {/* Property */}
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 hidden md:table-cell whitespace-nowrap">
                     <div>
-                      <p className="text-gray-900 font-medium">
+                      <p className="text-gray-900 font-medium whitespace-nowrap">
                         {lead.property?.title || lead.propertySnapshot?.title || "N/A"}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 whitespace-nowrap">
                         {lead.property?.address?.city || lead.propertySnapshot?.city || ""}
                       </p>
                     </div>
                   </td>
 
                   {/* Owner */}
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 hidden md:table-cell whitespace-nowrap">
                     <div>
                       <p className="text-gray-900">
                         {lead.propertyOwner?.name || "N/A"}
@@ -276,19 +355,18 @@ export default function LeadMonitoring() {
                   </td>
 
                   {/* Date */}
-                  <td className="py-4 px-6 text-gray-700">
+                  <td className="py-4 px-6 text-gray-700 hidden md:table-cell whitespace-nowrap">
                     {formatDate(lead.createdAt)}
                   </td>
 
                   {/* Status */}
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 whitespace-nowrap hidden md:table-cell">
                     <select
                       value={lead.status}
                       onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
                       disabled={updatingStatus === lead._id}
-                      className={`px-3 py-1.5 border rounded-lg text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                        statusColors[lead.status] || "bg-gray-100"
-                      }`}
+                      className={`px-2 py-1 border rounded-lg text-xs md:text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 ${statusColors[lead.status] || "bg-gray-100"
+                        }`}
                     >
                       <option value="new">New</option>
                       <option value="contacted">Contacted</option>
@@ -300,14 +378,14 @@ export default function LeadMonitoring() {
                   </td>
 
                   {/* Actions */}
-                  <td className="py-4 px-6 text-center">
-                    <div className="flex justify-center gap-5">
+                  <td className="py-4 px-6 text-center whitespace-nowrap hidden md:table-cell">
+                    <div className="flex justify-center gap-3 md:gap-5">
                       <button
                         onClick={() => setSelectedLead(lead)}
                         className="text-blue-600 hover:scale-125 transition-transform"
                         title="View Details"
                       >
-                        <MessageSquare size={22} />
+                        <MessageSquare size={20} />
                       </button>
 
                       {lead.user?.phone && (
@@ -316,7 +394,7 @@ export default function LeadMonitoring() {
                           className="text-green-600 hover:scale-125 transition-transform"
                           title="Call Buyer"
                         >
-                          <PhoneCall size={22} />
+                          <PhoneCall size={20} />
                         </a>
                       )}
 
@@ -326,7 +404,7 @@ export default function LeadMonitoring() {
                           className="text-gray-700 hover:scale-125 transition-transform"
                           title="Email Buyer"
                         >
-                          <Mail size={22} />
+                          <Mail size={20} />
                         </a>
                       )}
                     </div>
@@ -443,9 +521,8 @@ export default function LeadMonitoring() {
                   <p>
                     <span className="text-gray-500">Status:</span>{" "}
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        statusColors[selectedLead.status] || "bg-gray-100"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[selectedLead.status] || "bg-gray-100"
+                        }`}
                     >
                       {selectedLead.status}
                     </span>

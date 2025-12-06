@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { 
-    Trash, 
-    CheckCircle, 
-    XCircle, 
-    MapPin, 
-    Loader2, 
-    DollarSign, 
+import {
+    Trash,
+    CheckCircle,
+    XCircle,
+    MapPin,
+    Loader2,
+    DollarSign,
     Home as HomeIcon,
-    RefreshCw 
+    RefreshCw
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -83,7 +83,7 @@ const AllProperty = () => {
                 { headers: { Authorization: `Bearer ${adminToken}` } }
             );
             toast.success(status === "approve" ? "Property Published Successfully!" : "Listing pulled down.");
-            fetchProperties(); 
+            fetchProperties();
         } catch (err) {
             toast.error("Status update failed. Check network or server logs.");
         }
@@ -92,13 +92,13 @@ const AllProperty = () => {
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b-4 border-indigo-100">
-                <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
-                    <HomeIcon className="w-8 h-8 text-indigo-600"/> All Property Listings
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-4 border-b-4 border-indigo-100 gap-4">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+                    <HomeIcon className="w-8 h-8 text-indigo-600" /> All Property Listings
                 </h2>
                 <button
                     onClick={fetchProperties}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold shadow-lg transition"
+                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold shadow-lg transition flex items-center justify-center"
                 >
                     <RefreshCw className="w-4 h-4 inline mr-1" /> Reload Data
                 </button>
@@ -129,7 +129,7 @@ const AllProperty = () => {
                     properties.map((item) => {
                         const id = item._id;
                         const isApproved = item.isApproved;
-                        
+
                         // Use purple for pending/red for deletion, green for active
                         const statusColor = isApproved ? "bg-green-600" : "bg-purple-600";
                         const statusLabel = isApproved ? "PUBLISHED" : "PENDING";
@@ -172,7 +172,7 @@ const AllProperty = () => {
                                             {item.propertyType?.name || "N/A Type"}
                                         </p>
                                     </div>
-                                    
+
                                     {/* Price and Date */}
                                     <div className="flex justify-between items-end pt-2 border-t border-gray-100">
                                         <p className="flex items-center gap-1 font-extrabold text-2xl text-green-700">
@@ -182,11 +182,11 @@ const AllProperty = () => {
                                             Posted: {new Date(item.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
-                                    
+
 
                                     {/* Action Buttons - Simplified Moderation */}
                                     <div className="grid grid-cols-2 gap-3 pt-4">
-                                        
+
                                         {/* 1. PRIMARY MODERATION ACTION (PUBLISH/UNPUBLISH) */}
                                         {isApproved ? (
                                             <button
@@ -203,7 +203,7 @@ const AllProperty = () => {
                                                 <CheckCircle className="w-4 h-4" /> PUBLISH
                                             </button>
                                         )}
-                                        
+
                                         {/* 2. DELETE/REJECT ACTION (Final removal) */}
                                         <button
                                             onClick={() => handleDelete(id)}

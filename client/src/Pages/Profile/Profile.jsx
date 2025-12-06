@@ -197,7 +197,7 @@ const Profile = () => {
         toast.error("Image size should be less than 10MB");
         return;
       }
-      
+
       // Read file and open crop modal
       const reader = new FileReader();
       reader.addEventListener("load", () => {
@@ -457,7 +457,7 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden sticky top-24">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden static lg:sticky lg:top-24">
               {/* Profile Header */}
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-6 text-center">
                 <div className="relative inline-block">
@@ -498,59 +498,55 @@ const Profile = () => {
               </div>
 
               {/* Navigation Tabs */}
-              <nav className="p-4 space-y-1">
+              <nav className="p-4 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-3 lg:gap-0 space-y-0 lg:space-y-1 scrollbar-hide">
                 <button
                   onClick={() => handleTabChange("profile")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
-                    activeTab === "profile"
+                  className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "profile"
                       ? "bg-red-50 text-red-600"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <User size={18} />
                   <span className="font-medium">Profile Info</span>
                 </button>
                 <button
                   onClick={() => handleTabChange("security")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
-                    activeTab === "security"
+                  className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "security"
                       ? "bg-red-50 text-red-600"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <Lock size={18} />
                   <span className="font-medium">Security</span>
                 </button>
                 <button
                   onClick={() => handleTabChange("preferences")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
-                    activeTab === "preferences"
+                  className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "preferences"
                       ? "bg-red-50 text-red-600"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <Bell size={18} />
                   <span className="font-medium">Notifications</span>
                 </button>
                 <button
                   onClick={() => handleTabChange("settings")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${
-                    activeTab === "settings"
+                  className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "settings"
                       ? "bg-red-50 text-red-600"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <Settings size={18} />
                   <span className="font-medium">Settings</span>
                 </button>
-                
+
                 {/* Divider */}
-                <div className="border-t border-slate-100 my-2"></div>
-                
+                <div className="hidden lg:block border-t border-slate-100 my-2"></div>
+
                 {(user?.role === 'owner' || user?.role === 'agent') && (
                   <Link
                     to="/my-properties"
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition"
+                    className="flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition whitespace-nowrap"
                   >
                     <Building2 size={18} />
                     <span className="font-medium">My Properties</span>
@@ -558,7 +554,7 @@ const Profile = () => {
                 )}
                 <Link
                   to="/saved-properties"
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition"
+                  className="flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-slate-600 hover:bg-slate-50 transition whitespace-nowrap"
                 >
                   <Heart size={18} />
                   <span className="font-medium">Saved Properties</span>
@@ -629,11 +625,10 @@ const Profile = () => {
                         value={formData.name}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          isEditing
+                        className={`w-full px-4 py-3 rounded-xl border ${isEditing
                             ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             : "border-transparent bg-slate-50"
-                        } outline-none transition`}
+                          } outline-none transition`}
                       />
                     </div>
 
@@ -664,11 +659,10 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         placeholder="+91 9876543210"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          isEditing
+                        className={`w-full px-4 py-3 rounded-xl border ${isEditing
                             ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             : "border-transparent bg-slate-50"
-                        } outline-none transition`}
+                          } outline-none transition`}
                       />
                     </div>
 
@@ -684,11 +678,10 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         placeholder="+91 9876543210"
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          isEditing
+                        className={`w-full px-4 py-3 rounded-xl border ${isEditing
                             ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             : "border-transparent bg-slate-50"
-                        } outline-none transition`}
+                          } outline-none transition`}
                       />
                     </div>
 
@@ -703,11 +696,10 @@ const Profile = () => {
                         value={formData.dateOfBirth}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          isEditing
+                        className={`w-full px-4 py-3 rounded-xl border ${isEditing
                             ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             : "border-transparent bg-slate-50"
-                        } outline-none transition`}
+                          } outline-none transition`}
                       />
                     </div>
 
@@ -720,11 +712,10 @@ const Profile = () => {
                         value={formData.gender}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 rounded-xl border ${
-                          isEditing
+                        className={`w-full px-4 py-3 rounded-xl border ${isEditing
                             ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             : "border-transparent bg-slate-50"
-                        } outline-none transition`}
+                          } outline-none transition`}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
@@ -746,11 +737,10 @@ const Profile = () => {
                       disabled={!isEditing}
                       rows={3}
                       placeholder="Tell us a little about yourself..."
-                      className={`w-full px-4 py-3 rounded-xl border ${
-                        isEditing
+                      className={`w-full px-4 py-3 rounded-xl border ${isEditing
                           ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                           : "border-transparent bg-slate-50"
-                      } outline-none transition resize-none`}
+                        } outline-none transition resize-none`}
                     />
                   </div>
 
@@ -772,11 +762,10 @@ const Profile = () => {
                           onChange={handleChange}
                           disabled={!isEditing}
                           placeholder="House/Flat No., Building Name"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            isEditing
+                          className={`w-full px-4 py-3 rounded-xl border ${isEditing
                               ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                               : "border-transparent bg-slate-50"
-                          } outline-none transition`}
+                            } outline-none transition`}
                         />
                       </div>
 
@@ -791,11 +780,10 @@ const Profile = () => {
                           onChange={handleChange}
                           disabled={!isEditing}
                           placeholder="Street, Area, Landmark"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            isEditing
+                          className={`w-full px-4 py-3 rounded-xl border ${isEditing
                               ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                               : "border-transparent bg-slate-50"
-                          } outline-none transition`}
+                            } outline-none transition`}
                         />
                       </div>
 
@@ -810,11 +798,10 @@ const Profile = () => {
                           onChange={handleChange}
                           disabled={!isEditing}
                           placeholder="Mumbai"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            isEditing
+                          className={`w-full px-4 py-3 rounded-xl border ${isEditing
                               ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                               : "border-transparent bg-slate-50"
-                          } outline-none transition`}
+                            } outline-none transition`}
                         />
                       </div>
 
@@ -829,11 +816,10 @@ const Profile = () => {
                           onChange={handleChange}
                           disabled={!isEditing}
                           placeholder="Maharashtra"
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            isEditing
+                          className={`w-full px-4 py-3 rounded-xl border ${isEditing
                               ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                               : "border-transparent bg-slate-50"
-                          } outline-none transition`}
+                            } outline-none transition`}
                         />
                       </div>
 
@@ -849,11 +835,10 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="400001"
                           maxLength={6}
-                          className={`w-full px-4 py-3 rounded-xl border ${
-                            isEditing
+                          className={`w-full px-4 py-3 rounded-xl border ${isEditing
                               ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                               : "border-transparent bg-slate-50"
-                          } outline-none transition`}
+                            } outline-none transition`}
                         />
                       </div>
                     </div>
@@ -946,10 +931,10 @@ const Profile = () => {
                       <p className="font-medium text-slate-800">
                         {user?.createdAt
                           ? new Date(user.createdAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
                           : "N/A"}
                       </p>
                     </div>
@@ -958,10 +943,10 @@ const Profile = () => {
                       <p className="font-medium text-slate-800">
                         {user?.updatedAt
                           ? new Date(user.updatedAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
                           : "N/A"}
                       </p>
                     </div>
@@ -1070,17 +1055,16 @@ const Profile = () => {
                         <div>
                           <h4 className="font-medium text-slate-800">Account Type</h4>
                           <p className="text-sm text-slate-500">
-                            {user?.role === 'owner' ? 'Property Owner - Can list properties' : 
-                             user?.role === 'agent' ? 'Agent - Full access' : 
-                             'Buyer - Browse and save properties'}
+                            {user?.role === 'owner' ? 'Property Owner - Can list properties' :
+                              user?.role === 'agent' ? 'Agent - Full access' :
+                                'Buyer - Browse and save properties'}
                           </p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                        user?.role === 'owner' ? 'bg-blue-100 text-blue-700' :
-                        user?.role === 'agent' ? 'bg-purple-100 text-purple-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${user?.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                          user?.role === 'agent' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
                         {user?.role === 'owner' ? '🏠 Owner' : user?.role === 'agent' ? '👔 Agent' : '👤 Buyer'}
                       </span>
                     </div>

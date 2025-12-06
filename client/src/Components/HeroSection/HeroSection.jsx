@@ -42,7 +42,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   // Optimized autocomplete with dedicated endpoint, caching, and request cancellation
   useEffect(() => {
     const searchTerm = filters.search?.trim() || '';
-    
+
     if (searchTerm.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -78,7 +78,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
         );
 
         const data = response.data.suggestions || [];
-        
+
         // Cache the result
         suggestionsCache.set(cacheKey, {
           data,
@@ -232,14 +232,14 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
           </span>
         </p>
 
-        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-2 sm:p-3 mt-4 w-full max-w-5xl">
-          <div className="flex flex-col sm:flex-row gap-2 items-center">
+        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-1.5 sm:p-3 mt-8 w-full max-w-5xl">
+          <div className="flex flex-row gap-2 items-center">
             <div className="relative flex-1 w-full" ref={searchInputRef}>
               <div className="relative flex items-center">
-                <AiOutlineSearch className="absolute left-5 text-gray-400 text-2xl" />
+                <AiOutlineSearch className="absolute left-3 sm:left-4 text-gray-400 text-lg sm:text-2xl" />
                 <input
                   type="text"
-                  placeholder="Search by Project, Locality, or City"
+                  placeholder="Search..."
                   value={filters.search}
                   onChange={(e) => {
                     setFilters({ ...filters, search: e.target.value });
@@ -249,11 +249,30 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                   onFocus={() => {
                     if (suggestions.length > 0) setShowSuggestions(true);
                   }}
-                  className="w-full bg-transparent rounded-full pl-14 pr-24 py-4 text-lg text-gray-900 placeholder-gray-400 focus:outline-none"
+                  className="w-full bg-transparent rounded-full pl-9 sm:pl-12 pr-16 sm:pr-20 py-2 sm:py-4 text-sm sm:text-lg text-gray-900 placeholder-gray-400 focus:outline-none placeholder:text-ellipsis"
                 />
-                <div className="absolute right-5 flex items-center gap-4">
-                  <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800 text-xl" />
-                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700 text-xl" />
+                {/* Responsive placeholder text using CSS */}
+                <style>{`
+                  @media (min-width: 640px) {
+                    input::placeholder {
+                      color: transparent;
+                    }
+                    input::-webkit-input-placeholder::after {
+                       content: "Search by Project, Locality, or City";
+                       color: #9ca3af;
+                    }
+                    /* Simple fallback: just rely on width allowing full text on desktop */
+                  }
+                  /* JS-free placeholder switching is tricky, sticking to short default "Search..." for mobile safety, 
+                     and let's rely on the input's default behavior for larger screens if we put the long text back. 
+                     Actually, let's just use the long text but allow it to clip on mobile. */
+                `}</style>
+                {/* Re-setting placeholder to long text, but relying on CSS to handle overflow gracefully if needed. 
+                     Actually, a short placeholder "Search by Project..." works better. 
+                     Let's use the full text but rely on text-overflow (already added placeholder:text-ellipsis). */}
+                <div className="absolute right-2 sm:right-4 flex items-center gap-2 sm:gap-4">
+                  <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800 text-base sm:text-xl" />
+                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700 text-base sm:text-xl" />
                 </div>
               </div>
 
@@ -261,7 +280,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 text-left"
                 >
                   {isLoadingSuggestions ? (
                     <div className="p-4 text-center text-gray-500">
@@ -283,17 +302,16 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                               <FaMapMarkerAlt className="text-white text-lg" />
                             </div>
                           ) : suggestion.image ? (
-                            <img 
-                              src={suggestion.image} 
-                              alt="" 
+                            <img
+                              src={suggestion.image}
+                              alt=""
                               className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
                           ) : (
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                              suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
                               'bg-green-100 text-green-600'
-                            }`}>
+                              }`}>
                               {suggestion.type === 'project' ? '🏠' : '📍'}
                             </div>
                           )}
@@ -305,11 +323,10 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                               <p className="text-xs text-gray-500 truncate">{suggestion.subtitle}</p>
                             )}
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                            suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
+                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
                             suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
-                            'bg-orange-50 text-orange-600'
-                          }`}>{suggestion.type}</span>
+                              'bg-orange-50 text-orange-600'
+                            }`}>{suggestion.type}</span>
                         </li>
                       ))}
                     </ul>
@@ -318,9 +335,9 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               )}
             </div>
 
-            <button className="bg-red-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
-              <AiOutlineSearch className="text-xl" />
-              Search
+            <button className="bg-red-600 text-white p-3 sm:px-8 sm:py-4 rounded-full font-semibold text-sm sm:text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 aspect-square sm:aspect-auto">
+              <AiOutlineSearch className="text-xl sm:text-xl" />
+              <span className="hidden sm:inline">Search</span>
             </button>
           </div>
         </div>

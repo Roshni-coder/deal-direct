@@ -92,27 +92,23 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   return (
     <>
-      {/* Mobile toggle button */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow"
-        onClick={toggleSidebar}
-        aria-label={isOpen ? "Close menu" : "Open menu"}
-      >
-        {isOpen ? (
-          <X className="h-6 w-6 text-gray-700" />
-        ) : (
-          <Menu className="h-6 w-6 text-gray-700" />
-        )}
-      </button>
-
-      <div className="flex  border-r border-gray-100 flex-col h-full">
-        {/* Top section with logo & toggle */}
-        <div className="flex items-center justify-between p-4">
+      <div className="flex border-r border-gray-100 flex-col h-full">
+        {/* Top section with Toggle/Close */}
+        <div className="flex items-center justify-end p-4 lg:justify-center">
+          {/* Mobile Close Button */}
           <button
-            className="hidden lg:block text-gray-600 hover:text-gray-600"
+            className="lg:hidden text-gray-600 hover:text-gray-900 p-2"
             onClick={toggleSidebar}
           >
-            {isOpen ? <X size={25} className="ml-60" /> : <Menu size={25} />}
+            <X size={24} />
+          </button>
+
+          {/* Desktop Collapse Button */}
+          <button
+            className="hidden lg:block text-gray-600 hover:text-gray-900"
+            onClick={toggleSidebar}
+          >
+            {isOpen ? <Menu size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
@@ -124,10 +120,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 p-2 rounded-md transition-all duration-200 ${
-                      isActive
-                        ? "bg-gray-100 text-gray-600 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
+                    `flex items-center gap-3 p-2 rounded-md transition-all duration-200 ${isActive
+                      ? "bg-gray-100 text-gray-600 font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
                     }`
                   }
                 >

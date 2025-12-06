@@ -515,10 +515,10 @@ export default function MyProperties() {
   };
 
   // Prepare chart data
-  const leadStatusData = leadAnalytics?.statusStats 
+  const leadStatusData = leadAnalytics?.statusStats
     ? Object.entries(leadAnalytics.statusStats)
-        .filter(([name, value]) => value > 0)
-        .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }))
+      .filter(([name, value]) => value > 0)
+      .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }))
     : [];
 
   const dailyLeadsData = leadAnalytics?.dailyLeads?.map(d => ({
@@ -677,7 +677,7 @@ export default function MyProperties() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-6 bg-gray-100 p-1 rounded-xl w-fit">
+          <div className="flex gap-1 mt-6 bg-gray-100 p-1 rounded-xl w-full md:w-fit overflow-x-auto scrollbar-hide">
             {[
               { key: "properties", label: "Properties", icon: Home },
               { key: "leads", label: "Leads", icon: Users, badge: stats.newLeads },
@@ -686,11 +686,10 @@ export default function MyProperties() {
               <button
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key); setSelectedPropertyForLeads(null); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  activeTab === tab.key
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab.key
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -741,11 +740,10 @@ export default function MyProperties() {
                     <button
                       key={tab.key}
                       onClick={() => setFilter(tab.key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                        filter === tab.key
+                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${filter === tab.key
                           ? "bg-blue-600 text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -838,11 +836,10 @@ export default function MyProperties() {
                     <button
                       key={tab.key}
                       onClick={() => setLeadFilter(tab.key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                        leadFilter === tab.key
+                      className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${leadFilter === tab.key
                           ? "bg-blue-600 text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -889,22 +886,22 @@ export default function MyProperties() {
                     <AreaChart data={dailyLeadsData}>
                       <defs>
                         <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
                       <YAxis tick={{ fontSize: 12 }} stroke="#9CA3AF" />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="leads" 
-                        stroke="#3B82F6" 
-                        fillOpacity={1} 
-                        fill="url(#colorLeads)" 
+                      <Area
+                        type="monotone"
+                        dataKey="leads"
+                        stroke="#3B82F6"
+                        fillOpacity={1}
+                        fill="url(#colorLeads)"
                         strokeWidth={2}
                       />
                     </AreaChart>
@@ -958,7 +955,7 @@ export default function MyProperties() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                       <XAxis type="number" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
                       <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9CA3AF" width={120} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB' }}
                       />
                       <Bar dataKey="leads" fill="#3B82F6" radius={[0, 4, 4, 0]} />

@@ -93,10 +93,10 @@ const PropertyCard = ({ property, onRemove, onViewDetails }) => {
           alt={property.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        
+
         {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
+
         {/* Top Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg">
@@ -145,7 +145,7 @@ const PropertyCard = ({ property, onRemove, onViewDetails }) => {
         <h3 className="font-bold text-gray-900 text-lg line-clamp-1 mb-2 group-hover:text-red-600 transition">
           {property.title}
         </h3>
-        
+
         <p className="text-sm text-gray-500 flex items-center gap-1.5 mb-4">
           <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
           <span className="line-clamp-1">{getLocation() || "Location not specified"}</span>
@@ -177,14 +177,14 @@ const PropertyCard = ({ property, onRemove, onViewDetails }) => {
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <Clock className="w-3.5 h-3.5" />
             <span>
-              Saved {property.interestedAt ? new Date(property.interestedAt).toLocaleDateString('en-IN', { 
-                day: 'numeric', 
+              Saved {property.interestedAt ? new Date(property.interestedAt).toLocaleDateString('en-IN', {
+                day: 'numeric',
                 month: 'short',
                 year: 'numeric'
               }) : 'recently'}
             </span>
           </div>
-          
+
           <button
             onClick={() => onViewDetails(property)}
             className="flex items-center gap-1.5 text-red-600 hover:text-red-700 font-medium text-sm transition"
@@ -257,7 +257,7 @@ export default function SavedProperties() {
       await axios.delete(`${API_BASE}/api/properties/saved/${propertyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       setProperties(prev => prev.filter(p => p._id !== propertyId));
       toast.success("Property removed from saved");
     } catch (err) {
@@ -332,7 +332,7 @@ export default function SavedProperties() {
                 Properties you've expressed interest in ({properties.length} saved)
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={handleRefresh}
@@ -372,7 +372,7 @@ export default function SavedProperties() {
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {[
                   { key: "all", label: "All" },
                   { key: "rent", label: "For Rent" },
@@ -381,11 +381,10 @@ export default function SavedProperties() {
                   <button
                     key={tab.key}
                     onClick={() => setFilterType(tab.key)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                      filterType === tab.key
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${filterType === tab.key
                         ? "bg-red-600 text-white"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -427,8 +426,8 @@ export default function SavedProperties() {
               <Heart className="w-12 h-12 text-red-300" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchQuery || filterType !== "all" 
-                ? "No properties found" 
+              {searchQuery || filterType !== "all"
+                ? "No properties found"
                 : "No saved properties yet"}
             </h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">

@@ -52,30 +52,41 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
   const isLoginPage = location.pathname === "/admin/login";
 
   return (
-    <div className="h-screen flex flex-col font-sans text-gray-800 bg-gray-50">
+    <div className="h-screen flex flex-col font-sans text-gray-800 bg-gray-50 relative overflow-hidden">
       {/* Header */}
       {!isLoginPage && (
-        <header className="w-full shadow bg-white">
+        <header className="w-full shadow bg-white z-40 relative">
           <Header toggleSidebar={toggleSidebar} />
         </header>
       )}
 
       {/* Main content area */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 h-full overflow-hidden relative">
         {/* Sidebar */}
         {!isLoginPage && (
-          <aside
-            className={`bg-white shadow-md transition-all duration-300 ease-in-out`}
-            style={{ width: isSidebarOpen ? "20%" : "5%" }}
-          >
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-          </aside>
+          <>
+            {/* Mobile Overlay */}
+            <div
+              className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${isSidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+                }`}
+              onClick={toggleSidebar}
+            />
+
+            {/* Sidebar Component */}
+            <aside
+              className={`bg-white shadow-md transition-all duration-300 ease-in-out z-50
+                fixed lg:static inset-y-0 left-0 h-full
+                ${isSidebarOpen ? "w-64 translate-x-0" : "w-64 lg:w-20 -translate-x-full lg:translate-x-0"}
+              `}
+            >
+              <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+            </aside>
+          </>
         )}
-        
+
         {/* footer */}
         <main
-          className={`transition-all duration-300 ease-in-out overflow-auto p-6`}
-          style={{ width: !isLoginPage && isSidebarOpen ? "80%" : "100%" }}
+          className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden p-4 sm:p-6 w-full"
         >
           {children}
           {/* Footer */}
@@ -95,7 +106,7 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
               </div>
             </footer>
           )}
-        </main> 
+        </main>
       </div>
     </div>
   );
