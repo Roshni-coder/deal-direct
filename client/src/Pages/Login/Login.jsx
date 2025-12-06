@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Loader2, X, ArrowLeft, KeyRound, CheckCircle, AlertTriangle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Loader2, X, ArrowLeft, KeyRound, CheckCircle } from "lucide-react";
 import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -13,13 +13,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Get the redirect path from state (if user was redirected here)
-  const redirectPath = location.state?.from || "/";
-
-  // Blocked user state
-  const [blockedError, setBlockedError] = useState(null);
 
   // Forgot Password Modal State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -38,7 +31,6 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setBlockedError(null); // Clear any previous blocked error
 
     try {
       const res = await axios.post(`${API_BASE}/api/users/login`, formData);
@@ -51,22 +43,9 @@ export default function Login() {
       window.dispatchEvent(new Event("auth-change"));
 
       toast.success(`Welcome back, ${user.name || 'User'}!`);
-      
-      // Redirect to the original page user was trying to access, or home
-      navigate(redirectPath);
+      navigate("/");
     } catch (err) {
-      const errorData = err.response?.data;
-      
-      // Check if user is blocked
-      if (errorData?.isBlocked) {
-        setBlockedError({
-          message: errorData.message,
-          reason: errorData.blockReason,
-          blockedAt: errorData.blockedAt
-        });
-      } else {
-        toast.error(errorData?.message || "Invalid credentials. Please try again.");
-      }
+      toast.error(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -195,29 +174,6 @@ export default function Login() {
               <h2 className="text-3xl font-bold text-slate-800">Welcome Back</h2>
               <p className="text-slate-500 mt-2">Please enter your details to sign in.</p>
             </div>
-
-            {/* Blocked User Error */}
-            {blockedError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <AlertTriangle className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-red-800 font-semibold text-lg">Account Blocked</h3>
-                    <p className="text-red-700 text-sm mt-1">{blockedError.message}</p>
-                    <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                      <p className="text-red-800 text-sm">
-                        <strong>Reason:</strong> {blockedError.reason}
-                      </p>
-                    </div>
-                    <p className="text-red-600 text-xs mt-3">
-                      If you believe this is a mistake, please contact our support team.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
