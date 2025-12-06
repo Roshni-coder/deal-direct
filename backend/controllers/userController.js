@@ -386,6 +386,16 @@ export const loginUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({
+        message: "Your account has been blocked",
+        isBlocked: true,
+        blockReason: user.blockReason || "No reason provided",
+        blockedAt: user.blockedAt
+      });
+    }
+
     if (!user.isVerified) {
       return res.status(400).json({ message: "Email not verified. Please register again to verify." });
     }
@@ -956,7 +966,9 @@ export const getAllUsers = async (req, res) => {
         address: u.address,
         profileImage: u.profileImage,
         role: u.role,
-        isBlocked: u.isBlocked, // IMPORTANT: Return this status
+        isBlocked: u.isBlocked,
+        blockReason: u.blockReason || "",
+        blockedAt: u.blockedAt,
 
         // ADD FULL FIELDS
         gender: u.gender,
@@ -976,24 +988,40 @@ export const getAllUsers = async (req, res) => {
 };
 
 // ✅ Block or Unblock User - ALREADY CORRECT
+// ✅ Block or Unblock User
 export const toggleBlockUser = async (req, res) => {
-  try {
-    const userId = req.params.id;
+  try {
+    const userId = req.params.id;
+    const { reason } = req.body;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId);
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.isBlocked = !user.isBlocked;
-    await user.save();
+    const willBeBlocked = !user.isBlocked;
+    user.isBlocked = willBeBlocked;
 
-    res.status(200).json({
-      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
-      isBlocked: user.isBlocked, // IMPORTANT: Return final status
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to update user", error: err.message });
-  }
+    if (willBeBlocked) {
+      if (!reason || reason.trim() === "") {
+        return res.status(400).json({ message: "Block reason is required" });
+      }
+      user.blockReason = reason.trim();
+      user.blockedAt = new Date();
+    } else {
+      user.blockReason = "";
+      user.blockedAt = null;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
+      isBlocked: user.isBlocked,
+      blockReason: user.blockReason,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to update user", error: err.message });
+  }
 };

@@ -28,6 +28,12 @@ export default function AllClients() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("profile");
 
+    // Block reason modal state
+    const [blockModalOpen, setBlockModalOpen] = useState(false);
+    const [blockReason, setBlockReason] = useState("");
+    const [userToBlock, setUserToBlock] = useState(null);
+    const [blockLoading, setBlockLoading] = useState(false);
+
     // Get the token once on component load
     // Using useMemo to ensure it's only retrieved once unless dependencies change (which it has none)
     const token = useMemo(() => localStorage.getItem("adminToken"), []);
@@ -61,6 +67,8 @@ export default function AllClients() {
                     role: u.role,
                     // isBlocked flag determines the status
                     status: u.isBlocked ? "Blocked" : "Active",
+                    blockReason: u.blockReason || "",
+                    blockedAt: u.blockedAt,
                     joinedAt: formatDate(u.createdAt),
 
                     // FULL FIELDS
@@ -91,50 +99,82 @@ export default function AllClients() {
     }, []); // Run only once on mount
 
     /* -----------------------------------------------
-      🔥 BLOCK / UNBLOCK USER - FIX APPLIED
+      🔥 BLOCK / UNBLOCK USER
     ------------------------------------------------- */
-    const toggleBlock = async (userId) => {
-        if (!userId) { // CRITICAL GUARD: Prevents the /block/undefined error
+    const handleBlockClick = (user) => {
+        if (!user?.id) {
             toast.error("User ID is missing. Cannot perform action.");
             return;
         }
+        
+        // If user is currently blocked, unblock directly (no reason needed)
+        if (user.status === "Blocked") {
+            confirmBlock(user.id, null);
+        } else {
+            // If blocking, show modal to get reason
+            setUserToBlock(user);
+            setBlockReason("");
+            setBlockModalOpen(true);
+        }
+    };
+
+    const confirmBlock = async (userId, reason) => {
         if (!token) {
             toast.error("Not authenticated for this action.");
             return;
         }
 
+        setBlockLoading(true);
         try {
             const { data } = await axios.put(
-                // The URL is correct: /api/users/block/USER_ID
                 `${API_URL}/api/users/block/${userId}`,
-                {},
+                { reason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             toast.success(data.message);
 
             const newStatus = data.isBlocked ? "Blocked" : "Active";
+            const newBlockReason = data.blockReason || "";
 
-            // 1. Update the main 'users' list
+            // Update the main 'users' list
             setUsers(prevUsers =>
                 prevUsers.map(u =>
                     u.id === userId
-                        ? { ...u, status: newStatus }
+                        ? { ...u, status: newStatus, blockReason: newBlockReason }
                         : u
                 )
             );
 
-            // 2. Instantly update the selected user's status in the open drawer
+            // Update the selected user's status in the open drawer
             if (selectedUser && selectedUser.id === userId) {
                 setSelectedUser(prev => ({
                     ...prev,
-                    status: newStatus
+                    status: newStatus,
+                    blockReason: newBlockReason
                 }));
             }
+
+            // Close modal
+            setBlockModalOpen(false);
+            setUserToBlock(null);
+            setBlockReason("");
 
         } catch (err) {
             console.error("Block/Unblock API Error:", err.response || err);
             toast.error(err.response?.data?.message || "Action failed. Check console for details.");
+        } finally {
+            setBlockLoading(false);
+        }
+    };
+
+    const handleConfirmBlock = () => {
+        if (!blockReason.trim()) {
+            toast.error("Please provide a reason for blocking this user.");
+            return;
+        }
+        if (userToBlock) {
+            confirmBlock(userToBlock.id, blockReason.trim());
         }
     };
 
@@ -334,7 +374,7 @@ export default function AllClients() {
                                                 </button>
 
                                                 <button
-                                                    onClick={() => toggleBlock(u.id)}
+                                                    onClick={() => handleBlockClick(u)}
                                                     className={`w-24 py-1 rounded-md text-white text-sm font-medium transition-colors whitespace-nowrap flex justify-center items-center ${u.status === "Active"
                                                         ? "bg-red-600 hover:bg-red-700"
                                                         : "bg-green-600 hover:bg-green-700"
@@ -365,6 +405,53 @@ export default function AllClients() {
                 </div>
             </div>
 
+            {/* BLOCK REASON MODAL */}
+            {blockModalOpen && userToBlock && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="bg-red-600 px-6 py-4">
+                            <h3 className="text-lg font-semibold text-white">Block User</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-gray-700 mb-4">
+                                You are about to block <strong>{userToBlock.name}</strong> ({userToBlock.email}).
+                            </p>
+                            <p className="text-sm text-gray-600 mb-3">
+                                Please provide a reason for blocking this user. This will be shown to the user when they try to login.
+                            </p>
+                            <textarea
+                                value={blockReason}
+                                onChange={(e) => setBlockReason(e.target.value)}
+                                placeholder="Enter reason for blocking (e.g., Violation of terms of service, Fraudulent activity, etc.)"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                                rows={4}
+                            />
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setBlockModalOpen(false);
+                                    setUserToBlock(null);
+                                    setBlockReason("");
+                                }}
+                                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                                disabled={blockLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmBlock}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center gap-2"
+                                disabled={blockLoading}
+                            >
+                                {blockLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Block User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* DRAWER */}
             {drawerOpen && selectedUser && (
                 <div className="fixed inset-0 flex z-50">
@@ -386,8 +473,7 @@ export default function AllClients() {
 
                         <div className="flex gap-3 mb-6">
                             <button
-                                // CRITICAL FIX: Ensure selectedUser.id is not undefined before calling toggleBlock
-                                onClick={() => selectedUser.id && toggleBlock(selectedUser.id)}
+                                onClick={() => handleBlockClick(selectedUser)}
                                 className={`px-4 py-2 text-white rounded-md text-sm font-semibold transition-colors ${selectedUser.status === "Active"
                                     ? "bg-red-600 hover:bg-red-700"
                                     : "bg-green-600 hover:bg-green-700"
@@ -424,6 +510,11 @@ export default function AllClients() {
                                             {selectedUser.status}
                                         </span>
                                     </p>
+                                    {selectedUser.status === "Blocked" && selectedUser.blockReason && (
+                                        <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded">
+                                            <p className="text-sm text-red-800"><strong>Block Reason:</strong> {selectedUser.blockReason}</p>
+                                        </div>
+                                    )}
                                     <p className="text-sm text-gray-600"><strong>Joined Date:</strong> {selectedUser.joinedAt}</p>
                                 </div>
 

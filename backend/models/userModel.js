@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
     bio: { type: String },
     // Block status
     isBlocked: { type: Boolean, default: false },
+    blockReason: { type: String, default: "" },
+    blockedAt: { type: Date },
     // Preferences
     preferences: {
       emailNotifications: { type: Boolean, default: true },
@@ -44,3 +46,4 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 export default User;
+

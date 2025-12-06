@@ -58,6 +58,16 @@ export default function BuilderVerification() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
+    // Block reason modal state
+    const [blockModalOpen, setBlockModalOpen] = useState(false);
+    const [blockReason, setBlockReason] = useState("");
+    const [ownerToBlock, setOwnerToBlock] = useState(null);
+    const [blockLoading, setBlockLoading] = useState(false);
+
+    // Selected owner drawer state
+    const [selectedOwner, setSelectedOwner] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
     // Get the token once on component load
     const token = localStorage.getItem("adminToken");
 
@@ -89,6 +99,8 @@ export default function BuilderVerification() {
                     role: u.role,
                     // Map DB status to local state
                     isBlocked: u.isBlocked,
+                    blockReason: u.blockReason || "",
+                    blockedAt: u.blockedAt,
                     joinedAt: formatDate(u.createdAt),
                     gender: u.gender,
                     dateOfBirth: u.dateOfBirth,
@@ -117,38 +129,84 @@ export default function BuilderVerification() {
     }, []);
 
     /* -----------------------------------------------
-      🔥 BLOCK / UNBLOCK OWNER (Instant UI update)
+      🔥 BLOCK / UNBLOCK OWNER (With block reason)
     ------------------------------------------------- */
-    const toggleBlock = async (userId) => {
+    const handleBlockClick = (owner) => {
+        if (!owner?.id) {
+            toast.error("Owner ID is missing. Cannot perform action.");
+            return;
+        }
+        
+        if (owner.isBlocked) {
+            // Unblock directly without reason
+            confirmBlock(owner.id, null);
+        } else {
+            // Show modal for block reason
+            setOwnerToBlock(owner);
+            setBlockReason("");
+            setBlockModalOpen(true);
+        }
+    };
+
+    const confirmBlock = async (ownerId, reason) => {
         if (!token) {
             toast.error("Not authenticated for this action.");
             return;
         }
 
+        setBlockLoading(true);
         try {
-            // Use the standard block endpoint
             const { data } = await axios.put(
-                `${API_URL}/api/users/block/${userId}`,
-                {},
+                `${API_URL}/api/users/block/${ownerId}`,
+                { reason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             toast.success(data.message);
 
-            // Instant Local State Update
             const newIsBlocked = data.isBlocked;
+            const newBlockReason = data.blockReason || "";
 
             setUsers(prevUsers =>
                 prevUsers.map(u =>
-                    u.id === userId
-                        ? { ...u, isBlocked: newIsBlocked }
+                    u.id === ownerId
+                        ? { ...u, isBlocked: newIsBlocked, blockReason: newBlockReason }
                         : u
                 )
             );
 
+            if (selectedOwner && selectedOwner.id === ownerId) {
+                setSelectedOwner(prev => ({
+                    ...prev,
+                    isBlocked: newIsBlocked,
+                    blockReason: newBlockReason
+                }));
+            }
+
+            setBlockModalOpen(false);
+            setOwnerToBlock(null);
+            setBlockReason("");
         } catch (err) {
-            toast.error(err.response?.data?.message || "Action failed");
+            console.error("Block/Unblock API Error:", err.response || err);
+            toast.error(err.response?.data?.message || "Action failed. Check console for details.");
+        } finally {
+            setBlockLoading(false);
         }
+    };
+
+    const handleConfirmBlock = () => {
+        if (!blockReason.trim()) {
+            toast.error("Please provide a reason for blocking this owner.");
+            return;
+        }
+        if (ownerToBlock) {
+            confirmBlock(ownerToBlock.id, blockReason.trim());
+        }
+    };
+
+    const openDrawer = (owner) => {
+        setSelectedOwner(owner);
+        setDrawerOpen(true);
     };
 
     /* -----------------------------------------------
@@ -314,12 +372,19 @@ export default function BuilderVerification() {
 
                                         {/* Actions: Block/Unblock */}
                                         <td className="py-4 px-6 text-center whitespace-nowrap">
-                                            <div className="flex justify-center gap-3">
+                                            <div className="flex justify-center gap-2">
+                                                {/* View Button */}
+                                                <button
+                                                    onClick={() => openDrawer(u)}
+                                                    className="px-3 py-1.5 bg-white shadow-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 text-xs font-medium transition-colors whitespace-nowrap"
+                                                >
+                                                    View
+                                                </button>
 
                                                 {/* Block Button (Active Owner -> Block, styled Red) */}
                                                 {!u.isBlocked && (
                                                     <button
-                                                        onClick={() => toggleBlock(u.id)}
+                                                        onClick={() => handleBlockClick(u)}
                                                         className="w-24 flex items-center justify-center gap-1 py-1.5 rounded-xl text-white text-xs font-bold transition-all shadow-md bg-red-600 hover:bg-red-700 shadow-red-400/50 hover:shadow-lg whitespace-nowrap"
                                                     >
                                                         <XCircle className="w-4 h-4" /> Block
@@ -329,7 +394,7 @@ export default function BuilderVerification() {
                                                 {/* Unblock Button (Blocked Owner -> Unblock, styled Green) */}
                                                 {u.isBlocked && (
                                                     <button
-                                                        onClick={() => toggleBlock(u.id)}
+                                                        onClick={() => handleBlockClick(u)}
                                                         className="w-24 flex items-center justify-center gap-1 py-1.5 rounded-xl text-white text-xs font-bold transition-all shadow-md bg-emerald-600 hover:bg-emerald-700 shadow-emerald-400/50 hover:shadow-lg whitespace-nowrap"
                                                     >
                                                         <CheckCircle className="w-4 h-4" /> Unblock
@@ -351,6 +416,140 @@ export default function BuilderVerification() {
                     </table>
                 </div>
             </div>
+
+            {/* BLOCK REASON MODAL */}
+            {blockModalOpen && ownerToBlock && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="bg-red-600 px-6 py-4">
+                            <h3 className="text-lg font-semibold text-white">Block Owner</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-gray-700 mb-4">
+                                You are about to block <strong>{ownerToBlock.name}</strong> ({ownerToBlock.email}).
+                            </p>
+                            <p className="text-sm text-gray-600 mb-3">
+                                Please provide a reason for blocking this owner. This will be shown to the owner when they try to login.
+                            </p>
+                            <textarea
+                                value={blockReason}
+                                onChange={(e) => setBlockReason(e.target.value)}
+                                placeholder="Enter reason for blocking (e.g., Violation of terms of service, Fraudulent property listings, etc.)"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                                rows={4}
+                            />
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setBlockModalOpen(false);
+                                    setOwnerToBlock(null);
+                                    setBlockReason("");
+                                }}
+                                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                                disabled={blockLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmBlock}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center gap-2"
+                                disabled={blockLoading}
+                            >
+                                {blockLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Block Owner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* OWNER DETAILS DRAWER */}
+            {drawerOpen && selectedOwner && (
+                <div className="fixed inset-0 flex z-50">
+                    <div
+                        className="flex-1 bg-black/50 transition-opacity duration-300"
+                        onClick={() => setDrawerOpen(false)}
+                    />
+
+                    <div className="w-full max-w-lg bg-white shadow-2xl p-6 overflow-y-auto transform translate-x-0 transition-transform duration-300">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">{selectedOwner.name}</h2>
+                                <p className="text-purple-600 font-medium">{selectedOwner.email}</p>
+                            </div>
+                            <button onClick={() => setDrawerOpen(false)} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="flex gap-3 mb-6">
+                            <button
+                                onClick={() => handleBlockClick(selectedOwner)}
+                                className={`px-4 py-2 text-white rounded-md text-sm font-semibold transition-colors ${selectedOwner.isBlocked
+                                    ? "bg-green-600 hover:bg-green-700"
+                                    : "bg-red-600 hover:bg-red-700"
+                                    }`}
+                            >
+                                {selectedOwner.isBlocked ? "Unblock Owner" : "Block Owner"}
+                            </button>
+                        </div>
+
+                        {/* Owner Details */}
+                        <div className="space-y-4 text-gray-700">
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                                <p className="font-semibold text-gray-900">Role: <span className="text-purple-700 capitalize">{selectedOwner.role}</span></p>
+                                <p className="font-semibold text-gray-900">Status:
+                                    <span className={`ml-2 font-bold ${!selectedOwner.isBlocked ? 'text-green-600' : 'text-red-600'}`}>
+                                        {selectedOwner.isBlocked ? 'Blocked' : 'Active'}
+                                    </span>
+                                </p>
+                                {selectedOwner.isBlocked && selectedOwner.blockReason && (
+                                    <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded">
+                                        <p className="text-sm text-red-800"><strong>Block Reason:</strong> {selectedOwner.blockReason}</p>
+                                    </div>
+                                )}
+                                <p className="text-sm text-gray-600"><strong>Joined Date:</strong> {selectedOwner.joinedAt}</p>
+                            </div>
+
+                            <p><strong>Phone:</strong> {selectedOwner.phone || "N/A"}</p>
+                            <p><strong>Alternate Phone:</strong> {selectedOwner.alternatePhone || "N/A"}</p>
+
+                            <p><strong>Gender:</strong> {selectedOwner.gender || "N/A"}</p>
+                            <p><strong>Date of Birth:</strong>
+                                {selectedOwner.dateOfBirth
+                                    ? formatDate(selectedOwner.dateOfBirth)
+                                    : "N/A"}
+                            </p>
+
+                            <p><strong>Bio:</strong> {selectedOwner.bio || "N/A"}</p>
+
+                            <div>
+                                <h4 className="font-semibold text-gray-900 mt-4 mb-2">Address Details:</h4>
+                                {selectedOwner.address ? (
+                                    <div className="bg-gray-100 p-3 rounded text-sm space-y-1">
+                                        <p><strong>Line 1:</strong> {selectedOwner.address.line1 || 'N/A'}</p>
+                                        <p><strong>Line 2:</strong> {selectedOwner.address.line2 || 'N/A'}</p>
+                                        <p><strong>City/Town:</strong> {selectedOwner.address.city || 'N/A'}</p>
+                                        <p><strong>State:</strong> {selectedOwner.address.state || 'N/A'}</p>
+                                        <p><strong>Pincode:</strong> <span className="font-bold text-purple-700">{selectedOwner.address.pincode || 'N/A'}</span></p>
+                                    </div>
+                                ) : (
+                                    <p className="text-red-500">No address information available.</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <h4 className="font-semibold text-gray-900 mt-4 mb-2">Preferences:</h4>
+                                <ul className="ml-4 list-disc list-inside bg-gray-50 p-3 rounded-lg text-sm">
+                                    <li>Email Notifications: <span className="font-medium">{selectedOwner?.preferences?.emailNotifications ? "Yes" : "No"}</span></li>
+                                    <li>SMS Notifications: <span className="font-medium">{selectedOwner?.preferences?.smsNotifications ? "Yes" : "No"}</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
