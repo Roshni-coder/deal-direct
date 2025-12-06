@@ -88,12 +88,12 @@ const pinDropIcon = new L.Icon({
 
 // Create simple pin marker (default state)
 const createSimplePinMarker = (price, isHighlighted = false) => {
-  const formattedPrice = price >= 10000000 
-    ? `₹${(price / 10000000).toFixed(1)}Cr` 
-    : price >= 100000 
-      ? `₹${(price / 100000).toFixed(0)}L` 
+  const formattedPrice = price >= 10000000
+    ? `₹${(price / 10000000).toFixed(1)}Cr`
+    : price >= 100000
+      ? `₹${(price / 100000).toFixed(0)}L`
       : `₹${price?.toLocaleString()}`;
-  
+
   return L.divIcon({
     className: 'custom-property-marker',
     html: `
@@ -135,17 +135,17 @@ const createSimplePinMarker = (price, isHighlighted = false) => {
 // Create detailed property marker with image (hover state)
 const createDetailedPropertyMarker = (property) => {
   const price = property.price;
-  const formattedPrice = price >= 10000000 
-    ? `₹${(price / 10000000).toFixed(1)}Cr` 
-    : price >= 100000 
-      ? `₹${(price / 100000).toFixed(0)}L` 
+  const formattedPrice = price >= 10000000
+    ? `₹${(price / 10000000).toFixed(1)}Cr`
+    : price >= 100000
+      ? `₹${(price / 100000).toFixed(0)}L`
       : `₹${price?.toLocaleString()}`;
-  
+
   // Get first image or fallback
   const imageUrl = property.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=100&h=60&fit=crop';
   const title = property.title?.substring(0, 20) + (property.title?.length > 20 ? '...' : '') || 'Property';
   const location = property.address?.city || property.city || '';
-  
+
   return L.divIcon({
     className: 'custom-property-marker',
     html: `
@@ -226,10 +226,10 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
@@ -274,12 +274,12 @@ const PropertyPage = () => {
   const [cities, setCities] = useState([]);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
   const [hoveredProperty, setHoveredProperty] = useState(null);
-  
+
   // Pin drop states
   const [pinDropMode, setPinDropMode] = useState(false);
   const [droppedPin, setDroppedPin] = useState(null); // { lat, lng }
   const [searchRadius, setSearchRadius] = useState(2); // km
-  
+
   // Autocomplete states
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -329,7 +329,7 @@ const PropertyPage = () => {
   // Optimized autocomplete with caching and request cancellation
   useEffect(() => {
     const searchTerm = filters.search?.trim() || '';
-    
+
     if (searchTerm.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -365,7 +365,7 @@ const PropertyPage = () => {
         );
 
         const data = response.data.suggestions || [];
-        
+
         // Cache the result
         suggestionsCache.set(cacheKey, {
           data,
@@ -457,6 +457,12 @@ const PropertyPage = () => {
     const intent = params.get("intent");
     if (intent && !updates.search) updates.search = intent;
 
+    // Check for view mode (map or list)
+    const viewParam = params.get("view");
+    if (viewParam === "map" || viewParam === "list") {
+      setViewMode(viewParam);
+    }
+
     if (Object.keys(updates).length) setFilters((prev) => ({ ...prev, ...updates }));
   }, [location.search]);
 
@@ -508,13 +514,13 @@ const PropertyPage = () => {
       lat: p.lat || p.address?.latitude || p.location?.coordinates?.[1],
       lng: p.lng || p.address?.longitude || p.location?.coordinates?.[0]
     }));
-    
+
     // Debug log
     console.log(`Properties: ${filteredProperties.length} total, ${withCoords.length} with coordinates`);
     if (withCoords.length > 0) {
       console.log('Sample property with coords:', withCoords[0]?.title, withCoords[0]?.lat, withCoords[0]?.lng);
     }
-    
+
     return withCoords;
   }, [filteredProperties]);
 
@@ -559,7 +565,7 @@ const PropertyPage = () => {
   // Component to fit map bounds to markers
   const MapBoundsUpdater = ({ properties }) => {
     const map = useMap();
-    
+
     useEffect(() => {
       if (droppedPin) {
         map.setView([droppedPin.lat, droppedPin.lng], 14);
@@ -568,7 +574,7 @@ const PropertyPage = () => {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
       }
     }, [properties, map, droppedPin]);
-    
+
     return null;
   };
 
@@ -597,7 +603,7 @@ const PropertyPage = () => {
                   onKeyDown={handleSearchKeyDown}
                   onFocus={() => filters.search?.trim().length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
                 />
-                
+
                 {/* Autocomplete Suggestions Dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
                   <div
@@ -610,9 +616,8 @@ const PropertyPage = () => {
                     {suggestions.map((suggestion, index) => (
                       <div
                         key={`${suggestion.type}-${suggestion.value}`}
-                        className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${
-                          index === selectedIndex ? 'bg-red-50' : 'hover:bg-slate-50'
-                        }`}
+                        className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors ${index === selectedIndex ? 'bg-red-50' : 'hover:bg-slate-50'
+                          }`}
                         onClick={() => handleSuggestionClick(suggestion)}
                         onMouseEnter={() => setSelectedIndex(index)}
                       >
@@ -621,17 +626,16 @@ const PropertyPage = () => {
                             <FaMapMarkerAlt className="text-white text-lg" />
                           </div>
                         ) : suggestion.image ? (
-                          <img 
-                            src={suggestion.image} 
-                            alt="" 
+                          <img
+                            src={suggestion.image}
+                            alt=""
                             className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
                         ) : (
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
-                            'bg-green-100 text-green-600'
-                          }`}>
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
+                              'bg-green-100 text-green-600'
+                            }`}>
                             {suggestion.type === 'project' ? '🏠' : '📍'}
                           </div>
                         )}
@@ -643,11 +647,10 @@ const PropertyPage = () => {
                             <div className="text-xs text-slate-500 truncate">{suggestion.subtitle}</div>
                           )}
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
-                          suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
-                          'bg-orange-50 text-orange-600'
-                        }`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
+                            suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
+                              'bg-orange-50 text-orange-600'
+                          }`}>
                           {suggestion.type}
                         </span>
                       </div>
@@ -725,22 +728,20 @@ const PropertyPage = () => {
               <div className="flex items-center bg-slate-100 rounded-xl p-1 ml-2">
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    viewMode === "list"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "list"
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   <FaList size={14} />
                   <span className="hidden sm:inline">List</span>
                 </button>
                 <button
                   onClick={() => setViewMode("map")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    viewMode === "map"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "map"
                       ? "bg-white text-slate-800 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   <FaMap size={14} />
                   <span className="hidden sm:inline">Map</span>
@@ -816,9 +817,8 @@ const PropertyPage = () => {
                     onClick={() => viewDetails(p)}
                     onMouseEnter={() => setHoveredProperty(p._id)}
                     onMouseLeave={() => setHoveredProperty(null)}
-                    className={`p-4 cursor-pointer transition-colors ${
-                      hoveredProperty === p._id ? "bg-red-50" : "hover:bg-slate-50"
-                    }`}
+                    className={`p-4 cursor-pointer transition-colors ${hoveredProperty === p._id ? "bg-red-50" : "hover:bg-slate-50"
+                      }`}
                   >
                     <div className="flex gap-3">
                       <img
@@ -861,13 +861,12 @@ const PropertyPage = () => {
                       setPinDropMode(!pinDropMode);
                     }
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all ${
-                    pinDropMode 
-                      ? 'bg-green-600 text-white animate-pulse' 
-                      : droppedPin 
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all ${pinDropMode
+                      ? 'bg-green-600 text-white animate-pulse'
+                      : droppedPin
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
                         : 'bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {droppedPin ? (
                     <>
@@ -919,7 +918,7 @@ const PropertyPage = () => {
                 />
                 <MapClickHandler />
                 <MapBoundsUpdater properties={droppedPin ? nearbyProperties : propertiesWithCoords} />
-                
+
                 {/* No Properties Message */}
                 {propertiesWithCoords.length === 0 && !droppedPin && (
                   <div className="leaflet-control absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000]">
@@ -935,7 +934,7 @@ const PropertyPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Dropped Pin and Search Radius Circle */}
                 {droppedPin && (
                   <>

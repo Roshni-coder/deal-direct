@@ -6,6 +6,8 @@ import {
   getDashboardStats,
   getAdminLeads,
   updateAdminLeadStatus,
+  getAdminReports,
+  updateReportStatus,
 } from "../controllers/adminController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
 
@@ -21,5 +23,9 @@ router.get("/dashboard/stats", protectAdmin, getDashboardStats);
 // Leads Management
 router.get("/leads", protectAdmin, getAdminLeads);
 router.put("/leads/:id", protectAdmin, updateAdminLeadStatus);
+
+// Reported Messages
+router.get("/reports", protectAdmin, getAdminReports);
+router.put("/reports/:id", protectAdmin, updateReportStatus);
 
 export default router;

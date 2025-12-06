@@ -6,13 +6,15 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowLeftIcon,
   UserCircleIcon,
+  FlagIcon,
 } from "@heroicons/react/24/outline";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "react-toastify";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 // Chat Message Component
-const ChatMessage = ({ message, isOwn }) => {
+const ChatMessage = ({ message, isOwn, onReport }) => {
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -21,21 +23,28 @@ const ChatMessage = ({ message, isOwn }) => {
   };
 
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-3`}>
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-3 group`}>
       <div
-        className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
-          isOwn
-            ? "bg-blue-600 text-white rounded-br-md"
-            : "bg-gray-100 text-gray-900 rounded-bl-md"
-        }`}
+        className={`max-w-[75%] relative px-4 py-2.5 rounded-2xl ${isOwn
+          ? "bg-blue-600 text-white rounded-br-md"
+          : "bg-gray-100 text-gray-900 rounded-bl-md"
+          }`}
       >
+        {!isOwn && (
+          <button
+            onClick={() => onReport(message)}
+            className="absolute -right-8 top-1/2 -translate-y-1/2 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+            title="Report Message"
+          >
+            <FlagIcon className="w-4 h-4" />
+          </button>
+        )}
         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
           {message.text}
         </p>
         <p
-          className={`text-[10px] mt-1 ${
-            isOwn ? "text-blue-100" : "text-gray-500"
-          }`}
+          className={`text-[10px] mt-1 ${isOwn ? "text-blue-100" : "text-gray-500"
+            }`}
         >
           {formatTime(message.createdAt)}
         </p>
@@ -60,9 +69,8 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition-all border-b border-gray-100 hover:bg-gray-50 ${
-        isActive ? "bg-blue-50 border-l-4 border-l-blue-600" : ""
-      }`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition-all border-b border-gray-100 hover:bg-gray-50 ${isActive ? "bg-blue-50 border-l-4 border-l-blue-600" : ""
+        }`}
     >
       {/* Property Image */}
       <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
@@ -133,12 +141,19 @@ const ChatWidget = () => {
     joinConversation,
     leaveConversation,
     unreadCount,
+    reportMessage,
   } = useChat();
 
   const [messageText, setMessageText] = useState("");
   const [showConversations, setShowConversations] = useState(true);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Report State
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [selectedMessageForReport, setSelectedMessageForReport] = useState(null);
+  const [reportReason, setReportReason] = useState("Asking for brokerage/commission");
+  const [isReporting, setIsReporting] = useState(false);
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -160,7 +175,7 @@ const ChatWidget = () => {
   // Handle typing
   const handleTyping = (e) => {
     setMessageText(e.target.value);
-    
+
     if (currentConversation) {
       emitTyping(currentConversation._id);
 
@@ -192,6 +207,29 @@ const ChatWidget = () => {
     }
     setShowConversations(true);
     openChat(null);
+  };
+
+  // Handle Report Click
+  const onReportClick = (message) => {
+    setSelectedMessageForReport(message);
+    setReportModalOpen(true);
+  };
+
+  // Submit Report
+  const handleSubmitReport = async () => {
+    if (!selectedMessageForReport) return;
+    setIsReporting(true);
+    const res = await reportMessage(selectedMessageForReport._id, reportReason);
+    setIsReporting(false);
+
+    if (res?.success) {
+      toast.success("Message reported to admin.");
+      setReportModalOpen(false);
+      setReportReason("Asking for brokerage/commission");
+      setSelectedMessageForReport(null);
+    } else {
+      toast.error(res?.message || "Failed to report message.");
+    }
   };
 
   // Build image URL
@@ -257,7 +295,7 @@ const ChatWidget = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         {showConversations ? (
           // Conversations List
           <div className="h-full overflow-y-auto">
@@ -324,6 +362,7 @@ const ChatWidget = () => {
                       key={msg._id}
                       message={msg}
                       isOwn={msg.sender?._id === currentUser._id}
+                      onReport={onReportClick}
                     />
                   ))}
                   {isTyping && isTyping.userId !== currentUser._id && (
@@ -360,6 +399,59 @@ const ChatWidget = () => {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Report Modal Overlay */}
+        {reportModalOpen && (
+          <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <FlagIcon className="w-5 h-5 text-red-600" />
+                  Report Message
+                </h3>
+                <button onClick={() => setReportModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 mb-2 line-clamp-2 italic bg-gray-50 p-2 rounded">
+                  "{selectedMessageForReport?.text}"
+                </p>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Reason</label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-red-500 outline-none"
+                >
+                  <option value="Asking for brokerage/commission">Asking for brokerage/commission</option>
+                  <option value="Listing info is incorrect">Listing information is incorrect</option>
+                  <option value="Fake Property / Fraud">Fake Property / Fraud Suspected</option>
+                  <option value="Unresponsive/Ghosting">Unresponsive / Ghosting</option>
+                  <option value="Spam / Irrelevant Messages">Spam / Irrelevant Messages</option>
+                  <option value="Abusive or Offensive Language">Abusive or Offensive Language</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setReportModalOpen(false)}
+                  className="flex-1 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReport}
+                  disabled={isReporting}
+                  className="flex-1 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition disabled:opacity-50"
+                >
+                  {isReporting ? "Reporting..." : "Submit"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

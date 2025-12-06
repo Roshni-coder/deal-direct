@@ -6,7 +6,7 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { FaMapMarkerAlt, FaMicrophone, FaHome, FaKey, FaBuilding, FaBed, FaTree } from "react-icons/fa";
 import { tabConfig } from "./filterConfig";
 import PropertyTypeFilter from "./PropertyTypeFilter";
-import gemback from "../../assets/gemback.png";
+import herokaback from "../../assets/herokaback.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -29,10 +29,13 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const dropdownRefs = {
     budget: useRef(null),
@@ -192,6 +195,62 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
     setActiveTab(tab.label);
   };
 
+  const handleMapClick = () => {
+    // Navigate to PropertyList with map view enabled
+    // Preserve current search query if any
+    const searchParams = new URLSearchParams();
+    searchParams.set('view', 'map');
+    if (filters.search) {
+      searchParams.set('search', filters.search);
+    }
+    navigate(`/properties?${searchParams.toString()}`);
+  };
+
+  const startVoiceInput = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    }
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Voice input is not supported in this browser.");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setFilters(prev => ({ ...prev, search: transcript }));
+        setShowSuggestions(true);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   // Highlight matching text
   const highlightMatch = (text, query) => {
     if (!query || !text) return text;
@@ -208,13 +267,14 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   };
 
   return (
-    <section className="relative flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-visible">
+    <section className="relative flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-hidden">
+      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${gemback})` }}
+        style={{ backgroundImage: `url(${herokaback})` }}
       ></div>
 
-      {/* Dark overlay for better text visibility */}
+      {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
 
       <div className="relative pt-32 pb-16 z-10 flex flex-col items-center max-w-7xl w-full space-y-2">
@@ -232,14 +292,14 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
           </span>
         </p>
 
-        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-1.5 sm:p-3 mt-8 w-full max-w-5xl">
+        <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-1.5 sm:p-3 mt-8 w-full max-w-5xl relative z-50">
           <div className="flex flex-row gap-2 items-center">
-            <div className="relative flex-1 w-full" ref={searchInputRef}>
+            <div className="relative flex-1 w-full z-50" ref={searchInputRef}>
               <div className="relative flex items-center">
                 <AiOutlineSearch className="absolute left-3 sm:left-4 text-gray-400 text-lg sm:text-2xl" />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search by Project, Locality, or City"
                   value={filters.search}
                   onChange={(e) => {
                     setFilters({ ...filters, search: e.target.value });
@@ -252,27 +312,20 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                   className="w-full bg-transparent rounded-full pl-9 sm:pl-12 pr-16 sm:pr-20 py-2 sm:py-4 text-sm sm:text-lg text-gray-900 placeholder-gray-400 focus:outline-none placeholder:text-ellipsis"
                 />
                 {/* Responsive placeholder text using CSS */}
-                <style>{`
-                  @media (min-width: 640px) {
-                    input::placeholder {
-                      color: transparent;
-                    }
-                    input::-webkit-input-placeholder::after {
-                       content: "Search by Project, Locality, or City";
-                       color: #9ca3af;
-                    }
-                    /* Simple fallback: just rely on width allowing full text on desktop */
-                  }
-                  /* JS-free placeholder switching is tricky, sticking to short default "Search..." for mobile safety, 
-                     and let's rely on the input's default behavior for larger screens if we put the long text back. 
-                     Actually, let's just use the long text but allow it to clip on mobile. */
-                `}</style>
                 {/* Re-setting placeholder to long text, but relying on CSS to handle overflow gracefully if needed. 
                      Actually, a short placeholder "Search by Project..." works better. 
                      Let's use the full text but rely on text-overflow (already added placeholder:text-ellipsis). */}
                 <div className="absolute right-2 sm:right-4 flex items-center gap-2 sm:gap-4">
-                  <FaMapMarkerAlt className="text-gray-600 cursor-pointer hover:text-gray-800 text-base sm:text-xl" />
-                  <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700 text-base sm:text-xl" />
+                  <FaMapMarkerAlt
+                    className="text-gray-600 cursor-pointer hover:text-blue-800 text-base sm:text-blue-600-2xl transition-colors hover:scale-110 animate-pulse"
+                    onClick={handleMapClick}
+                    title="Search on Map"
+                  />
+                  <FaMicrophone
+                    className={`cursor-pointer text-base sm:text-xl transition-all hover:scale-110 ${isListening ? 'text-red-600 animate-pulse scale-110' : 'text-red-600 hover:text-red-700'}`}
+                    onClick={startVoiceInput}
+                    title="Search by Voice"
+                  />
                 </div>
               </div>
 

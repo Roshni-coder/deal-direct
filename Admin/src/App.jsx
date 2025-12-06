@@ -21,6 +21,7 @@ import LeadMonitoring from "./pages/LeadMonitoring";
 import BuilderVerification from "./pages/BuilderVerification";
 import BuilderProjects from "./pages/BuilderProjects";
 import ContactInquiries from "./pages/ContactInquiries";
+import ReportedMessages from "./pages/ReportedMessages";
 
 const getStoredAdminInfo = () => {
   try {
@@ -209,6 +210,14 @@ function App() {
             element={
               <ProtectedRoute allowEnvAgent={false}>
                 <ContactInquiries />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reported-messages"
+            element={
+              <ProtectedRoute allowEnvAgent={false}>
+                <ReportedMessages />
               </ProtectedRoute>
             }
           />

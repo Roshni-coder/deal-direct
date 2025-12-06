@@ -22,6 +22,7 @@ import {
 import HeroSection from "../../Components/HeroSection/HeroSection";
 import TopLocalities from "../../Components/TopLocalities/TopLocalities";
 import AuthModal from "../../Components/AuthModal/AuthModal";
+import { FaRupeeSign } from "react-icons/fa";
 
 // Asset Imports
 import MumbaiIcon from "../../assets/Mumbai.png";
@@ -373,13 +374,14 @@ const Home = () => {
           {/* Benefit 1: Zero Commission */}
           <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">
             <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 text-4xl text-white shadow-lg group-hover:shadow-2xl group-hover:scale-105 transition-all duration-300">
-              <AiOutlineDollarCircle className="w-12 h-12" />
+              <FaRupeeSign className="w-12 h-12" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">Zero Commission</h3>
             <p className="text-gray-500 text-[15px] leading-relaxed max-w-[220px]">
               Save thousands by connecting directly with owners.
             </p>
           </div>
+
 
           {/* Benefit 2: Faster Deals */}
           <div className="group text-center flex flex-col items-center transition-all duration-300 hover:-translate-y-2">

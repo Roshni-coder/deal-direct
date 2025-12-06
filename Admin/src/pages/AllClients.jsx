@@ -17,12 +17,23 @@ const formatDate = (dateString) => {
     }
 };
 
+import { useLocation } from "react-router-dom"; // Import useLocation
+
 export default function AllClients() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const location = useLocation(); // Get location
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const searchParam = params.get("search");
+        if (searchParam) {
+            setSearch(searchParam);
+        }
+    }, [location.search]);
 
     const [selectedUser, setSelectedUser] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -106,7 +117,7 @@ export default function AllClients() {
             toast.error("User ID is missing. Cannot perform action.");
             return;
         }
-        
+
         // If user is currently blocked, unblock directly (no reason needed)
         if (user.status === "Blocked") {
             confirmBlock(user.id, null);

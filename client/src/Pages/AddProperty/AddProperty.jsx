@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import axios from "axios";
 import {
     Home, MapPin, IndianRupee, Layers, Image as ImageIcon, Calendar,
@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import EmailVerificationModal from "../../Components/EmailVerificationModal/EmailVerificationModal";
+import locationData from "../../data/real-estate-locations.json";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -190,27 +191,27 @@ const IMAGE_CATEGORIES = {
             { key: "other", label: "Other Areas", maxImages: 5, tip: "Amenities, garden, pool, etc." }
         ],
         // ... (Other Residential types assumed present as per previous code)
-         "Independent House": [{ key: "exterior", label: "House Exterior", maxImages: 4 }, { key: "livingRoom", label: "Living Room", maxImages: 3 }],
-         "Villa": [{ key: "exterior", label: "Villa Exterior", maxImages: 5 }], 
-         "Builder Floor": [{ key: "exterior", label: "Building Exterior", maxImages: 2 }],
-         "Studio Apartment": [{ key: "livingRoom", label: "Studio Space", maxImages: 4 }],
-         "Penthouse": [{ key: "exterior", label: "Building & Terrace", maxImages: 4 }],
-         "Row House": [{ key: "exterior", label: "House Exterior", maxImages: 3 }],
-         "Farm House": [{ key: "exterior", label: "Property Exterior", maxImages: 5 }]
+        "Independent House": [{ key: "exterior", label: "House Exterior", maxImages: 4 }, { key: "livingRoom", label: "Living Room", maxImages: 3 }],
+        "Villa": [{ key: "exterior", label: "Villa Exterior", maxImages: 5 }],
+        "Builder Floor": [{ key: "exterior", label: "Building Exterior", maxImages: 2 }],
+        "Studio Apartment": [{ key: "livingRoom", label: "Studio Space", maxImages: 4 }],
+        "Penthouse": [{ key: "exterior", label: "Building & Terrace", maxImages: 4 }],
+        "Row House": [{ key: "exterior", label: "House Exterior", maxImages: 3 }],
+        "Farm House": [{ key: "exterior", label: "Property Exterior", maxImages: 5 }]
     },
     Commercial: {
         "Office Space": [
             { key: "facade", label: "Building Exterior", maxImages: 3, tip: "Building facade and entrance" },
             { key: "workArea", label: "Work Area", maxImages: 4, tip: "Main working floor" }
         ],
-         // ... (Other Commercial types assumed present)
-         "Shop / Retail": [{ key: "facade", label: "Shop Front", maxImages: 3 }],
-         "Showroom": [{ key: "facade", label: "Showroom Facade", maxImages: 4 }],
-         "Restaurant / Cafe": [{ key: "facade", label: "Restaurant Exterior", maxImages: 3 }],
-         "Co-Working Space": [{ key: "workArea", label: "Open Desk Area", maxImages: 4 }],
-         "Warehouse / Godown": [{ key: "warehouse", label: "Storage Area", maxImages: 5 }],
-         "Industrial Shed": [{ key: "warehouse", label: "Main Floor", maxImages: 5 }],
-         "Commercial Building / Floor": [{ key: "facade", label: "Building Exterior", maxImages: 3 }]
+        // ... (Other Commercial types assumed present)
+        "Shop / Retail": [{ key: "facade", label: "Shop Front", maxImages: 3 }],
+        "Showroom": [{ key: "facade", label: "Showroom Facade", maxImages: 4 }],
+        "Restaurant / Cafe": [{ key: "facade", label: "Restaurant Exterior", maxImages: 3 }],
+        "Co-Working Space": [{ key: "workArea", label: "Open Desk Area", maxImages: 4 }],
+        "Warehouse / Godown": [{ key: "warehouse", label: "Storage Area", maxImages: 5 }],
+        "Industrial Shed": [{ key: "warehouse", label: "Main Floor", maxImages: 5 }],
+        "Commercial Building / Floor": [{ key: "facade", label: "Building Exterior", maxImages: 3 }]
     }
 };
 
@@ -417,7 +418,7 @@ export default function AddProperty() {
     };
 
     const toggleCategory = (categoryKey) => {
-        setExpandedCategories(prev => 
+        setExpandedCategories(prev =>
             prev.includes(categoryKey) ? prev.filter(k => k !== categoryKey) : [...prev, categoryKey]
         );
     };
@@ -459,9 +460,9 @@ export default function AddProperty() {
 
     const findObjectId = (name, type) => {
         if (!metadata[type] || !metadata[type].length) return null;
-        let match = metadata[type].find(item => item.name === name) || 
-                    metadata[type].find(item => item.name.toLowerCase() === name.toLowerCase()) || 
-                    metadata[type].find(item => item.name.toLowerCase().includes(name.toLowerCase()));
+        let match = metadata[type].find(item => item.name === name) ||
+            metadata[type].find(item => item.name.toLowerCase() === name.toLowerCase()) ||
+            metadata[type].find(item => item.name.toLowerCase().includes(name.toLowerCase()));
         return match ? match._id : null;
     };
 
@@ -489,17 +490,17 @@ export default function AddProperty() {
             const areaData = { builtUpSqft: formData.builtUpArea, carpetSqft: formData.carpetArea, superBuiltUpSqft: formData.superBuiltUpArea, plotSqft: formData.plotArea };
             submitData.append("area", JSON.stringify(areaData));
 
-            const addressData = { 
-                city: formData.city, 
-                area: formData.locality, 
-                line: formData.address, 
-                landmark: formData.landmark, 
+            const addressData = {
+                city: formData.city,
+                area: formData.locality,
+                line: formData.address,
+                landmark: formData.landmark,
                 nearby: formData.nearby || [],
                 latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                 longitude: formData.longitude ? parseFloat(formData.longitude) : null
             };
             submitData.append("address", JSON.stringify(addressData));
-            
+
             // Add coordinates separately for easy access
             if (formData.latitude && formData.longitude) {
                 submitData.append("latitude", formData.latitude);
@@ -529,7 +530,7 @@ export default function AddProperty() {
             submitData.append("legal", JSON.stringify(legalData));
 
             images.forEach(file => submitData.append("images", file));
-            
+
             const imageCategoryMap = {};
             Object.entries(categorizedImages).forEach(([categoryKey, data]) => {
                 if (data.files && data.files.length > 0) {
@@ -567,7 +568,7 @@ export default function AddProperty() {
     };
 
     const generateShortDescription = () => formData.description || `${generateTitle()} | ${formData.builtUpArea || "Area not specified"} sq.ft`;
-    
+
     // Common Styles (UPDATED: Blue focus ring instead of red)
     const inputStyle = "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all";
     const labelStyle = "text-sm font-semibold text-gray-700 mb-1 block";
@@ -657,7 +658,7 @@ export default function AddProperty() {
         }
 
         setIsLocating(true);
-        
+
         // First try with high accuracy (GPS)
         const tryGetLocation = (highAccuracy, timeout) => {
             return new Promise((resolve, reject) => {
@@ -685,7 +686,7 @@ export default function AddProperty() {
                 }));
                 setIsLocating(false);
                 toast.success("Location detected successfully!");
-                
+
                 // Reverse geocode to get address details
                 reverseGeocode(latitude, longitude);
             })
@@ -717,16 +718,16 @@ export default function AddProperty() {
             );
             if (response.data && response.data.address) {
                 const addr = response.data.address;
-                
+
                 // Extract city (try multiple fields)
                 const city = addr.city || addr.town || addr.village || addr.state_district || addr.county || '';
-                
+
                 // Extract locality/area
                 const locality = addr.suburb || addr.neighbourhood || addr.hamlet || addr.residential || addr.quarter || '';
-                
+
                 // Extract landmark (nearby point of interest)
                 const landmark = addr.amenity || addr.building || addr.shop || addr.tourism || addr.leisure || '';
-                
+
                 // Build a cleaner address line
                 const addressParts = [];
                 if (addr.house_number) addressParts.push(addr.house_number);
@@ -735,8 +736,8 @@ export default function AddProperty() {
                 if (city) addressParts.push(city);
                 if (addr.state) addressParts.push(addr.state);
                 if (addr.postcode) addressParts.push(addr.postcode);
-                
-                const formattedAddress = addressParts.length > 0 
+
+                const formattedAddress = addressParts.length > 0
                     ? addressParts.join(', ')
                     : response.data.display_name;
 
@@ -747,7 +748,7 @@ export default function AddProperty() {
                     address: formattedAddress || prev.address,
                     landmark: landmark || prev.landmark
                 }));
-                
+
                 toast.success("Address details filled from your location!");
             }
         } catch (error) {
@@ -756,109 +757,141 @@ export default function AddProperty() {
         }
     };
 
-    // Search locations using Nominatim API
-    const searchLocations = async (query, fieldType) => {
-        if (!query || query.length < 2) {
-            setLocationSuggestions([]);
-            setShowSuggestions(false);
-            return;
-        }
-
-        setIsSearchingLocation(true);
+    // Search locations using local JSON data
+    const searchLocations = (query, fieldType) => {
         setActiveLocationField(fieldType);
         setShowSuggestions(true);
+        
+        const suggestions = [];
+        const searchTerm = (query || '').toLowerCase().trim();
 
-        try {
-            // Add India bias to get more relevant results
-            const searchQuery = fieldType === 'city' 
-                ? `${query}, India` 
-                : `${query}${formData.city ? `, ${formData.city}, India` : ', India'}`;
+        if (fieldType === 'city') {
+            // Search cities
+            locationData.cities.forEach(city => {
+                if (!searchTerm || city.name.toLowerCase().includes(searchTerm)) {
+                    suggestions.push({
+                        type: 'city',
+                        city: city.name,
+                        locality: '',
+                        project: '',
+                        display_name: city.name,
+                        shortName: city.name
+                    });
+                }
+            });
+        } else if (fieldType === 'locality') {
+            // Search areas/localities within selected city or all cities
+            const selectedCity = formData.city?.toLowerCase();
             
-            const response = await axios.get(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=8&addressdetails=1&countrycodes=in`,
-                { 
-                    headers: { 
-                        'Accept-Language': 'en',
-                        'User-Agent': 'DealDirect Property App'
-                    },
-                    timeout: 10000
-                }
-            );
-
-            if (response.data && Array.isArray(response.data)) {
-                const suggestions = response.data.map(item => ({
-                    display_name: item.display_name,
-                    lat: parseFloat(item.lat),
-                    lon: parseFloat(item.lon),
-                    address: item.address,
-                    type: item.type,
-                    // Extract useful parts
-                    city: item.address?.city || item.address?.town || item.address?.village || item.address?.county || item.address?.state_district || '',
-                    locality: item.address?.suburb || item.address?.neighbourhood || item.address?.hamlet || item.address?.residential || '',
-                    state: item.address?.state || '',
-                    shortName: getShortDisplayName(item)
-                }));
+            locationData.cities.forEach(city => {
+                // If city is selected, only search within that city
+                if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
                 
-                // Only update if we're still on the same field
-                if (fieldType === activeLocationField || !activeLocationField) {
-                    setLocationSuggestions(suggestions);
-                    setShowSuggestions(suggestions.length > 0);
+                city.areas.forEach(area => {
+                    if (!searchTerm || area.name.toLowerCase().includes(searchTerm)) {
+                        suggestions.push({
+                            type: 'locality',
+                            city: city.name,
+                            locality: area.name,
+                            project: '',
+                            display_name: `${area.name}, ${city.name}`,
+                            shortName: `${area.name}, ${city.name}`,
+                            projects: area.projects
+                        });
+                    }
+                });
+            });
+        } else if (fieldType === 'address' || fieldType === 'project') {
+            // Search ALL - cities, areas, and projects for comprehensive suggestions
+            const selectedCity = formData.city?.toLowerCase();
+            const selectedLocality = formData.locality?.toLowerCase();
+            
+            locationData.cities.forEach(city => {
+                // If no city selected, also show matching cities
+                if (!selectedCity && (!searchTerm || city.name.toLowerCase().includes(searchTerm))) {
+                    suggestions.push({
+                        type: 'city',
+                        city: city.name,
+                        locality: '',
+                        project: '',
+                        display_name: city.name,
+                        shortName: city.name
+                    });
                 }
-            } else {
-                setLocationSuggestions([]);
-                setShowSuggestions(false);
-            }
-        } catch (error) {
-            console.error("Location search failed:", error);
-            setLocationSuggestions([]);
-            setShowSuggestions(false);
-        } finally {
-            setIsSearchingLocation(false);
+                
+                if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
+                
+                city.areas.forEach(area => {
+                    // If no locality selected, also show matching areas
+                    if (!selectedLocality && (!searchTerm || area.name.toLowerCase().includes(searchTerm))) {
+                        suggestions.push({
+                            type: 'locality',
+                            city: city.name,
+                            locality: area.name,
+                            project: '',
+                            display_name: `${area.name}, ${city.name}`,
+                            shortName: `${area.name}, ${city.name}`
+                        });
+                    }
+                    
+                    if (selectedLocality && area.name.toLowerCase() !== selectedLocality) return;
+                    
+                    // Always search projects
+                    area.projects.forEach(project => {
+                        if (!searchTerm || project.toLowerCase().includes(searchTerm)) {
+                            suggestions.push({
+                                type: 'project',
+                                city: city.name,
+                                locality: area.name,
+                                project: project,
+                                display_name: `${project}, ${area.name}, ${city.name}`,
+                                shortName: `${project}, ${area.name}`
+                            });
+                        }
+                    });
+                });
+            });
         }
+
+        // Limit suggestions
+        setLocationSuggestions(suggestions.slice(0, 15));
+        setShowSuggestions(suggestions.length > 0);
     };
 
     // Get a shorter display name for suggestions
     const getShortDisplayName = (item) => {
         const parts = [];
         const addr = item.address;
-        
+
         if (addr?.suburb || addr?.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
         if (addr?.city || addr?.town || addr?.village) parts.push(addr.city || addr.town || addr.village);
         if (addr?.state) parts.push(addr.state);
-        
+
         return parts.length > 0 ? parts.join(', ') : item.display_name?.split(',').slice(0, 3).join(',');
     };
 
-    // Handle location input change with debounce
+    // Handle location input change
     const handleLocationInputChange = (e, fieldType) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setActiveLocationField(fieldType);
-        
+
         // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-        
-        // Clear suggestions if input is too short
-        if (value.length < 2) {
-            setLocationSuggestions([]);
-            setShowSuggestions(false);
-            return;
-        }
-        
-        // Debounce the search
+
+        // Debounce the search - search immediately for local data
         searchTimeoutRef.current = setTimeout(() => {
             searchLocations(value, fieldType);
-        }, 400);
+        }, 100);
     };
 
-    // Handle input focus
+    // Handle input focus - show suggestions immediately on focus
     const handleLocationFocus = (fieldType, value) => {
         setActiveLocationField(fieldType);
-        if (value && value.length >= 2) {
-            searchLocations(value, fieldType);
-        }
+        // Show suggestions immediately when focused, even without typing
+        searchLocations(value || '', fieldType);
     };
 
     // Handle input blur - delay to allow click on suggestions
@@ -870,26 +903,30 @@ export default function AddProperty() {
 
     // Handle suggestion selection
     const handleSuggestionSelect = (suggestion) => {
-        const updates = {
-            latitude: suggestion.lat.toFixed(6),
-            longitude: suggestion.lon.toFixed(6)
-        };
+        const updates = {};
 
-        // Update fields based on which field was being edited
-        if (activeLocationField === 'city') {
-            updates.city = suggestion.city || suggestion.address?.city || suggestion.address?.town || '';
+        // Update fields based on suggestion type and active field
+        if (suggestion.type === 'city' || activeLocationField === 'city') {
+            updates.city = suggestion.city;
+            // Clear locality when city changes
+            if (formData.city !== suggestion.city) {
+                updates.locality = '';
+                updates.address = '';
+            }
+        }
+        
+        if (suggestion.type === 'locality' || activeLocationField === 'locality') {
+            updates.locality = suggestion.locality;
+            if (suggestion.city) updates.city = suggestion.city;
+        }
+        
+        if (suggestion.type === 'project' || activeLocationField === 'address') {
+            updates.address = suggestion.project || suggestion.display_name;
+            if (suggestion.city) updates.city = suggestion.city;
             if (suggestion.locality) updates.locality = suggestion.locality;
-        } else if (activeLocationField === 'locality') {
-            updates.locality = suggestion.locality || suggestion.address?.suburb || suggestion.address?.neighbourhood || formData.locality;
-            if (!formData.city && suggestion.city) updates.city = suggestion.city;
-        } else if (activeLocationField === 'address') {
-            updates.address = suggestion.display_name;
-            if (!formData.city && suggestion.city) updates.city = suggestion.city;
-            if (!formData.locality && suggestion.locality) updates.locality = suggestion.locality;
         }
 
         setFormData(prev => ({ ...prev, ...updates }));
-        setMapPosition([suggestion.lat, suggestion.lon]);
         setLocationSuggestions([]);
         setShowSuggestions(false);
         setActiveLocationField(null);
@@ -919,21 +956,16 @@ export default function AddProperty() {
                 <div className="relative">
                     <label className={labelStyle}>City</label>
                     <div className="relative">
-                        <input 
-                            name="city" 
-                            value={formData.city} 
-                            onChange={(e) => handleLocationInputChange(e, 'city')} 
+                        <input
+                            name="city"
+                            value={formData.city}
+                            onChange={(e) => handleLocationInputChange(e, 'city')}
                             onFocus={() => handleLocationFocus('city', formData.city)}
                             onBlur={handleLocationBlur}
-                            placeholder="Start typing city name..." 
-                            className={inputStyle} 
+                            placeholder="Click to select city..."
+                            className={inputStyle}
                             autoComplete="off"
                         />
-                        {isSearchingLocation && activeLocationField === 'city' && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                        )}
                     </div>
                     {/* City Suggestions Dropdown */}
                     {showSuggestions && activeLocationField === 'city' && locationSuggestions.length > 0 && (
@@ -945,12 +977,9 @@ export default function AddProperty() {
                                     onClick={() => handleSuggestionSelect(suggestion)}
                                     className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                                 >
-                                    <div className="flex items-start gap-2">
-                                        <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <div className="font-medium text-gray-900 text-sm">{suggestion.city || suggestion.shortName?.split(',')[0]}</div>
-                                            <div className="text-xs text-gray-500 truncate">{suggestion.shortName}</div>
-                                        </div>
+                                    <div className="flex items-center gap-2">
+                                        <MapPin size={16} className="text-blue-600 flex-shrink-0" />
+                                        <span className="font-medium text-gray-900 text-sm">{suggestion.city}</span>
                                     </div>
                                 </div>
                             ))}
@@ -960,23 +989,18 @@ export default function AddProperty() {
 
                 {/* Locality Field with Autocomplete */}
                 <div className="relative">
-                    <label className={labelStyle}>Locality / Society</label>
+                    <label className={labelStyle}>Locality / Area</label>
                     <div className="relative">
-                        <input 
-                            name="locality" 
-                            value={formData.locality} 
-                            onChange={(e) => handleLocationInputChange(e, 'locality')} 
+                        <input
+                            name="locality"
+                            value={formData.locality}
+                            onChange={(e) => handleLocationInputChange(e, 'locality')}
                             onFocus={() => handleLocationFocus('locality', formData.locality)}
                             onBlur={handleLocationBlur}
-                            placeholder="Start typing locality..." 
-                            className={inputStyle} 
+                            placeholder={formData.city ? `Select area in ${formData.city}...` : "Select city first..."}
+                            className={inputStyle}
                             autoComplete="off"
                         />
-                        {isSearchingLocation && activeLocationField === 'locality' && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                        )}
                     </div>
                     {/* Locality Suggestions Dropdown */}
                     {showSuggestions && activeLocationField === 'locality' && locationSuggestions.length > 0 && (
@@ -988,11 +1012,11 @@ export default function AddProperty() {
                                     onClick={() => handleSuggestionSelect(suggestion)}
                                     className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                                 >
-                                    <div className="flex items-start gap-2">
-                                        <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div className="flex items-center gap-2">
+                                        <Building2 size={16} className="text-green-600 flex-shrink-0" />
                                         <div>
-                                            <div className="font-medium text-gray-900 text-sm">{suggestion.locality || suggestion.shortName?.split(',')[0]}</div>
-                                            <div className="text-xs text-gray-500 truncate">{suggestion.shortName}</div>
+                                            <span className="font-medium text-gray-900 text-sm">{suggestion.locality}</span>
+                                            {suggestion.city && <span className="text-xs text-gray-500 ml-1">({suggestion.city})</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -1002,42 +1026,60 @@ export default function AddProperty() {
                 </div>
             </div>
 
-            {/* Full Address Field with Autocomplete */}
-            <div className="relative">
-                <label className={labelStyle}>Full Address</label>
+            {/* Project/Society Name Field with Autocomplete */}
+            <div className="relative z-40">
+                <label className={labelStyle}>Project / Society Name</label>
                 <div className="relative">
-                    <textarea 
-                        name="address" 
-                        value={formData.address} 
-                        onChange={(e) => handleLocationInputChange(e, 'address')} 
+                    <input
+                        name="address"
+                        value={formData.address}
+                        onChange={(e) => handleLocationInputChange(e, 'address')}
                         onFocus={() => handleLocationFocus('address', formData.address)}
                         onBlur={handleLocationBlur}
-                        rows={3} 
-                        placeholder="Start typing address for suggestions..." 
+                        placeholder="Search city, area or project name..."
                         className={inputStyle}
                         autoComplete="off"
-                    ></textarea>
-                    {isSearchingLocation && activeLocationField === 'address' && (
-                        <div className="absolute right-3 top-4">
-                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                    )}
+                    />
                 </div>
-                {/* Address Suggestions Dropdown */}
+                {/* Project Suggestions Dropdown */}
                 {showSuggestions && activeLocationField === 'address' && locationSuggestions.length > 0 && (
-                    <div ref={suggestionsRef} className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div ref={suggestionsRef} className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto">
                         {locationSuggestions.map((suggestion, index) => (
                             <div
                                 key={index}
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => handleSuggestionSelect(suggestion)}
-                                className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                             >
-                                <div className="flex items-start gap-2">
-                                    <MapPin size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                <div className="flex items-center gap-3">
+                                    {suggestion.type === 'city' && (
+                                        <MapPin size={16} className="text-blue-600 flex-shrink-0" />
+                                    )}
+                                    {suggestion.type === 'locality' && (
+                                        <Building2 size={16} className="text-green-600 flex-shrink-0" />
+                                    )}
+                                    {suggestion.type === 'project' && (
+                                        <Home size={16} className="text-orange-600 flex-shrink-0" />
+                                    )}
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm text-gray-900 line-clamp-2">{suggestion.display_name}</div>
+                                        <div className="font-medium text-gray-900 text-sm truncate">
+                                            {suggestion.type === 'city' && suggestion.city}
+                                            {suggestion.type === 'locality' && suggestion.locality}
+                                            {suggestion.type === 'project' && suggestion.project}
+                                        </div>
+                                        <div className="text-xs text-gray-500 truncate">
+                                            {suggestion.type === 'city' && 'City'}
+                                            {suggestion.type === 'locality' && `Area in ${suggestion.city}`}
+                                            {suggestion.type === 'project' && `${suggestion.locality}, ${suggestion.city}`}
+                                        </div>
                                     </div>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                        suggestion.type === 'city' ? 'bg-blue-100 text-blue-700' :
+                                        suggestion.type === 'locality' ? 'bg-green-100 text-green-700' :
+                                        'bg-orange-100 text-orange-700'
+                                    }`}>
+                                        {suggestion.type === 'city' ? 'City' : suggestion.type === 'locality' ? 'Area' : 'Project'}
+                                    </span>
                                 </div>
                             </div>
                         ))}
@@ -1057,7 +1099,7 @@ export default function AddProperty() {
             </div>
 
             {/* Leaflet Map Section */}
-            <div className={cardStyle}>
+            <div className={`${cardStyle} relative z-0`}>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2">
                         <MapPin size={18} className="text-blue-600" />
@@ -1076,7 +1118,7 @@ export default function AddProperty() {
 
                 <p className="text-sm text-gray-500 mb-3">Click on the map to set your property's exact location, or use the "Use My Location" button.</p>
 
-                <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: "350px" }}>
+                <div className="rounded-xl overflow-hidden border border-gray-200 relative z-0" style={{ height: "350px" }}>
                     <MapContainer
                         center={mapPosition || defaultCenter}
                         zoom={mapPosition ? 15 : 5}
@@ -1147,314 +1189,314 @@ export default function AddProperty() {
     const renderStep3 = () => {
         const isRent = formData.listingType === "Rent";
         const isSell = formData.listingType === "Sell";
-        
-        return (
-        <div className="space-y-6">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold text-gray-900">Pricing & Area</h2>
-                <p className="text-gray-500 mt-2">Provide accurate area & pricing to attract quality leads.</p>
-            </div>
 
-            <div className={cardStyle}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className={labelStyle}>Listing Type</label>
-                        <div className="flex gap-2 mt-2">
-                            {["Rent", "Sell"].map(t => (
-                                <button key={t} onClick={() => setFormData(p => ({ ...p, listingType: t }))} 
-                                // UPDATED: Blue theme for listing type
-                                className={`px-4 py-2 rounded-xl text-sm font-medium ${formData.listingType === t ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>{t}</button>
+        return (
+            <div className="space-y-6">
+                <div className="text-center">
+                    <h2 className="text-3xl font-bold text-gray-900">Pricing & Area</h2>
+                    <p className="text-gray-500 mt-2">Provide accurate area & pricing to attract quality leads.</p>
+                </div>
+
+                <div className={cardStyle}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className={labelStyle}>Listing Type</label>
+                            <div className="flex gap-2 mt-2">
+                                {["Rent", "Sell"].map(t => (
+                                    <button key={t} onClick={() => setFormData(p => ({ ...p, listingType: t }))}
+                                        // UPDATED: Blue theme for listing type
+                                        className={`px-4 py-2 rounded-xl text-sm font-medium ${formData.listingType === t ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>{t}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className={labelStyle}>Expected {isRent ? "Monthly Rent" : "Sale Price"}</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
+                                <input name="expectedPrice" value={formData.expectedPrice} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {isRent && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div>
+                                <label className={labelStyle}>Security Deposit</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
+                                    <input name="expectedDeposit" value={formData.expectedDeposit} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                                </div>
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className={labelStyle}>Monthly Maintenance</label>
+                                <div className="flex items-center gap-3 mt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        {/* UPDATED: Blue checkbox */}
+                                        <input type="checkbox" checked={formData.maintenanceIncluded} onChange={(e) => setFormData(p => ({ ...p, maintenanceIncluded: e.target.checked, maintenance: e.target.checked ? "" : p.maintenance }))} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600" />
+                                        <span className="text-sm text-gray-700">Included in rent</span>
+                                    </label>
+                                    {!formData.maintenanceIncluded && (
+                                        <div className="relative flex-1">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">₹</div>
+                                            <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className={`${inputStyle} pl-8 py-2`} placeholder="Monthly amount" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isSell && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div>
+                                <label className={labelStyle}>Booking Amount</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
+                                    <input name="bookingAmount" value={formData.bookingAmount} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelStyle}>Monthly Maintenance</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
+                                    <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="Society maintenance" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelStyle}>GST Applicable?</label>
+                                <select name="gstApplicable" value={formData.gstApplicable ? "Yes" : "No"} onChange={(e) => setFormData(p => ({ ...p, gstApplicable: e.target.value === "Yes" }))} className={inputStyle}>
+                                    <option>No</option>
+                                    <option>Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-4 mt-4">
+                        <label className={labelStyle}>Price Negotiable?</label>
+                        <div className="flex gap-2">
+                            {["No", "Yes"].map(opt => (
+                                <button key={opt} type="button" onClick={() => setFormData(p => ({ ...p, priceNegotiable: opt === "Yes" }))}
+                                    // UPDATED: Blue theme for negotiation toggle
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${formData.priceNegotiable === (opt === "Yes") ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>
+                                    {opt}
+                                </button>
                             ))}
                         </div>
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className={labelStyle}>Expected {isRent ? "Monthly Rent" : "Sale Price"}</label>
+                        <label className={labelStyle}>{isResidential ? "Built-up Area" : "Built-up / Carpet Area"}</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
-                            <input name="expectedPrice" value={formData.expectedPrice} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                            <input name="builtUpArea" value={formData.builtUpArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 1200" />
+                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className={labelStyle}>Carpet Area</label>
+                        <div className="relative">
+                            <input name="carpetArea" value={formData.carpetArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 900" />
+                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className={labelStyle}>Super Built-up (optional)</label>
+                        <div className="relative">
+                            <input name="superBuiltUpArea" value={formData.superBuiltUpArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 1400" />
+                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
                         </div>
                     </div>
                 </div>
 
-                {isRent && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                            <label className={labelStyle}>Security Deposit</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
-                                <input name="expectedDeposit" value={formData.expectedDeposit} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    {isResidential && (
+                        <>
+                            <div>
+                                <label className={labelStyle}>Floor No</label>
+                                <input name="floorNo" value={formData.floorNo} onChange={handleChange} type="number" min="0" className={inputStyle} placeholder="eg. 3" />
                             </div>
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className={labelStyle}>Monthly Maintenance</label>
-                            <div className="flex items-center gap-3 mt-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    {/* UPDATED: Blue checkbox */}
-                                    <input type="checkbox" checked={formData.maintenanceIncluded} onChange={(e) => setFormData(p => ({ ...p, maintenanceIncluded: e.target.checked, maintenance: e.target.checked ? "" : p.maintenance }))} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600" />
-                                    <span className="text-sm text-gray-700">Included in rent</span>
-                                </label>
-                                {!formData.maintenanceIncluded && (
-                                    <div className="relative flex-1">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">₹</div>
-                                        <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className={`${inputStyle} pl-8 py-2`} placeholder="Monthly amount" />
-                                    </div>
-                                )}
+                            <div>
+                                <label className={labelStyle}>Total Floors</label>
+                                <input name="totalFloors" value={formData.totalFloors} onChange={handleChange} type="number" min="1" className={inputStyle} placeholder="eg. 10" />
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {isSell && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                            <label className={labelStyle}>Booking Amount</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
-                                <input name="bookingAmount" value={formData.bookingAmount} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
+                            <div>
+                                <label className={labelStyle}>Facing</label>
+                                <select name="facing" value={formData.facing} onChange={handleChange} className={inputStyle}>
+                                    <option value="">Select</option>
+                                    {["East", "West", "North", "South", "North-East", "North-West", "South-East", "South-West"].map(d => <option key={d}>{d}</option>)}
+                                </select>
                             </div>
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Monthly Maintenance</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
-                                <input name="maintenance" value={formData.maintenance} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="Society maintenance" />
+                        </>
+                    )}
+                    {isCommercial && (
+                        <>
+                            <div>
+                                <label className={labelStyle}>Washrooms</label>
+                                <input name="washrooms" value={formData.washrooms} onChange={handleChange} type="number" min="0" className={inputStyle} />
                             </div>
-                        </div>
-                        <div>
-                            <label className={labelStyle}>GST Applicable?</label>
-                            <select name="gstApplicable" value={formData.gstApplicable ? "Yes" : "No"} onChange={(e) => setFormData(p => ({ ...p, gstApplicable: e.target.value === "Yes" }))} className={inputStyle}>
-                                <option>No</option>
-                                <option>Yes</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex items-center gap-4 mt-4">
-                    <label className={labelStyle}>Price Negotiable?</label>
-                    <div className="flex gap-2">
-                        {["No", "Yes"].map(opt => (
-                            <button key={opt} type="button" onClick={() => setFormData(p => ({ ...p, priceNegotiable: opt === "Yes" }))} 
-                                // UPDATED: Blue theme for negotiation toggle
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${formData.priceNegotiable === (opt === "Yes") ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>
-                                {opt}
-                            </button>
-                        ))}
-                    </div>
+                            <div>
+                                <label className={labelStyle}>Floor Height (ft)</label>
+                                <input name="floorHeight" value={formData.floorHeight} onChange={handleChange} type="number" className={inputStyle} />
+                            </div>
+                            <div>
+                                <label className={labelStyle}>Power Load (kW)</label>
+                                <input name="powerLoad" value={formData.powerLoad} onChange={handleChange} type="number" className={inputStyle} />
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label className={labelStyle}>{isResidential ? "Built-up Area" : "Built-up / Carpet Area"}</label>
-                    <div className="relative">
-                        <input name="builtUpArea" value={formData.builtUpArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 1200" />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
-                    </div>
-                </div>
-                <div>
-                    <label className={labelStyle}>Carpet Area</label>
-                    <div className="relative">
-                        <input name="carpetArea" value={formData.carpetArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 900" />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
-                    </div>
-                </div>
-                <div>
-                    <label className={labelStyle}>Super Built-up (optional)</label>
-                    <div className="relative">
-                        <input name="superBuiltUpArea" value={formData.superBuiltUpArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 1400" />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                {isResidential && (
-                    <>
-                        <div>
-                            <label className={labelStyle}>Floor No</label>
-                            <input name="floorNo" value={formData.floorNo} onChange={handleChange} type="number" min="0" className={inputStyle} placeholder="eg. 3" />
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Total Floors</label>
-                            <input name="totalFloors" value={formData.totalFloors} onChange={handleChange} type="number" min="1" className={inputStyle} placeholder="eg. 10" />
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Facing</label>
-                            <select name="facing" value={formData.facing} onChange={handleChange} className={inputStyle}>
-                                <option value="">Select</option>
-                                {["East", "West", "North", "South", "North-East", "North-West", "South-East", "South-West"].map(d => <option key={d}>{d}</option>)}
-                            </select>
-                        </div>
-                    </>
-                )}
-                {isCommercial && (
-                    <>
-                        <div>
-                            <label className={labelStyle}>Washrooms</label>
-                            <input name="washrooms" value={formData.washrooms} onChange={handleChange} type="number" min="0" className={inputStyle} />
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Floor Height (ft)</label>
-                            <input name="floorHeight" value={formData.floorHeight} onChange={handleChange} type="number" className={inputStyle} />
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Power Load (kW)</label>
-                            <input name="powerLoad" value={formData.powerLoad} onChange={handleChange} type="number" className={inputStyle} />
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
-    );
+        );
     };
 
     const renderStep4 = () => {
         const isRent = formData.listingType === "Rent";
         const isSell = formData.listingType === "Sell";
-        
+
         return (
-        <div className="space-y-6">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold text-gray-900">Property Details</h2>
-                <p className="text-gray-500 mt-2">Add specific features to make your listing stand out.</p>
-            </div>
+            <div className="space-y-6">
+                <div className="text-center">
+                    <h2 className="text-3xl font-bold text-gray-900">Property Details</h2>
+                    <p className="text-gray-500 mt-2">Add specific features to make your listing stand out.</p>
+                </div>
 
-            {isResidential && (
-                <>
-                    <div className={cardStyle}>
-                        <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900">
-                            {/* UPDATED: Blue icon */}
-                            <Home size={18} className="text-blue-600" />
-                            Residential Configuration
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label className={labelStyle}>Bedrooms</label><input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" className={inputStyle} /></div>
-                            <div><label className={labelStyle}>Bathrooms</label><input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" className={inputStyle} /></div>
-                            <div><label className={labelStyle}>Balconies</label><input name="balconies" value={formData.balconies} onChange={handleChange} type="number" className={inputStyle} /></div>
+                {isResidential && (
+                    <>
+                        <div className={cardStyle}>
+                            <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900">
+                                {/* UPDATED: Blue icon */}
+                                <Home size={18} className="text-blue-600" />
+                                Residential Configuration
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div><label className={labelStyle}>Bedrooms</label><input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" className={inputStyle} /></div>
+                                <div><label className={labelStyle}>Bathrooms</label><input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" className={inputStyle} /></div>
+                                <div><label className={labelStyle}>Balconies</label><input name="balconies" value={formData.balconies} onChange={handleChange} type="number" className={inputStyle} /></div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label className={labelStyle}>Furnishing</label>
+                                    <select name="furnishing" value={formData.furnishing} onChange={handleChange} className={inputStyle}>
+                                        <option>Unfurnished</option>
+                                        <option>Semi-Furnished</option>
+                                        <option>Fully Furnished</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>Property Age</label>
+                                    <select name="propertyAge" value={formData.propertyAge} onChange={handleChange} className={inputStyle}>
+                                        <option>New</option>
+                                        <option>1-5 Years</option>
+                                        <option>5-10 Years</option>
+                                        <option>10+ Years</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {isSell && (
+                                <div className="mt-4">
+                                    <label className={labelStyle}>Construction Status</label>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {["Ready to Move", "Under Construction", "New Launch"].map(status => (
+                                            <button key={status} type="button" onClick={() => setFormData(p => ({ ...p, constructionStatus: status }))}
+                                                // UPDATED: Blue theme for status toggle
+                                                className={`px-4 py-2 rounded-xl text-sm transition-all ${formData.constructionStatus === status ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 text-gray-700">
+                                {["servantRoom", "poojaRoom", "studyRoom", "storeRoom"].map(room => (
+                                    <label key={room} className="flex items-center gap-2 cursor-pointer">
+                                        {/* UPDATED: Blue checkbox */}
+                                        <input type="checkbox" name={room} checked={formData[room]} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600" />
+                                        <span className="text-sm capitalize">{room.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label className={labelStyle}>Furnishing</label>
-                                <select name="furnishing" value={formData.furnishing} onChange={handleChange} className={inputStyle}>
-                                    <option>Unfurnished</option>
-                                    <option>Semi-Furnished</option>
-                                    <option>Fully Furnished</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelStyle}>Property Age</label>
-                                <select name="propertyAge" value={formData.propertyAge} onChange={handleChange} className={inputStyle}>
-                                    <option>New</option>
-                                    <option>1-5 Years</option>
-                                    <option>5-10 Years</option>
-                                    <option>10+ Years</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {isSell && (
-                            <div className="mt-4">
-                                <label className={labelStyle}>Construction Status</label>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {["Ready to Move", "Under Construction", "New Launch"].map(status => (
-                                        <button key={status} type="button" onClick={() => setFormData(p => ({ ...p, constructionStatus: status }))} 
-                                            // UPDATED: Blue theme for status toggle
-                                            className={`px-4 py-2 rounded-xl text-sm transition-all ${formData.constructionStatus === status ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"}`}>
-                                            {status}
-                                        </button>
-                                    ))}
+                        {isRent && (
+                            <div className={cardStyle}>
+                                <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900"><Users size={18} className="text-blue-600" /> Tenant Preferences</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className={labelStyle}>Preferred Tenants</label>
+                                        <select name="allowedFor" value={formData.allowedFor} onChange={handleChange} className={inputStyle}>
+                                            <option value="Family">Family</option>
+                                            <option value="Bachelor Male">Bachelor Male</option>
+                                            <option value="Bachelor Female">Bachelor Female</option>
+                                            <option value="Company Lease">Company Lease</option>
+                                            <option value="Any">Any</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Pet Friendly?</label>
+                                        <select name="petFriendly" value={formData.petFriendly} onChange={handleChange} className={inputStyle}>
+                                            <option value="No">No</option>
+                                            <option value="Yes">Yes</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Available From</label>
+                                        <input type="date" name="availableFrom" value={formData.availableFrom} onChange={handleChange} min={new Date().toISOString().split('T')[0]} className={inputStyle} />
+                                    </div>
                                 </div>
                             </div>
                         )}
+                    </>
+                )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 text-gray-700">
-                            {["servantRoom", "poojaRoom", "studyRoom", "storeRoom"].map(room => (
-                                <label key={room} className="flex items-center gap-2 cursor-pointer">
-                                    {/* UPDATED: Blue checkbox */}
-                                    <input type="checkbox" name={room} checked={formData[room]} onChange={handleChange} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-600" />
-                                    <span className="text-sm capitalize">{room.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                </label>
+                {isCommercial && commercialConfig && (
+                    <div className={cardStyle}>
+                        <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900">{commercialConfig.icon} {commercialConfig.label}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {commercialConfig.fields.map(field => (
+                                <div key={field}>
+                                    <label className={labelStyle}>{field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
+                                    <input name={field} value={formData[field]} onChange={handleChange} type="number" className={inputStyle} />
+                                </div>
                             ))}
                         </div>
                     </div>
+                )}
 
-                    {isRent && (
-                        <div className={cardStyle}>
-                            <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900"><Users size={18} className="text-blue-600" /> Tenant Preferences</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className={labelStyle}>Preferred Tenants</label>
-                                    <select name="allowedFor" value={formData.allowedFor} onChange={handleChange} className={inputStyle}>
-                                        <option value="Family">Family</option>
-                                        <option value="Bachelor Male">Bachelor Male</option>
-                                        <option value="Bachelor Female">Bachelor Female</option>
-                                        <option value="Company Lease">Company Lease</option>
-                                        <option value="Any">Any</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Pet Friendly?</label>
-                                    <select name="petFriendly" value={formData.petFriendly} onChange={handleChange} className={inputStyle}>
-                                        <option value="No">No</option>
-                                        <option value="Yes">Yes</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Available From</label>
-                                    <input type="date" name="availableFrom" value={formData.availableFrom} onChange={handleChange} min={new Date().toISOString().split('T')[0]} className={inputStyle} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {isCommercial && commercialConfig && (
                 <div className={cardStyle}>
-                    <h3 className="font-bold mb-4 flex items-center gap-2 text-gray-900">{commercialConfig.icon} {commercialConfig.label}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {commercialConfig.fields.map(field => (
-                            <div key={field}>
-                                <label className={labelStyle}>{field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
-                                <input name={field} value={formData[field]} onChange={handleChange} type="number" className={inputStyle} />
-                            </div>
-                        ))}
+                    <h3 className="font-bold mb-4 text-gray-900">Parking & Amenities</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label className={labelStyle}>Parking (Covered)</label><input name="parkingCovered" value={formData.parkingCovered} onChange={handleChange} type="number" className={inputStyle} /></div>
+                        <div><label className={labelStyle}>Parking (Open)</label><input name="parkingOpen" value={formData.parkingOpen} onChange={handleChange} type="number" className={inputStyle} /></div>
                     </div>
-                </div>
-            )}
 
-            <div className={cardStyle}>
-                <h3 className="font-bold mb-4 text-gray-900">Parking & Amenities</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label className={labelStyle}>Parking (Covered)</label><input name="parkingCovered" value={formData.parkingCovered} onChange={handleChange} type="number" className={inputStyle} /></div>
-                    <div><label className={labelStyle}>Parking (Open)</label><input name="parkingOpen" value={formData.parkingOpen} onChange={handleChange} type="number" className={inputStyle} /></div>
-                </div>
-
-                <div className="mt-4">
-                    <label className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Amenities</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
-                        {PROPERTY_CATEGORIES[formData.propertyCategory].amenities.map(am => (
-                            // UPDATED: Blue theme for selected amenity
-                            <div key={am} onClick={() => handleAmenityToggle(am)} className={`p-3 rounded-xl border cursor-pointer ${formData.selectedAmenities.includes(am) ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className={formData.selectedAmenities.includes(am) ? "text-blue-600" : "text-gray-400"}>{AMENITY_ICONS[am] || <Tag size={14} />}</div>
-                                    <div className="text-sm">{am}</div>
+                    <div className="mt-4">
+                        <label className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Amenities</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
+                            {PROPERTY_CATEGORIES[formData.propertyCategory].amenities.map(am => (
+                                // UPDATED: Blue theme for selected amenity
+                                <div key={am} onClick={() => handleAmenityToggle(am)} className={`p-3 rounded-xl border cursor-pointer ${formData.selectedAmenities.includes(am) ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className={formData.selectedAmenities.includes(am) ? "text-blue-600" : "text-gray-400"}>{AMENITY_ICONS[am] || <Tag size={14} />}</div>
+                                        <div className="text-sm">{am}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
     };
 
     const renderStep5 = () => {
         const categories = getImageCategories();
         const totalImages = getTotalCategorizedImages();
-        
+
         return (
             <div className="space-y-6">
                 <div className="text-center">
@@ -1476,7 +1518,7 @@ export default function AddProperty() {
                         const imageCount = catImages.files?.length || 0;
                         const isExpanded = expandedCategories.includes(category.key);
                         const hasImages = imageCount > 0;
-                        
+
                         return (
                             <div key={category.key} onClick={() => toggleCategory(category.key)}
                                 // UPDATED: Blue theme for active selection
@@ -1500,7 +1542,7 @@ export default function AddProperty() {
                         {categories.filter(cat => expandedCategories.includes(cat.key)).map((category) => {
                             const catImages = categorizedImages[category.key] || { files: [], previews: [] };
                             const imageCount = catImages.files?.length || 0;
-                            
+
                             return (
                                 <div key={category.key} className="rounded-2xl p-4 border border-gray-200 bg-white shadow-sm">
                                     <div className="flex items-center justify-between mb-3">
@@ -1510,14 +1552,14 @@ export default function AddProperty() {
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); toggleCategory(category.key); }} className="text-gray-400 hover:text-gray-600 p-1"><X size={16} /></button>
                                     </div>
-                                    
+
                                     {/* UPDATED: Blue hover effects for upload area */}
                                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center relative hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer mb-3">
                                         <input type="file" multiple accept="image/*" onChange={(e) => handleCategorizedImageUpload(category.key, e)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={imageCount >= category.maxImages} />
                                         <Upload size={24} className="mx-auto text-gray-400 mb-2" />
                                         <div className="text-gray-700 font-medium">{imageCount >= category.maxImages ? 'Maximum images reached' : 'Click to upload'}</div>
                                     </div>
-                                    
+
                                     {catImages.previews?.length > 0 && (
                                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                                             {catImages.previews.map((src, idx) => (
@@ -1559,7 +1601,7 @@ export default function AddProperty() {
     const renderStep6 = () => {
         const firstImage = getFirstPreviewImage();
         const totalImages = getTotalCategorizedImages() + (images?.length || 0);
-        
+
         return (
             <div className="space-y-6">
                 <div className="text-center">

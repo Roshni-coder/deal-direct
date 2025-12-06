@@ -15,6 +15,8 @@ import EditProperty from "./Pages/EditProperty/EditProperty.jsx";
 import Profile from "./Pages/Profile/Profile.jsx";
 import MyProperties from "./Pages/MyProperties/MyProperties.jsx";
 import SavedProperties from "./Pages/SavedProperties/SavedProperties.jsx";
+import PrivacyPolicy from "./Pages/Privacy/Privacy.jsx";
+import TermsAndConditions from "./Pages/Terms&Conditions/Terms&Conditions.jsx";
 import ScrollToTop from "./Components/ScrollToTop/ScrollToTop.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import ChatWidget from "./Components/Chat/ChatWidget.jsx";
@@ -41,6 +43,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-properties" element={<MyProperties />} />
             <Route path="/saved-properties" element={<SavedProperties />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
           </Routes>
           <Footer />
           <ChatButton />

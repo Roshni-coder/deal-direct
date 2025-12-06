@@ -4,6 +4,8 @@ import Admin from "../models/Admin.js";
 import User from "../models/userModel.js";
 import Property from "../models/Property.js";
 import Lead from "../models/Lead.js";
+import Report from "../models/Report.js";
+import Message from "../models/Message.js";
 
 // ✅ Register Admin
 export const registerAdmin = async (req, res) => {
@@ -303,7 +305,7 @@ export const getAdminLeads = async (req, res) => {
     // Apply search filter if provided
     if (search) {
       const searchLower = search.toLowerCase();
-      leads = leads.filter(lead => 
+      leads = leads.filter(lead =>
         lead.userSnapshot?.name?.toLowerCase().includes(searchLower) ||
         lead.userSnapshot?.email?.toLowerCase().includes(searchLower) ||
         lead.propertySnapshot?.title?.toLowerCase().includes(searchLower) ||
@@ -373,6 +375,79 @@ export const updateAdminLeadStatus = async (req, res) => {
       data: lead
     });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ Get Reported Messages (Admin)
+export const getAdminReports = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+
+    let filter = {};
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+
+    const reports = await Report.find(filter)
+      .populate("reportedBy", "name email")
+      .populate({
+        path: "message",
+        populate: { path: "sender", select: "name email role" }
+      })
+      .sort({ createdAt: -1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+
+    console.log(`Fetched ${reports.length} reports for admin.`);
+
+    const total = await Report.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      data: reports,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error("Admin reports error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ Update Report Status (Admin)
+export const updateReportStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, adminNotes } = req.body;
+
+    const report = await Report.findById(id);
+    if (!report) {
+      return res.status(404).json({ success: false, message: "Report not found" });
+    }
+
+    if (status) report.status = status;
+    if (adminNotes !== undefined) report.adminNotes = adminNotes;
+
+    // Track who reviewed it and when
+    if (status === 'reviewed' || status === 'resolved' || status === 'dismissed') {
+      report.reviewedBy = req.admin ? req.admin._id : null;
+      report.reviewedAt = new Date();
+    }
+
+    await report.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Report updated successfully",
+      data: report
+    });
+  } catch (error) {
+    console.error("Update report error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -6,6 +6,7 @@ import {
   sendMessage,
   getUnreadCount,
   deleteConversation,
+  reportMessage,
 } from "../controllers/chatController.js";
 import { authMiddleware } from "../middleware/authUser.js";
 
@@ -25,6 +26,9 @@ router.get("/messages/:conversationId", getMessages);
 
 // Send a message
 router.post("/message/send", sendMessage);
+
+// Report a message
+router.post("/message/report", reportMessage);
 
 // Get unread message count
 router.get("/unread-count", getUnreadCount);

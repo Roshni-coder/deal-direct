@@ -25,13 +25,45 @@ export const ChatProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  // Listen for auth changes
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setToken(localStorage.getItem("token"));
+    };
+    window.addEventListener("auth-change", handleAuthChange);
+    window.addEventListener("storage", handleAuthChange); // For cross-tab sync
+
+    return () => {
+      window.removeEventListener("auth-change", handleAuthChange);
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, []);
+
   // Initialize socket connection
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setConversations([]);
+        setMessages([]);
+        setUnreadCount(0);
+      }
+      return;
+    }
+
+    // If socket already exists and matches token (not easy to check token on socket obj without custom prop), 
+    // but simplified: if we have a socket, we might want to reconnect if token changed. 
+    // However, usually token change means different user or login/logout.
+    if (socket) {
+      socket.disconnect();
+    }
 
     const newSocket = io(API_BASE, {
       transports: ["websocket", "polling"],
+      auth: { token } // Best practice to send token in auth handshake if server supports it, otherwise just connecting is fine if logic depends on REST
     });
 
     newSocket.on("connect", () => {
@@ -65,11 +97,10 @@ export const ChatProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, []);
+  }, [token]);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
-    const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
@@ -82,11 +113,10 @@ export const ChatProvider = ({ children }) => {
     } catch (error) {
       console.error("Error fetching conversations:", error);
     }
-  }, []);
+  }, [token]);
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
-    const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
@@ -99,11 +129,10 @@ export const ChatProvider = ({ children }) => {
     } catch (error) {
       console.error("Error fetching unread count:", error);
     }
-  }, []);
+  }, [token]);
 
   // Fetch messages for a conversation
   const fetchMessages = useCallback(async (conversationId) => {
-    const token = localStorage.getItem("token");
     if (!token) return;
 
     setLoading(true);
@@ -119,11 +148,10 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   // Start or get conversation
   const startConversation = useCallback(async (propertyId, ownerId) => {
-    const token = localStorage.getItem("token");
     if (!token) return null;
 
     try {
@@ -140,11 +168,10 @@ export const ChatProvider = ({ children }) => {
       console.error("Error starting conversation:", error);
       return null;
     }
-  }, [fetchConversations]);
+  }, [fetchConversations, token]);
 
   // Send message
   const sendMessage = useCallback(async (conversationId, text) => {
-    const token = localStorage.getItem("token");
     if (!token) return null;
 
     try {
@@ -156,12 +183,12 @@ export const ChatProvider = ({ children }) => {
       if (res.data.success) {
         const newMessage = res.data.message;
         setMessages((prev) => [...prev, newMessage]);
-        
+
         // Emit to socket
         if (socket) {
           socket.emit("send_message", { conversationId, message: newMessage });
         }
-        
+
         fetchConversations();
         return newMessage;
       }
@@ -169,7 +196,7 @@ export const ChatProvider = ({ children }) => {
       console.error("Error sending message:", error);
       return null;
     }
-  }, [socket, fetchConversations]);
+  }, [socket, fetchConversations, token]);
 
   // Join conversation room
   const joinConversation = useCallback((conversationId) => {
@@ -201,6 +228,24 @@ export const ChatProvider = ({ children }) => {
     }
   }, [socket]);
 
+  // Report message
+  const reportMessage = useCallback(async (messageId, reason) => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    try {
+      const res = await axios.post(
+        `${API_BASE}/api/chat/message/report`,
+        { messageId, reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error reporting message:", error);
+      return { success: false, message: error.response?.data?.message || "Failed to report" };
+    }
+  }, []);
+
   // Open chat with a conversation
   const openChat = useCallback((conversation = null) => {
     setCurrentConversation(conversation);
@@ -228,24 +273,25 @@ export const ChatProvider = ({ children }) => {
 
   // Initial fetch
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (token) {
       fetchConversations();
       fetchUnreadCount();
+    } else {
+      setConversations([]);
+      setUnreadCount(0);
     }
-  }, [fetchConversations, fetchUnreadCount]);
+  }, [fetchConversations, fetchUnreadCount, token]);
 
   // Poll for unread count
   useEffect(() => {
+    if (!token) return;
+
     const interval = setInterval(() => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        fetchUnreadCount();
-      }
+      fetchUnreadCount();
     }, 30000); // Every 30 seconds
 
     return () => clearInterval(interval);
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, token]);
 
   const value = {
     socket,
@@ -266,6 +312,7 @@ export const ChatProvider = ({ children }) => {
     leaveConversation,
     emitTyping,
     emitStopTyping,
+    reportMessage,
     openChat,
     closeChat,
     isUserOnline,

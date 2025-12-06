@@ -51,12 +51,23 @@ const StatusBadge = ({ isBlocked }) => {
 
 // --- Main Component: AllOwners (named BuilderVerification in this file) ---
 
+import { useLocation } from "react-router-dom";
+
 export default function BuilderVerification() {
     const [users, setUsers] = useState([]); // Array of owner users
     const [loading, setLoading] = useState(true);
 
+    const location = useLocation();
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const searchParam = params.get("search");
+        if (searchParam) {
+            setSearchQuery(searchParam);
+        }
+    }, [location.search]);
 
     // Block reason modal state
     const [blockModalOpen, setBlockModalOpen] = useState(false);
@@ -136,7 +147,7 @@ export default function BuilderVerification() {
             toast.error("Owner ID is missing. Cannot perform action.");
             return;
         }
-        
+
         if (owner.isBlocked) {
             // Unblock directly without reason
             confirmBlock(owner.id, null);

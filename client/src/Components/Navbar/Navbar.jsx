@@ -191,6 +191,15 @@ function Navbar() {
     navigate(`/properties?search=${encodeURIComponent(suggestion.value)}`);
   };
 
+  const handleMapClick = () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('view', 'map');
+    if (searchQuery) {
+      searchParams.set('search', searchQuery);
+    }
+    navigate(`/properties?${searchParams.toString()}`);
+  };
+
   const handleSearch = () => {
     if (searchQuery.trim()) {
       navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
@@ -248,7 +257,7 @@ function Navbar() {
     const protectedPaths = ["/profile", "/my-properties", "/saved-properties", "/add-property"];
     const currentPath = window.location.pathname;
     const isProtectedPage = protectedPaths.some(path => currentPath.startsWith(path));
-    
+
     if (isProtectedPage) {
       navigate("/");
     }
@@ -353,7 +362,11 @@ function Navbar() {
                     className="w-full border border-gray-300 rounded-lg pl-10 pr-16 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
                   />
                   <div className="absolute right-3 flex items-center gap-2">
-                    <FaMapMarkerAlt className="text-red-600 cursor-pointer hover:text-red-700" />
+                    <FaMapMarkerAlt
+                      className="text-red-600 cursor-pointer hover:text-red-700 transition-transform hover:scale-110"
+                      onClick={handleMapClick}
+                      title="Search on Map"
+                    />
                     <FaMicrophone className="text-red-600 cursor-pointer hover:text-red-700" />
                   </div>
                 </div>
@@ -529,7 +542,7 @@ function Navbar() {
                           <ul className="space-y-2">
                             <li><button onClick={handleRegisterProperty} className="text-gray-700 hover:text-red-600 text-sm text-left w-full">Post Property Free</button></li>
                             <li><Link to="/properties" className="text-gray-700 hover:text-red-600 text-sm">Browse Properties</Link></li>
-                                                      </ul>
+                          </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Company</h3>
@@ -634,11 +647,10 @@ function Navbar() {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 truncate">{user.name}</p>
                           <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                            user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
                             user.role === 'agent' ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>
+                              'bg-gray-100 text-gray-600'
+                            }`}>
                             {user.role === 'owner' ? '🏠 Property Owner' : user.role === 'agent' ? '👔 Agent' : '👤 Buyer'}
                           </span>
                         </div>
@@ -849,11 +861,10 @@ function Navbar() {
                     <div className="flex-1">
                       <p className="font-semibold text-slate-800">{user.name || "User"}</p>
                       <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'owner' ? 'bg-blue-100 text-blue-700' :
                         user.role === 'agent' ? 'bg-purple-100 text-purple-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
+                          'bg-gray-100 text-gray-600'
+                        }`}>
                         {user.role === 'owner' ? 'Owner' : user.role === 'agent' ? 'Agent' : 'Buyer'}
                       </span>
                     </div>

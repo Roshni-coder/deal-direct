@@ -2,6 +2,7 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import Property from "../models/Property.js";
 import User from "../models/userModel.js";
+import Report from "../models/Report.js";
 
 // Start or get existing conversation
 export const startConversation = async (req, res) => {
@@ -26,9 +27,9 @@ export const startConversation = async (req, res) => {
     // Validate ownerId exists
     if (!ownerId) {
       console.error("Property has no owner:", propertyId);
-      return res.status(400).json({ 
-        success: false, 
-        message: "This property has no owner assigned. Cannot start conversation." 
+      return res.status(400).json({
+        success: false,
+        message: "This property has no owner assigned. Cannot start conversation."
       });
     }
 
@@ -263,7 +264,47 @@ export const deleteConversation = async (req, res) => {
 
     res.json({ success: true, message: "Conversation archived" });
   } catch (error) {
-    console.error("Delete conversation error:", error);
     res.status(500).json({ success: false, message: "Failed to delete conversation" });
+  }
+};
+
+// Report a message
+export const reportMessage = async (req, res) => {
+  try {
+    const { messageId, reason } = req.body;
+    const userId = (req.user._id || req.user.id).toString();
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    // Verify user is part of the conversation (though reporting usually implies they saw it, so they must be)
+    // We can double check using conversation logic if needed, but message access is enough usually.
+    // However, for strict security:
+    const conversation = await Conversation.findById(message.conversation);
+    if (!conversation || !conversation.participants.map(p => p.toString()).includes(userId)) {
+      return res.status(403).json({ success: false, message: "Not authorized to report this message" });
+    }
+
+    // Check if already reported
+    const existingReport = await Report.findOne({ reportedBy: userId, message: messageId });
+    if (existingReport) {
+      return res.status(400).json({ success: false, message: "You have already reported this message" });
+    }
+
+    const report = new Report({
+      reportedBy: userId,
+      message: messageId,
+      conversation: message.conversation,
+      reason: reason || "Inappropriate content",
+    });
+
+    await report.save();
+
+    res.status(201).json({ success: true, message: "Message reported successfully", report });
+  } catch (error) {
+    console.error("Report message error:", error);
+    res.status(500).json({ success: false, message: "Failed to report message" });
   }
 };
