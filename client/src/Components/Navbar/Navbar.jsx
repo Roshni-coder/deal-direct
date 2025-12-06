@@ -243,7 +243,16 @@ function Navbar() {
     localStorage.removeItem("token");
     setUser(null);
     window.dispatchEvent(new Event("auth-change"));
-    navigate("/login");
+    // Stay on current page instead of redirecting to login
+    // Only redirect if on a protected page that requires authentication
+    const protectedPaths = ["/profile", "/my-properties", "/saved-properties", "/add-property"];
+    const currentPath = window.location.pathname;
+    const isProtectedPage = protectedPaths.some(path => currentPath.startsWith(path));
+    
+    if (isProtectedPage) {
+      navigate("/");
+    }
+    // Otherwise stay on the current page
   };
 
   const derivedRole = useMemo(() => {
@@ -420,30 +429,30 @@ function Navbar() {
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Residential</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=Apartment" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
-                            <li><Link to="/properties?search=Independent House" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
-                            <li><Link to="/properties?search=Villa" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
-                            <li><Link to="/properties?search=Builder Floor" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
-                            <li><Link to="/properties?search=Penthouse" className="text-gray-700 hover:text-red-600 text-sm">Penthouse</Link></li>
+                            <li><Link to="/properties?search=Apartment&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
+                            <li><Link to="/properties?search=Independent House&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
+                            <li><Link to="/properties?search=Villa&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
+                            <li><Link to="/properties?search=Builder Floor&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
+                            <li><Link to="/properties?search=Penthouse&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Penthouse</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Commercial</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=Office Space" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
-                            <li><Link to="/properties?search=Shop" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
-                            <li><Link to="/properties?search=Warehouse" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
-                            <li><Link to="/properties?search=Industrial" className="text-gray-700 hover:text-red-600 text-sm">Industrial Building</Link></li>
+                            <li><Link to="/properties?search=Office Space&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
+                            <li><Link to="/properties?search=Shop&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
+                            <li><Link to="/properties?search=Warehouse&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
+                            <li><Link to="/properties?search=Industrial&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">Industrial Building</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">By BHK</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=1 BHK" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
-                            <li><Link to="/properties?search=2 BHK" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
-                            <li><Link to="/properties?search=3 BHK" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
-                            <li><Link to="/properties?search=4 BHK" className="text-gray-700 hover:text-red-600 text-sm">4 BHK</Link></li>
-                            <li><Link to="/properties?search=5 BHK" className="text-gray-700 hover:text-red-600 text-sm">5+ BHK</Link></li>
+                            <li><Link to="/properties?search=1 BHK&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
+                            <li><Link to="/properties?search=2 BHK&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
+                            <li><Link to="/properties?search=3 BHK&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
+                            <li><Link to="/properties?search=4 BHK&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">4 BHK</Link></li>
+                            <li><Link to="/properties?search=5 BHK&availableFor=Sell" className="text-gray-700 hover:text-red-600 text-sm">5+ BHK</Link></li>
                           </ul>
                         </div>
                       </div>
@@ -469,30 +478,30 @@ function Navbar() {
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Residential</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=Apartment Rent" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
-                            <li><Link to="/properties?search=Independent House Rent" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
-                            <li><Link to="/properties?search=Villa Rent" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
-                            <li><Link to="/properties?search=Builder Floor Rent" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
-                            <li><Link to="/properties?search=PG" className="text-gray-700 hover:text-red-600 text-sm">PG / Hostel</Link></li>
+                            <li><Link to="/properties?search=Apartment&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Apartment / Flat</Link></li>
+                            <li><Link to="/properties?search=Independent House&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Independent House</Link></li>
+                            <li><Link to="/properties?search=Villa&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Villa</Link></li>
+                            <li><Link to="/properties?search=Builder Floor&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Builder Floor</Link></li>
+                            <li><Link to="/properties?search=PG&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">PG / Hostel</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">Commercial</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=Office Rent" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
-                            <li><Link to="/properties?search=Shop Rent" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
-                            <li><Link to="/properties?search=Coworking" className="text-gray-700 hover:text-red-600 text-sm">Coworking Space</Link></li>
-                            <li><Link to="/properties?search=Warehouse Rent" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
+                            <li><Link to="/properties?search=Office Space&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Office Space</Link></li>
+                            <li><Link to="/properties?search=Shop&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Shop / Showroom</Link></li>
+                            <li><Link to="/properties?search=Coworking&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Coworking Space</Link></li>
+                            <li><Link to="/properties?search=Warehouse&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">Warehouse / Godown</Link></li>
                           </ul>
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 mb-3 text-sm">By BHK</h3>
                           <ul className="space-y-2">
-                            <li><Link to="/properties?search=1 RK Rent" className="text-gray-700 hover:text-red-600 text-sm">1 RK</Link></li>
-                            <li><Link to="/properties?search=1 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
-                            <li><Link to="/properties?search=2 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
-                            <li><Link to="/properties?search=3 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
-                            <li><Link to="/properties?search=4 BHK Rent" className="text-gray-700 hover:text-red-600 text-sm">4+ BHK</Link></li>
+                            <li><Link to="/properties?search=1 RK&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">1 RK</Link></li>
+                            <li><Link to="/properties?search=1 BHK&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">1 BHK</Link></li>
+                            <li><Link to="/properties?search=2 BHK&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">2 BHK</Link></li>
+                            <li><Link to="/properties?search=3 BHK&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">3 BHK</Link></li>
+                            <li><Link to="/properties?search=4 BHK&availableFor=Rent" className="text-gray-700 hover:text-red-600 text-sm">4+ BHK</Link></li>
                           </ul>
                         </div>
                       </div>

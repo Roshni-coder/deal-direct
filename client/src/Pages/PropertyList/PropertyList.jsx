@@ -86,8 +86,8 @@ const pinDropIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Create custom property marker with price label
-const createPropertyMarker = (price, isHighlighted = false) => {
+// Create simple pin marker (default state)
+const createSimplePinMarker = (price, isHighlighted = false) => {
   const formattedPrice = price >= 10000000 
     ? `₹${(price / 10000000).toFixed(1)}Cr` 
     : price >= 100000 
@@ -101,9 +101,9 @@ const createPropertyMarker = (price, isHighlighted = false) => {
         background: ${isHighlighted ? '#dc2626' : '#ffffff'};
         color: ${isHighlighted ? '#ffffff' : '#1e293b'};
         padding: 6px 10px;
-        border-radius: 8px;
+        border-radius: 20px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11px;
         white-space: nowrap;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         border: 2px solid ${isHighlighted ? '#dc2626' : '#e2e8f0'};
@@ -112,8 +112,7 @@ const createPropertyMarker = (price, isHighlighted = false) => {
         align-items: center;
         gap: 4px;
       ">
-        <span style="font-size: 14px;">🏠</span>
-        ${formattedPrice}
+        🏠 ${formattedPrice}
         <div style="
           position: absolute;
           bottom: -8px;
@@ -121,15 +120,104 @@ const createPropertyMarker = (price, isHighlighted = false) => {
           transform: translateX(-50%);
           width: 0;
           height: 0;
-          border-left: 8px solid transparent;
-          border-right: 8px solid transparent;
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
           border-top: 8px solid ${isHighlighted ? '#dc2626' : '#ffffff'};
         "></div>
       </div>
     `,
-    iconSize: [80, 40],
-    iconAnchor: [40, 40],
-    popupAnchor: [0, -35]
+    iconSize: [80, 36],
+    iconAnchor: [40, 36],
+    popupAnchor: [0, -30]
+  });
+};
+
+// Create detailed property marker with image (hover state)
+const createDetailedPropertyMarker = (property) => {
+  const price = property.price;
+  const formattedPrice = price >= 10000000 
+    ? `₹${(price / 10000000).toFixed(1)}Cr` 
+    : price >= 100000 
+      ? `₹${(price / 100000).toFixed(0)}L` 
+      : `₹${price?.toLocaleString()}`;
+  
+  // Get first image or fallback
+  const imageUrl = property.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=100&h=60&fit=crop';
+  const title = property.title?.substring(0, 20) + (property.title?.length > 20 ? '...' : '') || 'Property';
+  const location = property.address?.city || property.city || '';
+  
+  return L.divIcon({
+    className: 'custom-property-marker',
+    html: `
+      <div style="
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        border: 2px solid #dc2626;
+        overflow: hidden;
+        width: 160px;
+        cursor: pointer;
+        z-index: 1000 !important;
+      ">
+        <div style="
+          width: 100%;
+          height: 70px;
+          background-image: url('${imageUrl}');
+          background-size: cover;
+          background-position: center;
+          position: relative;
+        ">
+          <div style="
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            background: #dc2626;
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+          ">${formattedPrice}</div>
+        </div>
+        <div style="
+          padding: 8px 10px;
+          background: #ffffff;
+        ">
+          <div style="
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          ">${title}</div>
+          <div style="
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 3px;
+          ">
+            <span>📍</span>${location}
+          </div>
+        </div>
+        <div style="
+          position: absolute;
+          bottom: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-top: 10px solid #ffffff;
+        "></div>
+      </div>
+    `,
+    iconSize: [160, 130],
+    iconAnchor: [80, 130],
+    popupAnchor: [0, -125]
   });
 };
 
@@ -157,6 +245,7 @@ const initialFilters = {
   category: "",
   city: "",
   priceRange: "",
+  availableFor: "", // "Rent" or "Sell"
 };
 
 const SkeletonCard = () => (
@@ -361,7 +450,7 @@ const PropertyPage = () => {
     if (!location.search) return;
     const params = new URLSearchParams(location.search);
     const updates = {};
-    ["propertyType", "category", "city", "search"].forEach((key) => {
+    ["propertyType", "category", "city", "search", "availableFor"].forEach((key) => {
       const value = params.get(key);
       if (value) updates[key] = value;
     });
@@ -379,7 +468,7 @@ const PropertyPage = () => {
     const query = filters.search.toLowerCase();
 
     const matchesSearch = query
-      ? [p.title, p.address?.city, p.address?.state, p.propertyTypeName, p.propertyType?.name]
+      ? [p.title, p.address?.city, p.address?.state, p.propertyTypeName, p.propertyType?.name, p.bhk]
         .filter(Boolean).some((f) => f.toLowerCase().includes(query))
       : true;
 
@@ -391,6 +480,11 @@ const PropertyPage = () => {
       ? (p.address?.city || "").toLowerCase() === filters.city.toLowerCase()
       : true;
 
+    // Filter by listing type (Rent/Sell)
+    const matchListingType = filters.availableFor
+      ? p.listingType?.toLowerCase() === filters.availableFor.toLowerCase()
+      : true;
+
     let matchPrice = true;
     if (filters.priceRange) {
       const price = p.price || 0;
@@ -399,19 +493,20 @@ const PropertyPage = () => {
       if (filters.priceRange === "high") matchPrice = price > 15000000;
     }
 
-    return matchesSearch && matchType && matchCity && matchPrice;
+    return matchesSearch && matchType && matchCity && matchPrice && matchListingType;
   });
 
   // Get properties with valid coordinates for map
   const propertiesWithCoords = useMemo(() => {
     const withCoords = filteredProperties.filter(p => {
-      const lat = p.address?.latitude || p.location?.coordinates?.[1];
-      const lng = p.address?.longitude || p.location?.coordinates?.[0];
+      // Check multiple possible locations for lat/lng
+      const lat = p.lat || p.address?.latitude || p.location?.coordinates?.[1];
+      const lng = p.lng || p.address?.longitude || p.location?.coordinates?.[0];
       return lat && lng && !isNaN(lat) && !isNaN(lng);
     }).map(p => ({
       ...p,
-      lat: p.address?.latitude || p.location?.coordinates?.[1],
-      lng: p.address?.longitude || p.location?.coordinates?.[0]
+      lat: p.lat || p.address?.latitude || p.location?.coordinates?.[1],
+      lng: p.lng || p.address?.longitude || p.location?.coordinates?.[0]
     }));
     
     // Debug log
@@ -617,7 +712,7 @@ const PropertyPage = () => {
               </div>
 
               {/* Clear Button */}
-              {(filters.search || filters.city || filters.propertyType || filters.priceRange) && (
+              {(filters.search || filters.city || filters.propertyType || filters.priceRange || filters.availableFor) && (
                 <button
                   onClick={() => setFilters(initialFilters)}
                   className="text-red-600 text-sm font-semibold hover:underline px-3 py-2 hover:bg-red-50 rounded-lg transition-colors"
@@ -675,14 +770,27 @@ const PropertyPage = () => {
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
-            <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🏠</div>
-            <h3 className="text-xl font-bold text-slate-700">No properties found</h3>
-            <button
-              onClick={() => setFilters(initialFilters)}
-              className="mt-6 bg-slate-900 text-white px-6 py-2 rounded-full text-sm hover:bg-red-600 transition-colors"
-            >
-              Clear All Filters
-            </button>
+            <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaMapMarkerAlt className="text-4xl text-slate-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-700 mb-2">No Properties Listed</h3>
+            <p className="text-slate-500 max-w-md mx-auto mb-6">
+              We couldn't find any properties matching your search criteria. Try adjusting your filters or search for a different location.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => setFilters(initialFilters)}
+                className="bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
+              >
+                Clear All Filters
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="bg-slate-100 text-slate-700 px-6 py-3 rounded-full text-sm font-semibold hover:bg-slate-200 transition-colors"
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         ) : viewMode === "map" ? (
           /* Map View */
@@ -859,7 +967,8 @@ const PropertyPage = () => {
                   <Marker
                     key={p._id}
                     position={[p.lat, p.lng]}
-                    icon={createPropertyMarker(p.price, hoveredProperty === p._id)}
+                    icon={hoveredProperty === p._id ? createDetailedPropertyMarker(p) : createSimplePinMarker(p.price, false)}
+                    zIndexOffset={hoveredProperty === p._id ? 1000 : 0}
                     eventHandlers={{
                       click: () => viewDetails(p),
                       mouseover: () => setHoveredProperty(p._id),

@@ -495,10 +495,8 @@ export default function AddProperty() {
                 line: formData.address, 
                 landmark: formData.landmark, 
                 nearby: formData.nearby || [],
-                coordinates: formData.latitude && formData.longitude ? {
-                    latitude: parseFloat(formData.latitude),
-                    longitude: parseFloat(formData.longitude)
-                } : null
+                latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+                longitude: formData.longitude ? parseFloat(formData.longitude) : null
             };
             submitData.append("address", JSON.stringify(addressData));
             

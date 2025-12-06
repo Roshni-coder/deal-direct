@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, X, ArrowLeft, KeyRound, CheckCircle } from "lucide-react";
 import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
@@ -13,6 +13,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from state (if user was redirected here)
+  const redirectPath = location.state?.from || "/";
 
   // Forgot Password Modal State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -43,7 +47,9 @@ export default function Login() {
       window.dispatchEvent(new Event("auth-change"));
 
       toast.success(`Welcome back, ${user.name || 'User'}!`);
-      navigate("/");
+      
+      // Redirect to the original page user was trying to access, or home
+      navigate(redirectPath);
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {

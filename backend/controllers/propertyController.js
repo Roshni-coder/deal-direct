@@ -44,6 +44,12 @@ const withPublicImages = (req, doc) => {
     }
   }
   
+  // Add latitude/longitude at top level for easy map access
+  if (plain.address?.latitude && plain.address?.longitude) {
+    plain.lat = plain.address.latitude;
+    plain.lng = plain.address.longitude;
+  }
+  
   return plain;
 };
 
@@ -151,6 +157,31 @@ export const addProperty = async (req, res) => {
     // Set owner from auth token if available
     if (req.user?._id) {
       data.owner = req.user._id;
+    }
+
+    // Ensure latitude and longitude are properly set in address
+    if (data.address) {
+      // Handle coordinates object if sent (backward compatibility)
+      if (data.address.coordinates) {
+        data.address.latitude = parseFloat(data.address.coordinates.latitude) || null;
+        data.address.longitude = parseFloat(data.address.coordinates.longitude) || null;
+        delete data.address.coordinates;
+      }
+      // Parse latitude/longitude if they're strings
+      if (data.address.latitude) {
+        data.address.latitude = parseFloat(data.address.latitude);
+      }
+      if (data.address.longitude) {
+        data.address.longitude = parseFloat(data.address.longitude);
+      }
+    }
+    
+    // Also handle top-level latitude/longitude if sent separately
+    if (data.latitude && data.longitude && data.address) {
+      data.address.latitude = parseFloat(data.latitude);
+      data.address.longitude = parseFloat(data.longitude);
+      delete data.latitude;
+      delete data.longitude;
     }
 
     console.log("Final data being saved:", JSON.stringify(data, null, 2)); // Debug log
@@ -275,6 +306,31 @@ export const updateProperty = async (req, res) => {
       });
       
       delete data.imageCategoryMap;
+    }
+
+    // Ensure latitude and longitude are properly set in address
+    if (data.address) {
+      // Handle coordinates object if sent (backward compatibility)
+      if (data.address.coordinates) {
+        data.address.latitude = parseFloat(data.address.coordinates.latitude) || null;
+        data.address.longitude = parseFloat(data.address.coordinates.longitude) || null;
+        delete data.address.coordinates;
+      }
+      // Parse latitude/longitude if they're strings
+      if (data.address.latitude) {
+        data.address.latitude = parseFloat(data.address.latitude);
+      }
+      if (data.address.longitude) {
+        data.address.longitude = parseFloat(data.address.longitude);
+      }
+    }
+    
+    // Also handle top-level latitude/longitude if sent separately
+    if (data.latitude && data.longitude && data.address) {
+      data.address.latitude = parseFloat(data.latitude);
+      data.address.longitude = parseFloat(data.longitude);
+      delete data.latitude;
+      delete data.longitude;
     }
 
     const updated = await Property.findByIdAndUpdate(req.params.id, data, { new: true });
