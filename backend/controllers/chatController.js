@@ -172,7 +172,7 @@ export const getMessages = async (req, res) => {
 // Send a message
 export const sendMessage = async (req, res) => {
   try {
-    const { conversationId, text, messageType = "text" } = req.body;
+    const { conversationId, text, messageType = "text", metadata = {} } = req.body;
     const senderId = (req.user._id || req.user.id).toString();
 
     // Verify conversation and user is participant
@@ -191,6 +191,7 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       text,
       messageType,
+      metadata,
       readBy: [{ user: senderId, readAt: new Date() }],
     });
 

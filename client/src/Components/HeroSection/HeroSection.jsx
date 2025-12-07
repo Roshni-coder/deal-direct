@@ -207,11 +207,27 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
       return null;
     });
 
+  const handleSearch = () => {
+    const searchTerm = filters.search || "";
+    const searchParams = new URLSearchParams();
+
+    if (searchTerm) searchParams.set('search', searchTerm);
+    // Add active tab as filter if relevant, though user only mentioned search
+    // if (activeTab === "Rent") searchParams.set('type', 'rent');
+
+    navigate(`/properties?${searchParams.toString()}`);
+  };
+
   const handleSuggestionClick = (suggestion) => {
     addToRecentSearches(suggestion);
-    setFilters({ ...filters, search: suggestion.value });
+    // setFilters({ ...filters, search: suggestion.value }); // Optional if we navigate immediately
     setShowSuggestions(false);
     setSelectedIndex(-1);
+
+    // Navigate immediately
+    const searchParams = new URLSearchParams();
+    searchParams.set('search', suggestion.value);
+    navigate(`/properties?${searchParams.toString()}`);
   };
 
   const handleTabSelect = (tab) => {
@@ -340,7 +356,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                      Let's use the full text but rely on text-overflow (already added placeholder:text-ellipsis). */}
                 <div className="absolute right-2 sm:right-4 flex items-center gap-2 sm:gap-4">
                   <FaMapMarkerAlt
-                    className="text-gray-600 cursor-pointer hover:text-blue-800 text-base sm:text-blue-600-2xl transition-colors hover:scale-110 animate-pulse"
+                    className="text-gray-600 cursor-pointer hover:text-blue-800 text-xl sm:text-1.5xl transition-colors hover:scale-110 animate-pulse"
                     onClick={handleMapClick}
                     title="Search on Map"
                   />
@@ -488,7 +504,10 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               )}
             </div>
 
-            <button className="bg-red-600 text-white p-3 sm:px-8 sm:py-4 rounded-full font-semibold text-sm sm:text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 aspect-square sm:aspect-auto">
+            <button
+              onClick={handleSearch}
+              className="bg-red-600 text-white p-3 sm:px-8 sm:py-4 rounded-full font-semibold text-sm sm:text-lg hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 aspect-square sm:aspect-auto"
+            >
               <AiOutlineSearch className="text-xl sm:text-xl" />
               <span className="hidden sm:inline">Search</span>
             </button>

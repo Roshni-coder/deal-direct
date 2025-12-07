@@ -23,8 +23,13 @@ const messageSchema = new mongoose.Schema(
     // Message type
     messageType: {
       type: String,
-      enum: ["text", "image", "file", "system"],
+      enum: ["text", "image", "file", "system", "action"],
       default: "text",
+    },
+    // Metadata for action messages (e.g. site visit details)
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
     // For file/image messages
     attachments: [

@@ -171,13 +171,13 @@ export const ChatProvider = ({ children }) => {
   }, [fetchConversations, token]);
 
   // Send message
-  const sendMessage = useCallback(async (conversationId, text) => {
+  const sendMessage = useCallback(async (conversationId, text, options = {}) => {
     if (!token) return null;
 
     try {
       const res = await axios.post(
         `${API_BASE}/api/chat/message/send`,
-        { conversationId, text },
+        { conversationId, text, ...options },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {

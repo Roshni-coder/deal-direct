@@ -18,6 +18,9 @@ import {
   getSavedProperties,
   removeSavedProperty,
   getSuggestions,
+  togglePopularProperty,
+  getPopularProperties,
+  getAdminProperties,
 } from "../controllers/propertyController.js";
 import { protectAdmin } from "../middleware/authAdmin.js";
 import { authMiddleware } from "../middleware/authUser.js";
@@ -35,6 +38,7 @@ router.post("/add", authMiddleware, upload.fields([
 // Public listing routes
 router.get("/list", getProperties);
 router.get("/property-list", getAllPropertiesList); // 🟢 For frontend home page
+router.get("/popular", getPopularProperties); // 🟢 Popular properties for home page
 
 // Public search & filter (MUST be before /:id)
 router.get("/search", searchProperties);
@@ -60,6 +64,8 @@ router.put("/edit/:id", protectAdmin, upload.fields([
 router.delete("/delete/:id", protectAdmin, deleteProperty);
 router.put("/approve/:id", protectAdmin, approveProperty);
 router.put("/disapprove/:id", protectAdmin, disapproveProperty);
+router.put("/popular/:id", protectAdmin, togglePopularProperty); // Admin toggle popular status
+router.get("/admin/all", protectAdmin, getAdminProperties); // Admin get all with filters
 
 // 🔒 Protected: Interest routes (MUST be before /:id)
 router.post("/interested/:id", authMiddleware, markInterested);

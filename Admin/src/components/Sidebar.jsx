@@ -11,6 +11,7 @@ import {
   X,
   Mail,
   Flag,
+  Star,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
@@ -69,9 +70,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       icon: <Mail className="h-5 w-5" />,
     },
     {
+
       path: "/reported-messages",
       name: "Reported Messages",
       icon: <Flag className="h-5 w-5" />,
+    },
+    {
+      path: "/popular-properties",
+      name: "Popular Properties",
+      icon: <Star className="h-5 w-5" />,
     },
     // {
     //   path: "/add-category",

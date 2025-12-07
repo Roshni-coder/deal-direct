@@ -72,6 +72,7 @@ const normalizePrice = (price, unit) => {
 
 const Home = () => {
   const [properties, setProperties] = useState([]);
+  const [popularProperties, setPopularProperties] = useState([]); // New state for popular properties
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [propertyTypeOptions, setPropertyTypeOptions] = useState([]);
@@ -127,6 +128,18 @@ const Home = () => {
         setProperties(response.data.data || []);
       } catch (error) {
         console.error("Error loading data:", error);
+      }
+    })();
+  }, []);
+
+  // Fetch Popular Properties
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/properties/popular`);
+        setPopularProperties(response.data.data || []);
+      } catch (error) {
+        console.error("Error loading popular properties:", error);
       }
     })();
   }, []);
@@ -197,6 +210,9 @@ const Home = () => {
     );
   });
 
+  // Always show popular properties on Home page, search redirects to list page
+  const displayProperties = popularProperties;
+
   const handleViewDetails = (property) => {
     navigate(`/properties/${property._id}`, { state: { property } });
   };
@@ -236,7 +252,7 @@ const Home = () => {
             </button>
           </div>
 
-          {filteredProperties.length === 0 ? (
+          {displayProperties.length === 0 ? (
             <p className="text-gray-500 text-lg text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">No properties found matching your search.</p>
           ) : (
             <div className="relative group">
@@ -249,9 +265,13 @@ const Home = () => {
               </button>
 
               <div ref={scrollRef} className="flex gap-6 overflow-x-auto pb-8 pt-2 snap-x snap-mandatory scrollbar-hide px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {[...filteredProperties]
-                  .sort((a, b) => normalizePrice(b.price, b.priceUnit) - normalizePrice(a.price, a.priceUnit))
-                  .slice(0, 8)
+                {[...displayProperties]
+                  .sort((a, b) => {
+                    // Only sort if we are NOT using the pre-sorted popular list (though popular list is also sorted by date)
+                    // If searching, we might want relevance, but here we keep price/date logic or just use as is
+                    return normalizePrice(b.price, b.priceUnit) - normalizePrice(a.price, a.priceUnit);
+                  })
+                  .slice(0, 10) // Show top 10
                   .map((property) => (
                     <div
                       key={property._id}

@@ -17,6 +17,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { cities as staticCityList } from "../../utils/cityList";
 
 // Custom marker styles
 const markerStyles = `
@@ -271,7 +272,7 @@ const PropertyPage = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState(initialFilters);
   const [propertyTypes, setPropertyTypes] = useState([]);
-  const [cities, setCities] = useState([]);
+  const [cities, setCities] = useState(staticCityList);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
   const [hoveredProperty, setHoveredProperty] = useState(null);
 
@@ -314,8 +315,9 @@ const PropertyPage = () => {
         const propsData = propsRes.data.data || [];
         setProperties(propsData);
         setPropertyTypes(ptRes.data || []);
-        const uniqueCities = [...new Set(propsData.map(p => p.address?.city).filter(Boolean))];
-        setCities(uniqueCities);
+        // Removed dynamic city extraction to use static full list
+        // const uniqueCities = [...new Set(propsData.map(p => p.address?.city).filter(Boolean))];
+        // setCities(uniqueCities);
 
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -590,7 +592,7 @@ const PropertyPage = () => {
 
           {/* Search Bar with Button */}
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between mb-4">
-            <div className="relative w-full lg:w-2/5 flex gap-2">
+            <div className="relative w-full lg:w-1/3 flex gap-2">
               <div className="relative flex-1">
                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
                 <input
@@ -671,7 +673,7 @@ const PropertyPage = () => {
             </div>
 
             {/* Dropdowns Group */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
 
               {/* City Dropdown */}
               <div className="relative">
@@ -725,7 +727,7 @@ const PropertyPage = () => {
               )}
 
               {/* View Toggle */}
-              <div className="flex items-center bg-slate-100 rounded-xl p-1 ml-2">
+              <div className="flex items-center bg-slate-100 rounded-xl p-1">
                 <button
                   onClick={() => setViewMode("list")}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "list"
