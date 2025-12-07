@@ -441,6 +441,15 @@ export default function AddProperty() {
             case 4:
                 if (isResidential && !f.bedrooms && !f.bhkType.includes("Studio")) return "Please confirm bedrooms.";
                 break;
+            case 5:
+                const categories = getImageCategories();
+                const exteriorCategory = categories.find(c => ['exterior', 'facade'].includes(c.key));
+
+                if (exteriorCategory) {
+                    const hasExteriorImage = categorizedImages[exteriorCategory.key]?.files?.length > 0;
+                    if (!hasExteriorImage) return `Please upload at least one ${exteriorCategory.label} photo.`;
+                }
+                break;
             default: break;
         }
         return null;
@@ -1074,8 +1083,8 @@ export default function AddProperty() {
                                         </div>
                                     </div>
                                     <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${suggestion.type === 'city' ? 'bg-blue-100 text-blue-700' :
-                                            suggestion.type === 'locality' ? 'bg-green-100 text-green-700' :
-                                                'bg-orange-100 text-orange-700'
+                                        suggestion.type === 'locality' ? 'bg-green-100 text-green-700' :
+                                            'bg-orange-100 text-orange-700'
                                         }`}>
                                         {suggestion.type === 'city' ? 'City' : suggestion.type === 'locality' ? 'Area' : 'Project'}
                                     </span>
