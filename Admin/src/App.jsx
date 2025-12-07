@@ -92,18 +92,14 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
           {children}
           {/* Footer */}
           {!isLoginPage && (
-            <footer className="mt-10 border-t border-gray-200 pt-6 pb-4 text-center text-sm text-gray-500">
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <p className="flex items-center space-x-2">
-                  <span>
-                    © {new Date().getFullYear()}{" "}
-                    <strong className="text-blue-600">PropDeal</strong> Admin
-                    Panel
-                  </span>
+            <footer className="w-full bg-white p-4 shadow-md mt-6 border-t border-gray-200">
+              <div className="flex flex-col md:flex-row items-center justify-center text-sm text-gray-500">
+                {/* Copyright Section */}
+                <p className="mb-2 md:mb-0">
+                  &copy; {new Date().getFullYear()}{" "}
+                  <strong className="text-blue-600">Admin Panel</strong>. All
+                  rights reserved.
                 </p>
-                <div className="flex items-center space-x-4 text-gray-400 text-xs">
-                  <span>Built with ❤️ using React & Tailwind CSS</span>
-                </div>
               </div>
             </footer>
           )}
@@ -114,7 +110,7 @@ const Layout = ({ isSidebarOpen, toggleSidebar, children }) => {
 };
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (

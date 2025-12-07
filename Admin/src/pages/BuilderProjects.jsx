@@ -170,7 +170,7 @@ const BuilderProjects = () => {
     }
 
     return (
-        <div className="p-4 sm:p-8 bg-gray-100 min-h-screen space-y-10">
+        <div className="p-4 sm:p-4  min-h-screen space-y-10">
 
             {/* PAGE TITLE & REFRESH */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-gray-300 gap-4">
@@ -260,11 +260,7 @@ const BuilderProjects = () => {
                                             <StatusTag status={p.status} />
 
                                             {/* ACTION BUTTONS */}
-                                            <div className="flex gap-2 pt-3">
-                                                <button className="flex items-center justify-center w-full px-2 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 shadow-md">
-                                                    <Eye className="w-4 mr-1" /> View
-                                                </button>
-
+                                            <div className="flex  gap-2 pt-3">
                                                 {p.status !== "approved" && (
                                                     <button
                                                         onClick={() => handleProjectAction(owner.id, p.id, 'approve')}

@@ -1,22 +1,27 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import {
-  BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
+  BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 import {
   Home, Users, TrendingUp, CheckCircle, Clock,
   ArrowUp, ArrowDown, Loader2, Building, UserCheck,
-  Eye, Calendar, RefreshCw, MoreHorizontal, ExternalLink,
-  AlertCircle, Zap, Target, Activity
+  ExternalLink,
+  AlertCircle, Zap, Target, Activity, RefreshCw, Calendar
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Enhanced Metric Card with gradient backgrounds
-const MetricCard = ({ title, value, icon: Icon, subtitle, trend, trendValue, gradient }) => (
-  <div className={`relative overflow-hidden rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${gradient}`}>
+// 🎨 Added 'to' prop and onClick handler for navigation
+const MetricCard = ({ title, value, icon: Icon, subtitle, trend, trendValue, gradient, to, navigate }) => (
+  <div
+    className={`relative overflow-hidden rounded-2xl p-6 text-white shadow-lg transition-all duration-300 ${gradient} ${to ? 'cursor-pointer hover:shadow-xl hover:-translate-y-1' : ''}`}
+    onClick={to ? () => navigate(to) : null}
+  >
     {/* Background Pattern */}
     <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white/10"></div>
     <div className="absolute bottom-0 left-0 -mb-6 -ml-6 w-20 h-20 rounded-full bg-white/5"></div>
@@ -40,7 +45,7 @@ const MetricCard = ({ title, value, icon: Icon, subtitle, trend, trendValue, gra
   </div>
 );
 
-// Quick Stats Mini Card
+// Quick Stats Mini Card (No changes needed, keeping for completeness)
 const QuickStatCard = ({ label, value, icon: Icon, color }) => (
   <div className="bg-white rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors">
     <div className="flex items-center gap-3">
@@ -70,6 +75,9 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Initialize useNavigate
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     fetchDashboardStats();
@@ -107,12 +115,14 @@ const Dashboard = () => {
         // Merge mock history with current real-time data
         const enhancedProperties = last6Months.map((month, idx) => ({
           label: month,
-          value: idx === 5 ? currentPropValue : mockPropHistory[idx]
+          // Using a mock value for historical data and the real-time value for the current month (index 5)
+          value: idx < 5 ? mockPropHistory[idx] : currentPropValue 
         }));
 
         const enhancedLeads = last6Months.map((month, idx) => ({
           label: month,
-          value: idx === 5 ? currentLeadValue : mockLeadHistory[idx]
+          // Using a mock value for historical data and the real-time value for the current month (index 5)
+          value: idx < 5 ? mockLeadHistory[idx] : currentLeadValue
         }));
 
         // Update the charts data
@@ -178,7 +188,7 @@ const Dashboard = () => {
 
   const leadStatusData = stats?.leadStats
     ? Object.entries(stats.leadStats)
-      .filter(([key]) => key !== 'total' && key !== 'undefined')
+      .filter(([key]) => key !== 'total' && key !== 'undefined' && key !== 'contacted' && key !== 'negotiating')
       .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }))
       .filter(item => item.value > 0)
     : [];
@@ -218,12 +228,15 @@ const Dashboard = () => {
 
       {/* Primary Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Added 'to' and 'navigate' props for redirection */}
         <MetricCard
           title="Total Properties"
           value={stats?.counts?.totalProperties || 0}
           subtitle={`${stats?.counts?.approvedProperties || 0} approved`}
           icon={Home}
           gradient={GRADIENT_COLORS[0]}
+          to="/all-properties"
+          navigate={navigate}
         />
         <MetricCard
           title="Active Users"
@@ -231,6 +244,8 @@ const Dashboard = () => {
           subtitle="Registered users"
           icon={Users}
           gradient={GRADIENT_COLORS[1]}
+          to="/all-clients" // Assuming clients and owners are covered under 'Users'
+          navigate={navigate}
         />
         <MetricCard
           title="Total Leads"
@@ -238,6 +253,8 @@ const Dashboard = () => {
           subtitle={`${conversionRate}% conversion rate`}
           icon={Target}
           gradient={GRADIENT_COLORS[2]}
+          to="/lead-monitoring"
+          navigate={navigate}
         />
         <MetricCard
           title="Pending Review"
@@ -245,6 +262,8 @@ const Dashboard = () => {
           subtitle="Awaiting approval"
           icon={Clock}
           gradient={GRADIENT_COLORS[3]}
+          to="/all-properties" // Redirect to all properties, where filtering can be done
+          navigate={navigate}
         />
       </section>
 
@@ -303,7 +322,7 @@ const Dashboard = () => {
             </div>
           </div>
           {stats?.charts?.properties?.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={280} className="focus:outline-none"> {/* FIX APPLIED HERE */}
               <AreaChart data={stats.charts.properties}>
                 <defs>
                   <linearGradient id="propertyGradient" x1="0" y1="0" x2="0" y2="1">
@@ -353,7 +372,7 @@ const Dashboard = () => {
             </div>
           </div>
           {stats?.charts?.leads?.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={280} className="focus:outline-none"> {/* FIX APPLIED HERE */}
               <AreaChart data={stats.charts.leads}>
                 <defs>
                   <linearGradient id="leadGradient" x1="0" y1="0" x2="0" y2="1">
@@ -402,7 +421,7 @@ const Dashboard = () => {
             </div>
           </div>
           {leadStatusData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={280} className="focus:outline-none"> {/* FIX APPLIED HERE */}
               <PieChart>
                 <Pie
                   data={leadStatusData}
@@ -450,7 +469,8 @@ const Dashboard = () => {
         </div>
 
         {/* User Registrations */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2">
+        {/* User Registrations */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2 [&_.recharts-wrapper]:!outline-none">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-800">User Growth</h2>

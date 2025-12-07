@@ -51,7 +51,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     {
       path: "/all-properties",
       name: "All Properties",
-      icon: <Settings className="h-5 w-5" />,
+      icon: <BarChart3 className="h-5 w-5" />,
     },
     {
       path: "/lead-monitoring",
@@ -100,24 +100,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     <>
       <div className="flex border-r border-gray-100 flex-col h-full">
         {/* Top section with Toggle/Close */}
-        <div className="flex items-center justify-end p-4 lg:justify-center">
-          {/* Mobile Close Button */}
+        <div className={`flex items-center ${isOpen ? 'justify-end' : 'justify-center'} p-4`}>
           <button
-            className="lg:hidden text-gray-600 hover:text-gray-900 p-2"
+            className="text-gray-600 hover:text-gray-600"
             onClick={toggleSidebar}
           >
-            <X size={24} />
-          </button>
-
-          {/* Desktop Collapse Button */}
-          <button
-            className="hidden lg:block text-gray-600 hover:text-gray-900"
-            onClick={toggleSidebar}
-          >
-            {isOpen ? <Menu size={24} /> : <Menu size={24} />}
+            {isOpen ? <X size={25} /> : <Menu size={25} />}
           </button>
         </div>
-
         {/* Menu items */}
         <nav className="flex-1 overflow-auto mt-2 px-2">
           <ul className="space-y-1">
@@ -125,6 +115,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <li key={idx}>
                 <NavLink
                   to={item.path}
+                  onClick={() => isOpen && toggleSidebar()}
                   className={({ isActive }) =>
                     `flex items-center gap-3 p-2 rounded-md transition-all duration-200 ${isActive
                       ? "bg-gray-100 text-gray-600 font-medium"
