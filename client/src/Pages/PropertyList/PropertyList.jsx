@@ -585,7 +585,7 @@ const PropertyPage = () => {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 -mt-10 lg:-mt-8">
 
       {/* Filter Bar - Sticky */}
-      <div className="sticky top-1 lg:top-20 z-30 bg-white shadow-md border-b border-slate-200 py-4 mb-6 px-6 transition-all">
+      <div className="sticky top-1 lg:-top-2 z-30 bg-white shadow-md border-b border-slate-200 py-4 mb-6 px-6 transition-all">
         <div className="max-w-7xl mx-auto">
 
           {/* Search Bar with Button */}
