@@ -277,8 +277,8 @@ export default function AddProperty() {
     const [currentStep, setCurrentStep] = useState(1);
     const [direction, setDirection] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
-    const [images, setImages] = useState([]);
-    const [previewImages, setPreviewImages] = useState([]);
+    // const [images, setImages] = useState([]);        // ❌ Not used
+    // const [previewImages, setPreviewImages] = useState([]); // ❌ Not used
     const [categorizedImages, setCategorizedImages] = useState({});
     const [expandedCategories, setExpandedCategories] = useState([]);
 
@@ -304,7 +304,8 @@ export default function AddProperty() {
         availableFrom: new Date().toISOString().split('T')[0], petFriendly: "No", allowedFor: "Family", ageOfProperty: "",
         city: "", locality: "", landmark: "", address: "", nearby: [],
         latitude: "", longitude: "",
-        description: "", videoUrl: "", showHelpTips: true
+        description: "", videoUrl: "", showHelpTips: true,
+        powerLoad: "" // Missing in formData
     });
 
     // Map state
@@ -341,12 +342,29 @@ export default function AddProperty() {
         fetchMetadata();
     }, []);
 
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (currentStep > 1) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes!';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [currentStep]);
+
     const isResidential = formData.propertyCategory === "Residential";
     const isCommercial = formData.propertyCategory === "Commercial";
-    const commercialConfig = isCommercial ? COMMERCIAL_CONFIGS[formData.propertyType] : null;
+
+    const commercialConfig = useMemo(
+        () => isCommercial ? COMMERCIAL_CONFIGS[formData.propertyType] : null,
+        [isCommercial, formData.propertyType] // Only recompute when needed
+    );
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        // Prevent negative values for number inputs
+        if (type === "number" && parseFloat(value) < 0) return;
         setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     };
 
@@ -373,23 +391,43 @@ export default function AddProperty() {
     };
 
     const handlePropertyTypeChange = (type) => {
+        const autoSelectBhk = {
+            "Studio Apartment": "Studio",
+            "Apartment / Flat": "",
+            "Penthouse": "3 BHK" // Common for penthouses
+        };
+
         setFormData(prev => ({
             ...prev,
             propertyType: type,
-            bhkType: type.includes("Studio") ? "Studio" : prev.bhkType
+            bhkType: autoSelectBhk[type] || (type.includes("Studio") ? "Studio" : prev.bhkType)
         }));
     };
 
-    const getImageCategories = () => {
-        if (isResidential) return IMAGE_CATEGORIES.Residential[formData.propertyType] || IMAGE_CATEGORIES.Residential["Apartment / Flat"];
-        else if (isCommercial) return IMAGE_CATEGORIES.Commercial[formData.propertyType] || IMAGE_CATEGORIES.Commercial["Office Space"];
-        return [];
-    };
+    const imageCategories = useMemo(
+        () => {
+            if (isResidential) return IMAGE_CATEGORIES.Residential[formData.propertyType] || IMAGE_CATEGORIES.Residential["Apartment / Flat"];
+            if (isCommercial) return IMAGE_CATEGORIES.Commercial[formData.propertyType] || IMAGE_CATEGORIES.Commercial["Office Space"];
+            return [];
+        },
+        [isResidential, isCommercial, formData.propertyType]
+    );
+
+    const locationIndex = useMemo(() => {
+        const index = { cities: {}, areas: {}, projects: {} };
+        locationData.cities.forEach(city => {
+            index.cities[city.name.toLowerCase()] = city;
+            city.areas.forEach(area => {
+                index.areas[area.name.toLowerCase()] = { city: city.name, ...area };
+            });
+        });
+        return index;
+    }, []);
 
     const handleCategorizedImageUpload = (categoryKey, e) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
-        const category = getImageCategories().find(c => c.key === categoryKey);
+        const category = imageCategories.find(c => c.key === categoryKey);
         const maxImages = category?.maxImages || 5;
         const currentImages = categorizedImages[categoryKey]?.files || [];
         if (files.length + currentImages.length > maxImages) return toast.error(`Maximum ${maxImages} images allowed`);
@@ -437,12 +475,33 @@ export default function AddProperty() {
             case 3:
                 if (!f.expectedPrice) return "Please enter expected price.";
                 if (!f.builtUpArea && !(isCommercial && f.propertyType.toLowerCase().includes("warehouse"))) return "Built-up area is required.";
+
+                // Smart Area Validation
+                const area = parseFloat(f.builtUpArea);
+                if (area) {
+                    const minAreas = {
+                        "Studio Apartment": 250,
+                        "1 BHK": 400,
+                        "2 BHK": 600,
+                        "3 BHK": 800
+                    };
+                    const min = minAreas[f.bhkType];
+                    if (min && area < min) {
+                        return `${f.bhkType} typically needs min ${min} sq.ft`;
+                    }
+                }
                 break;
             case 4:
                 if (isResidential && !f.bedrooms && !f.bhkType.includes("Studio")) return "Please confirm bedrooms.";
+                if (isCommercial && commercialConfig) {
+                    const missingFields = commercialConfig.fields.filter(fItem => !f[fItem]);
+                    if (missingFields.length > 0) {
+                        return `Please fill: ${missingFields.join(", ")}`;
+                    }
+                }
                 break;
             case 5:
-                const categories = getImageCategories();
+                const categories = imageCategories;
                 const exteriorCategory = categories.find(c => ['exterior', 'facade'].includes(c.key));
 
                 if (exteriorCategory) {
@@ -458,6 +517,14 @@ export default function AddProperty() {
     const handleNext = () => {
         const error = validateStep(currentStep);
         if (error) return toast.error(error);
+
+        // Show summary
+        if (currentStep === 1) {
+            toast.success(`${formData.bhkType} ${formData.propertyType} selected!`);
+        } else if (currentStep === 2) {
+            toast.success(`Location: ${formData.locality}, ${formData.city}`);
+        }
+
         setDirection(1);
         setCurrentStep(prev => Math.min(prev + 1, 6));
     };
@@ -538,7 +605,7 @@ export default function AddProperty() {
             const legalData = { reraId: formData.reraId, occupancyCertificate: !!formData.occupancyCertificate, tradeLicense: !!formData.tradeLicense, fireNoc: !!formData.fireNoc };
             submitData.append("legal", JSON.stringify(legalData));
 
-            images.forEach(file => submitData.append("images", file));
+            // images.forEach(file => submitData.append("images", file));
 
             const imageCategoryMap = {};
             Object.entries(categorizedImages).forEach(([categoryKey, data]) => {
@@ -625,7 +692,7 @@ export default function AddProperty() {
                         </button>
                     ))}
                 </div>
-            </div>
+            </div >
 
             {isResidential && (
                 <div>
@@ -640,23 +707,26 @@ export default function AddProperty() {
                         ))}
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {isCommercial && (
-                <div>
-                    <label className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Commercial Sub-type</label>
-                    <div className="flex flex-wrap gap-3 mt-2">
-                        {["Bare Shell", "Warm Shell", "Fully Furnished"].map(subType => (
-                            <button key={subType} onClick={() => setFormData(p => ({ ...p, commercialSubType: subType }))}
-                                // UPDATED: Blue background for active button
-                                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${formData.commercialSubType === subType ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:border-blue-200"}`}>
-                                {subType}
-                            </button>
-                        ))}
+            {
+                isCommercial && (
+                    <div>
+                        <label className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Commercial Sub-type</label>
+                        <div className="flex flex-wrap gap-3 mt-2">
+                            {["Bare Shell", "Warm Shell", "Fully Furnished"].map(subType => (
+                                <button key={subType} onClick={() => setFormData(p => ({ ...p, commercialSubType: subType }))}
+                                    // UPDATED: Blue background for active button
+                                    className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${formData.commercialSubType === subType ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:border-blue-200"}`}>
+                                    {subType}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 
     // Get current location using Geolocation API
@@ -719,7 +789,16 @@ export default function AddProperty() {
     };
 
     // Reverse geocode to get address from coordinates
+    const geoCache = useRef(new Map());
+
     const reverseGeocode = async (lat, lng) => {
+        const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+        if (geoCache.current.has(key)) {
+            const cached = geoCache.current.get(key);
+            setFormData(prev => ({ ...prev, ...cached }));
+            return;
+        }
+
         try {
             const response = await axios.get(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`,
@@ -758,6 +837,8 @@ export default function AddProperty() {
                     landmark: landmark || prev.landmark
                 }));
 
+                geoCache.current.set(key, { city, locality, address: formattedAddress, landmark });
+
                 toast.success("Address details filled from your location!");
             }
         } catch (error) {
@@ -792,10 +873,12 @@ export default function AddProperty() {
             // Search areas/localities within selected city or all cities
             const selectedCity = formData.city?.toLowerCase();
 
-            locationData.cities.forEach(city => {
-                // If city is selected, only search within that city
-                if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
+            // Optimization: Use index for direct lookup if city is selected
+            const targets = (selectedCity && locationIndex.cities[selectedCity])
+                ? [locationIndex.cities[selectedCity]]
+                : (selectedCity ? [] : Object.values(locationIndex.cities));
 
+            targets.forEach(city => {
                 city.areas.forEach(area => {
                     if (!searchTerm || area.name.toLowerCase().includes(searchTerm)) {
                         suggestions.push({
@@ -815,7 +898,12 @@ export default function AddProperty() {
             const selectedCity = formData.city?.toLowerCase();
             const selectedLocality = formData.locality?.toLowerCase();
 
-            locationData.cities.forEach(city => {
+            // Optimization: Filter cities first
+            const cityTargets = (selectedCity && locationIndex.cities[selectedCity])
+                ? [locationIndex.cities[selectedCity]]
+                : (selectedCity ? [] : Object.values(locationIndex.cities));
+
+            cityTargets.forEach(city => {
                 // If no city selected, also show matching cities
                 if (!selectedCity && (!searchTerm || city.name.toLowerCase().includes(searchTerm))) {
                     suggestions.push({
@@ -828,7 +916,8 @@ export default function AddProperty() {
                     });
                 }
 
-                if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
+                // If city is selected, only search within that city (Already handled by cityTargets optimization)
+                // if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
 
                 city.areas.forEach(area => {
                     // If no locality selected, also show matching areas
@@ -893,7 +982,7 @@ export default function AddProperty() {
         // Debounce the search - search immediately for local data
         searchTimeoutRef.current = setTimeout(() => {
             searchLocations(value, fieldType);
-        }, 100);
+        }, 0); // Instant for local search
     };
 
     // Handle input focus - show suggestions immediately on focus
@@ -913,10 +1002,12 @@ export default function AddProperty() {
     // Handle suggestion selection
     const handleSuggestionSelect = (suggestion) => {
         const updates = {};
+        let toastMessage = "";
 
         // Update fields based on suggestion type and active field
         if (suggestion.type === 'city' || activeLocationField === 'city') {
             updates.city = suggestion.city;
+            toastMessage = `${suggestion.city} selected`;
             // Clear locality when city changes
             if (formData.city !== suggestion.city) {
                 updates.locality = '';
@@ -926,14 +1017,24 @@ export default function AddProperty() {
 
         if (suggestion.type === 'locality' || activeLocationField === 'locality') {
             updates.locality = suggestion.locality;
-            if (suggestion.city) updates.city = suggestion.city;
+            if (suggestion.city) {
+                updates.city = suggestion.city;
+            }
+            if (suggestion.type === 'locality' && !formData.city) {
+                updates.city = suggestion.city; // Auto-fill city
+                toast.info(`City auto-filled: ${suggestion.city}`);
+            }
+            toastMessage = `${suggestion.locality} selected`;
         }
 
         if (suggestion.type === 'project' || activeLocationField === 'address') {
             updates.address = suggestion.project || suggestion.display_name;
             if (suggestion.city) updates.city = suggestion.city;
             if (suggestion.locality) updates.locality = suggestion.locality;
+            toastMessage = `${suggestion.project || suggestion.display_name} selected`;
         }
+
+        if (toastMessage && !toastMessage.includes("auto-filled")) toast.success(toastMessage);
 
         setFormData(prev => ({ ...prev, ...updates }));
         setLocationSuggestions([]);
@@ -963,7 +1064,7 @@ export default function AddProperty() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* City Field with Autocomplete */}
                 <div className="relative">
-                    <label className={labelStyle}>City</label>
+                    <label className={`${labelStyle} after:content-["*"] after:ml-1 after:text-red-500`}>City</label>
                     <div className="relative">
                         <input
                             name="city"
@@ -998,7 +1099,7 @@ export default function AddProperty() {
 
                 {/* Locality Field with Autocomplete */}
                 <div className="relative">
-                    <label className={labelStyle}>Locality / Area</label>
+                    <label className={`${labelStyle} after:content-["*"] after:ml-1 after:text-red-500`}>Locality / Area</label>
                     <div className="relative">
                         <input
                             name="locality"
@@ -1147,42 +1248,40 @@ export default function AddProperty() {
                 </div>
 
                 {/* Coordinates Display */}
-                {(formData.latitude && formData.longitude) && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelStyle}>Latitude</label>
-                            <input
-                                name="latitude"
-                                value={formData.latitude}
-                                onChange={(e) => {
-                                    const lat = parseFloat(e.target.value);
-                                    handleChange(e);
-                                    if (!isNaN(lat) && formData.longitude) {
-                                        setMapPosition([lat, parseFloat(formData.longitude)]);
-                                    }
-                                }}
-                                placeholder="e.g. 19.0760"
-                                className={inputStyle}
-                            />
-                        </div>
-                        <div>
-                            <label className={labelStyle}>Longitude</label>
-                            <input
-                                name="longitude"
-                                value={formData.longitude}
-                                onChange={(e) => {
-                                    const lng = parseFloat(e.target.value);
-                                    handleChange(e);
-                                    if (!isNaN(lng) && formData.latitude) {
-                                        setMapPosition([parseFloat(formData.latitude), lng]);
-                                    }
-                                }}
-                                placeholder="e.g. 72.8777"
-                                className={inputStyle}
-                            />
-                        </div>
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <label className={labelStyle}>Latitude</label>
+                        <input
+                            name="latitude"
+                            value={formData.latitude}
+                            onChange={(e) => {
+                                const lat = parseFloat(e.target.value);
+                                handleChange(e);
+                                if (!isNaN(lat) && formData.longitude) {
+                                    setMapPosition([lat, parseFloat(formData.longitude)]);
+                                }
+                            }}
+                            placeholder="e.g. 19.0760"
+                            className={inputStyle}
+                        />
                     </div>
-                )}
+                    <div>
+                        <label className={labelStyle}>Longitude</label>
+                        <input
+                            name="longitude"
+                            value={formData.longitude}
+                            onChange={(e) => {
+                                const lng = parseFloat(e.target.value);
+                                handleChange(e);
+                                if (!isNaN(lng) && formData.latitude) {
+                                    setMapPosition([parseFloat(formData.latitude), lng]);
+                                }
+                            }}
+                            placeholder="e.g. 72.8777"
+                            className={inputStyle}
+                        />
+                    </div>
+                </div>
 
                 {mapPosition && (
                     <div className="mt-3 flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
@@ -1218,7 +1317,7 @@ export default function AddProperty() {
                             </div>
                         </div>
                         <div>
-                            <label className={labelStyle}>Expected {isRent ? "Monthly Rent" : "Sale Price"}</label>
+                            <label className={`${labelStyle} after:content-["*"] after:ml-1 after:text-red-500`}>Expected {isRent ? "Monthly Rent" : "Sale Price"}</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">₹</div>
                                 <input name="expectedPrice" value={formData.expectedPrice} onChange={handleChange} type="number" className={`${inputStyle} pl-10`} placeholder="0" />
@@ -1296,7 +1395,7 @@ export default function AddProperty() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className={labelStyle}>{isResidential ? "Built-up Area" : "Built-up / Carpet Area"}</label>
+                        <label className={`${labelStyle} after:content-["*"] after:ml-1 after:text-red-500`}>{isResidential ? "Built-up Area" : "Built-up / Carpet Area"}</label>
                         <div className="relative">
                             <input name="builtUpArea" value={formData.builtUpArea} onChange={handleChange} type="number" className={inputStyle} placeholder="eg. 1200" />
                             <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 text-sm">sq.ft</div>
@@ -1502,7 +1601,7 @@ export default function AddProperty() {
     };
 
     const renderStep5 = () => {
-        const categories = getImageCategories();
+        const categories = imageCategories;
         const totalImages = getTotalCategorizedImages();
 
         return (
@@ -1599,7 +1698,7 @@ export default function AddProperty() {
     };
 
     const getFirstPreviewImage = () => {
-        const categories = getImageCategories();
+        const categories = imageCategories;
         for (const cat of categories) {
             if (categorizedImages[cat.key]?.previews?.length > 0) return categorizedImages[cat.key].previews[0];
         }
@@ -1608,7 +1707,7 @@ export default function AddProperty() {
 
     const renderStep6 = () => {
         const firstImage = getFirstPreviewImage();
-        const totalImages = getTotalCategorizedImages() + (images?.length || 0);
+        const totalImages = getTotalCategorizedImages(); // Removed images state usage
 
         return (
             <div className="space-y-6">
@@ -1673,6 +1772,15 @@ export default function AddProperty() {
 
     if (!isAuthorized) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><EmailVerificationModal isOpen={showVerificationModal} onClose={() => navigate("/")} user={user} onVerified={handleVerificationSuccess} /></div>;
 
+    const isStepAccessible = (step) => {
+        if (step <= currentStep) return true; // Can go back
+        // Validate all previous steps
+        for (let i = 1; i < step; i++) {
+            if (validateStep(i) !== null) return false;
+        }
+        return true;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
             {/* Sidebar (Kept Red as per previous instruction/layout, but main content is now Blue theme) */}
@@ -1680,9 +1788,12 @@ export default function AddProperty() {
                 <nav className="space-y-2 flex-1">
                     {STEPS.map(step => {
                         const isActive = currentStep === step.id;
+                        const accessible = isStepAccessible(step.id);
                         const isCompleted = currentStep > step.id;
                         return (
-                            <div key={step.id} className={`group flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 relative overflow-hidden ${isActive ? "bg-white text-red-600 shadow-md" : "text-red-100 hover:bg-white/10 hover:text-white"}`}>
+                            <div key={step.id}
+                                onClick={() => accessible && setCurrentStep(step.id)}
+                                className={`group flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 relative overflow-hidden ${isActive ? "bg-white text-red-600 shadow-md" : accessible ? "text-red-100 hover:bg-white/10 hover:text-white cursor-pointer" : "text-red-300/50 opacity-50 cursor-not-allowed"}`}>
                                 <div className={`relative z-10 transition-colors ${isActive ? "text-red-600" : isCompleted ? "text-white" : "text-red-200 group-hover:text-white"}`}>
                                     {isCompleted ? <Check size={18} strokeWidth={3} /> : step.icon}
                                 </div>
