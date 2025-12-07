@@ -106,11 +106,7 @@ const PropertyDetails = () => {
   // Combine regular images with categorized images
   const getAllImages = () => {
     const allImages = [];
-
-    // Add regular images
-    if (property?.images?.length > 0) {
-      property.images.forEach(img => allImages.push({ url: buildImageUrl(img), category: 'Gallery' }));
-    }
+    let hasCategorizedImages = false;
 
     // Add categorized images if available
     if (property?.categorizedImages) {
@@ -119,7 +115,8 @@ const PropertyDetails = () => {
       // Check residential images
       if (catImages.residential) {
         Object.entries(catImages.residential).forEach(([category, images]) => {
-          if (Array.isArray(images)) {
+          if (Array.isArray(images) && images.length > 0) {
+            hasCategorizedImages = true;
             images.forEach(img => {
               if (img) allImages.push({ url: buildImageUrl(img), category: formatCategoryName(category) });
             });
@@ -130,13 +127,19 @@ const PropertyDetails = () => {
       // Check commercial images
       if (catImages.commercial) {
         Object.entries(catImages.commercial).forEach(([category, images]) => {
-          if (Array.isArray(images)) {
+          if (Array.isArray(images) && images.length > 0) {
+            hasCategorizedImages = true;
             images.forEach(img => {
               if (img) allImages.push({ url: buildImageUrl(img), category: formatCategoryName(category) });
             });
           }
         });
       }
+    }
+
+    // Add regular images ONLY if no categorized images found to avoid duplicates/generic "Gallery" label
+    if (!hasCategorizedImages && property?.images?.length > 0) {
+      property.images.forEach(img => allImages.push({ url: buildImageUrl(img), category: 'Gallery' }));
     }
 
     return allImages;
@@ -433,8 +436,8 @@ const PropertyDetails = () => {
               onClick={handleInterest}
               disabled={interestLoading || isInterested}
               className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed ${isInterested
-                  ? "bg-green-600 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-green-600 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
             >
               {interestLoading ? (
