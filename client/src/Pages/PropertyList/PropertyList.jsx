@@ -851,7 +851,7 @@ const PropertyPage = () => {
             {/* Map Container */}
             <div className="flex-1 h-full relative">
               {/* Pin Drop Controls */}
-              <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+              <div className="absolute top-4 right-4 z-[40] flex flex-col gap-2">
                 <button
                   onClick={() => {
                     if (droppedPin) {
@@ -921,7 +921,7 @@ const PropertyPage = () => {
 
                 {/* No Properties Message */}
                 {propertiesWithCoords.length === 0 && !droppedPin && (
-                  <div className="leaflet-control absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000]">
+                  <div className="leaflet-control absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[40]">
                     <div className="bg-white rounded-xl shadow-lg p-6 text-center max-w-sm">
                       <div className="text-4xl mb-3">📍</div>
                       <h3 className="font-bold text-slate-800 mb-2">No Location Data</h3>
@@ -1010,7 +1010,7 @@ const PropertyPage = () => {
               </MapContainer>
 
               {/* Map Legend */}
-              <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000]">
+              <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[40]">
                 {droppedPin ? (
                   <>
                     <p className="text-xs text-green-600 font-medium">

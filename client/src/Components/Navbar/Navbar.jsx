@@ -308,7 +308,7 @@ function Navbar() {
   };
 
   // Classes that adapt: white background always
-  const navWrapperClass = `fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
+  const navWrapperClass = `fixed top-0 left-0 w-full z-[9999] transition-all duration-300 ${isScrolled
     ? "bg-white shadow-lg py-3"
     : "bg-white py-4"
     }`;
@@ -746,14 +746,14 @@ function Navbar() {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          className={`lg:hidden fixed inset-0 z-[5000] bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
             }`}
           onClick={toggleMenu}
         />
 
         {/* Mobile Menu Drawer */}
         <div
-          className={`lg:hidden fixed top-0 right-0 h-full w-[80%] max-w-sm bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out ${menuOpen ? "translate-x-0" : "translate-x-full"
+          className={`lg:hidden fixed top-0 right-0 h-full w-[80%] max-w-sm bg-white shadow-2xl z-[5001] transform transition-transform duration-300 ease-out ${menuOpen ? "translate-x-0" : "translate-x-full"
             }`}
         >
           <div className="flex flex-col h-full">
