@@ -301,7 +301,7 @@ export default function Login() {
             {/* Footer */}
             <div className="mt-8 text-center text-sm text-slate-500">
               Don't have an account?{" "}
-              <Link to="/register" className="font-bold text-blue-900 hover:underline">
+              <Link to="/register" state={{ from: redirectPath }} className="font-bold text-blue-900 hover:underline">
                 Create an account
               </Link>
             </div>

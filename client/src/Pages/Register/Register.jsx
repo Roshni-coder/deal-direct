@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, ShieldCheck, RefreshCw, Home, Search } from "lucide-react";
 import dealDirectLogo from "../../assets/dealdirect_logo.png";
 
@@ -18,6 +18,8 @@ export default function Register() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectPath = location.state?.from || "/";
 
   // Countdown timer for resend OTP
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function Register() {
         window.dispatchEvent(new Event("auth-change"));
 
         toast.success("Registration successful! Welcome to DealDirect.");
-        navigate("/");
+        navigate(redirectPath);
       } else {
         // Owners: Require OTP verification
         await axios.post(`${API_BASE}/api/users/register`, {
@@ -111,7 +113,7 @@ export default function Register() {
       window.dispatchEvent(new Event("auth-change"));
 
       toast.success("Registration successful! Welcome aboard.");
-      navigate("/");
+      navigate(redirectPath);
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid OTP. Please try again.");
     } finally {
@@ -182,8 +184,8 @@ export default function Register() {
                       type="button"
                       onClick={() => setUserType("buyer")}
                       className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${userType === "buyer"
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         }`}
                     >
                       <Search className={`w-6 h-6 mb-2 ${userType === "buyer" ? "text-blue-600" : "text-slate-400"}`} />
@@ -194,8 +196,8 @@ export default function Register() {
                       type="button"
                       onClick={() => setUserType("owner")}
                       className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${userType === "owner"
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         }`}
                     >
                       <Home className={`w-6 h-6 mb-2 ${userType === "owner" ? "text-blue-600" : "text-slate-400"}`} />
@@ -369,8 +371,8 @@ export default function Register() {
                       onClick={handleResendOtp}
                       disabled={resendTimer > 0 || resendLoading}
                       className={`inline-flex items-center text-sm font-medium transition-colors ${resendTimer > 0
-                          ? 'text-slate-400 cursor-not-allowed'
-                          : 'text-blue-900 hover:text-blue-700 hover:underline cursor-pointer'
+                        ? 'text-slate-400 cursor-not-allowed'
+                        : 'text-blue-900 hover:text-blue-700 hover:underline cursor-pointer'
                         }`}
                     >
                       {resendLoading ? (
