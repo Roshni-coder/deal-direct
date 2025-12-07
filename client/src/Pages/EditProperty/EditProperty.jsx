@@ -307,7 +307,7 @@ export default function EditProperty() {
                 // Set existing categorized images
                 const existingCatImages = {};
                 const categoryType = prop.categoryName?.toLowerCase() || "residential";
-                
+
                 if (prop.categorizedImages) {
                     const catImages = prop.categorizedImages[categoryType] || prop.categorizedImages.residential || prop.categorizedImages.commercial;
                     if (catImages) {
@@ -318,14 +318,14 @@ export default function EditProperty() {
                         });
                     }
                 }
-                
+
                 // If no categorized images, put all images in "other" category
                 if (Object.keys(existingCatImages).length === 0 && prop.images?.length > 0) {
                     existingCatImages.other = prop.images;
                 }
-                
+
                 setExistingCategorizedImages(existingCatImages);
-                
+
                 // Flatten for display purposes
                 const allImages = [];
                 Object.values(existingCatImages).forEach(imgs => {
@@ -353,11 +353,11 @@ export default function EditProperty() {
     const getImageCategories = () => {
         const category = formData.propertyCategory;
         const type = formData.propertyType;
-        
+
         if (IMAGE_CATEGORIES[category] && IMAGE_CATEGORIES[category][type]) {
             return IMAGE_CATEGORIES[category][type];
         }
-        
+
         // Default categories
         return [
             { key: "exterior", label: "Exterior", maxImages: 3 },
@@ -372,17 +372,17 @@ export default function EditProperty() {
         const categories = getImageCategories();
         const categoryConfig = categories.find(c => c.key === categoryKey);
         const maxImages = categoryConfig?.maxImages || 5;
-        
+
         const existingCount = (existingCategorizedImages[categoryKey]?.length || 0) + (categorizedImages[categoryKey]?.files?.length || 0);
         const remainingSlots = maxImages - existingCount;
-        
+
         if (files.length > remainingSlots) {
             toast.error(`You can only add ${remainingSlots} more image(s) to this category (max: ${maxImages})`);
             return;
         }
-        
+
         const previews = files.map(file => URL.createObjectURL(file));
-        
+
         setCategorizedImages(prev => ({
             ...prev,
             [categoryKey]: {
@@ -398,7 +398,7 @@ export default function EditProperty() {
             // Mark existing image for removal
             const imageUrl = existingCategorizedImages[categoryKey][index];
             setImagesToRemove(prev => [...prev, imageUrl]);
-            
+
             setExistingCategorizedImages(prev => ({
                 ...prev,
                 [categoryKey]: prev[categoryKey].filter((_, i) => i !== index)
@@ -582,7 +582,7 @@ export default function EditProperty() {
             // Add categorized new images and build category map
             const imageCategoryMap = [];
             let imageIndex = 0;
-            
+
             Object.entries(categorizedImages).forEach(([categoryKey, categoryData]) => {
                 if (categoryData.files && categoryData.files.length > 0) {
                     categoryData.files.forEach(file => {
@@ -595,7 +595,7 @@ export default function EditProperty() {
                     });
                 }
             });
-            
+
             // Add category map
             formDataToSend.append('imageCategoryMap', JSON.stringify(imageCategoryMap));
 
@@ -1091,7 +1091,7 @@ export default function EditProperty() {
     const renderStep5 = () => {
         const categories = getImageCategories();
         const totalImages = getTotalCategorizedImages();
-        
+
         return (
             <div className="space-y-6">
                 <div className="text-center">
@@ -1107,7 +1107,7 @@ export default function EditProperty() {
                         const newCount = categorizedImages[category.key]?.files?.length || 0;
                         const totalCatImages = existingCount + newCount;
                         const isExpanded = expandedCategories[category.key] !== false;
-                        
+
                         return (
                             <div key={category.key} className="border border-gray-200 rounded-xl overflow-hidden">
                                 {/* Category Header */}
@@ -1130,7 +1130,7 @@ export default function EditProperty() {
                                         <ChevronLeft className="transform -rotate-90" size={20} />
                                     </motion.div>
                                 </button>
-                                
+
                                 {/* Category Content */}
                                 <AnimatePresence>
                                     {isExpanded && (
@@ -1159,7 +1159,7 @@ export default function EditProperty() {
                                                             </span>
                                                         </div>
                                                     ))}
-                                                    
+
                                                     {/* New Image Previews */}
                                                     {categorizedImages[category.key]?.previews?.map((preview, idx) => (
                                                         <div key={`new-${idx}`} className="relative group aspect-square rounded-lg overflow-hidden border-2 border-green-400">
@@ -1176,7 +1176,7 @@ export default function EditProperty() {
                                                             </span>
                                                         </div>
                                                     ))}
-                                                    
+
                                                     {/* Upload Button */}
                                                     {totalCatImages < category.maxImages && (
                                                         <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
@@ -1192,7 +1192,7 @@ export default function EditProperty() {
                                                         </label>
                                                     )}
                                                 </div>
-                                                
+
                                                 {totalCatImages === 0 && (
                                                     <p className="text-sm text-gray-400 text-center py-2">
                                                         No images in this category
@@ -1234,122 +1234,122 @@ export default function EditProperty() {
             }
             return null;
         };
-        
+
         const previewImage = getPreviewImage();
         const totalImages = getTotalCategorizedImages();
-        
-        return (
-        <div className="space-y-6">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold text-gray-900">Review Changes</h2>
-                <p className="text-gray-500 mt-2">Confirm your property updates</p>
-            </div>
 
-            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-                {/* Preview Image */}
-                <div className="h-56 bg-gray-100 rounded-2xl overflow-hidden relative mb-4 border border-gray-200">
-                    {previewImage ? (
-                        <img src={previewImage} className="w-full h-full object-cover" alt="Property Preview" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <ImageIcon size={48} />
-                        </div>
-                    )}
-                    <div className="absolute top-4 left-4 bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-bold shadow-md uppercase">
-                        {formData.listingType}
-                    </div>
-                    <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        {totalImages} photos
-                    </div>
+        return (
+            <div className="space-y-6">
+                <div className="text-center">
+                    <h2 className="text-3xl font-bold text-gray-900">Review Changes</h2>
+                    <p className="text-gray-500 mt-2">Confirm your property updates</p>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold text-xl text-gray-900">
-                                {formData.title || `${formData.bhkType || formData.propertyType} for ${formData.listingType}`}
-                            </h3>
-                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                <MapPin size={14} /> {formData.locality}, {formData.city}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <div className="font-bold text-2xl text-blue-600">
-                                ₹ {formData.expectedPrice ? Number(formData.expectedPrice).toLocaleString() : "-"}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                                {formData.priceNegotiable ? "Negotiable" : "Fixed Price"}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-t border-gray-100">
-                        <div>
-                            <div className="text-xs text-gray-400 uppercase">Area</div>
-                            <div className="font-semibold text-gray-800">{formData.builtUpArea || "-"} sq.ft</div>
-                        </div>
-                        <div>
-                            <div className="text-xs text-gray-400 uppercase">Furnishing</div>
-                            <div className="font-semibold text-gray-800">{formData.furnishing}</div>
-                        </div>
-                        {isResidential && (
-                            <div>
-                                <div className="text-xs text-gray-400 uppercase">Config</div>
-                                <div className="font-semibold text-gray-800">{formData.bhkType || "-"}</div>
+                <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+                    {/* Preview Image */}
+                    <div className="h-56 bg-gray-100 rounded-2xl overflow-hidden relative mb-4 border border-gray-200">
+                        {previewImage ? (
+                            <img src={previewImage} className="w-full h-full object-cover" alt="Property Preview" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                <ImageIcon size={48} />
                             </div>
                         )}
-                        <div>
-                            <div className="text-xs text-gray-400 uppercase">Available</div>
-                            <div className="font-semibold text-gray-800">{formData.availableFrom || "Immediate"}</div>
+                        <div className="absolute top-4 left-4 bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-bold shadow-md uppercase">
+                            {formData.listingType}
+                        </div>
+                        <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            {totalImages} photos
                         </div>
                     </div>
 
-                    {formData.selectedAmenities.length > 0 && (
-                        <div>
-                            <div className="text-xs text-gray-400 uppercase mb-2">Amenities</div>
-                            <div className="flex flex-wrap gap-2">
-                                {formData.selectedAmenities.map(a => (
-                                    <span key={a} className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded text-xs">
-                                        {a}
-                                    </span>
-                                ))}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="font-bold text-xl text-gray-900">
+                                    {formData.title || `${formData.bhkType || formData.propertyType} for ${formData.listingType}`}
+                                </h3>
+                                <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                    <MapPin size={14} /> {formData.locality}, {formData.city}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-bold text-2xl text-blue-600">
+                                    ₹ {formData.expectedPrice ? Number(formData.expectedPrice).toLocaleString() : "-"}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    {formData.priceNegotiable ? "Negotiable" : "Fixed Price"}
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {formData.description && (
-                        <div>
-                            <div className="text-xs text-gray-400 uppercase">Description</div>
-                            <p className="mt-1 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{formData.description}</p>
-                        </div>
-                    )}
-
-                    <div className="pt-4">
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isSaving}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg disabled:opacity-50"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Saving Changes...
-                                </>
-                            ) : (
-                                <>
-                                    Save Changes <Check size={18} />
-                                </>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-t border-gray-100">
+                            <div>
+                                <div className="text-xs text-gray-400 uppercase">Area</div>
+                                <div className="font-semibold text-gray-800">{formData.builtUpArea || "-"} sq.ft</div>
+                            </div>
+                            <div>
+                                <div className="text-xs text-gray-400 uppercase">Furnishing</div>
+                                <div className="font-semibold text-gray-800">{formData.furnishing}</div>
+                            </div>
+                            {isResidential && (
+                                <div>
+                                    <div className="text-xs text-gray-400 uppercase">Config</div>
+                                    <div className="font-semibold text-gray-800">{formData.bhkType || "-"}</div>
+                                </div>
                             )}
-                        </button>
+                            <div>
+                                <div className="text-xs text-gray-400 uppercase">Available</div>
+                                <div className="font-semibold text-gray-800">{formData.availableFrom || "Immediate"}</div>
+                            </div>
+                        </div>
+
+                        {formData.selectedAmenities.length > 0 && (
+                            <div>
+                                <div className="text-xs text-gray-400 uppercase mb-2">Amenities</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.selectedAmenities.map(a => (
+                                        <span key={a} className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded text-xs">
+                                            {a}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {formData.description && (
+                            <div>
+                                <div className="text-xs text-gray-400 uppercase">Description</div>
+                                <p className="mt-1 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{formData.description}</p>
+                            </div>
+                        )}
+
+                        <div className="pt-4">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={isSaving}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg disabled:opacity-50"
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Saving Changes...
+                                    </>
+                                ) : (
+                                    <>
+                                        Save Changes <Check size={18} />
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         );
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900 pt-20">
+        <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
             {/* Sidebar */}
             <aside className="hidden md:flex flex-col w-80 bg-blue-600 h-[calc(100vh-5rem)] sticky top-20 p-6 pt-8 z-20 shadow-xl overflow-y-auto">
                 <div className="mb-6">

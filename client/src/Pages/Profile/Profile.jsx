@@ -442,7 +442,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20 pb-10">
+    <div className="min-h-screen bg-slate-50 pb-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
@@ -502,8 +502,8 @@ const Profile = () => {
                 <button
                   onClick={() => handleTabChange("profile")}
                   className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "profile"
-                      ? "bg-red-50 text-red-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-red-50 text-red-600"
+                    : "text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   <User size={18} />
@@ -512,8 +512,8 @@ const Profile = () => {
                 <button
                   onClick={() => handleTabChange("security")}
                   className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "security"
-                      ? "bg-red-50 text-red-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-red-50 text-red-600"
+                    : "text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   <Lock size={18} />
@@ -522,8 +522,8 @@ const Profile = () => {
                 <button
                   onClick={() => handleTabChange("preferences")}
                   className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "preferences"
-                      ? "bg-red-50 text-red-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-red-50 text-red-600"
+                    : "text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   <Bell size={18} />
@@ -532,8 +532,8 @@ const Profile = () => {
                 <button
                   onClick={() => handleTabChange("settings")}
                   className={`flex-shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition whitespace-nowrap ${activeTab === "settings"
-                      ? "bg-red-50 text-red-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-red-50 text-red-600"
+                    : "text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   <Settings size={18} />
@@ -626,8 +626,8 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                            : "border-transparent bg-slate-50"
+                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          : "border-transparent bg-slate-50"
                           } outline-none transition`}
                       />
                     </div>
@@ -660,8 +660,8 @@ const Profile = () => {
                         disabled={!isEditing}
                         placeholder="+91 9876543210"
                         className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                            : "border-transparent bg-slate-50"
+                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          : "border-transparent bg-slate-50"
                           } outline-none transition`}
                       />
                     </div>
@@ -679,8 +679,8 @@ const Profile = () => {
                         disabled={!isEditing}
                         placeholder="+91 9876543210"
                         className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                            : "border-transparent bg-slate-50"
+                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          : "border-transparent bg-slate-50"
                           } outline-none transition`}
                       />
                     </div>
@@ -697,8 +697,8 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                            : "border-transparent bg-slate-50"
+                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          : "border-transparent bg-slate-50"
                           } outline-none transition`}
                       />
                     </div>
@@ -713,8 +713,8 @@ const Profile = () => {
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                            : "border-transparent bg-slate-50"
+                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          : "border-transparent bg-slate-50"
                           } outline-none transition`}
                       >
                         <option value="">Select Gender</option>
@@ -738,8 +738,8 @@ const Profile = () => {
                       rows={3}
                       placeholder="Tell us a little about yourself..."
                       className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                          ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                          : "border-transparent bg-slate-50"
+                        ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                        : "border-transparent bg-slate-50"
                         } outline-none transition resize-none`}
                     />
                   </div>
@@ -763,8 +763,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="House/Flat No., Building Name"
                           className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                              ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                              : "border-transparent bg-slate-50"
+                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            : "border-transparent bg-slate-50"
                             } outline-none transition`}
                         />
                       </div>
@@ -781,8 +781,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="Street, Area, Landmark"
                           className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                              ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                              : "border-transparent bg-slate-50"
+                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            : "border-transparent bg-slate-50"
                             } outline-none transition`}
                         />
                       </div>
@@ -799,8 +799,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="Mumbai"
                           className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                              ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                              : "border-transparent bg-slate-50"
+                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            : "border-transparent bg-slate-50"
                             } outline-none transition`}
                         />
                       </div>
@@ -817,8 +817,8 @@ const Profile = () => {
                           disabled={!isEditing}
                           placeholder="Maharashtra"
                           className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                              ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                              : "border-transparent bg-slate-50"
+                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            : "border-transparent bg-slate-50"
                             } outline-none transition`}
                         />
                       </div>
@@ -836,8 +836,8 @@ const Profile = () => {
                           placeholder="400001"
                           maxLength={6}
                           className={`w-full px-4 py-3 rounded-xl border ${isEditing
-                              ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                              : "border-transparent bg-slate-50"
+                            ? "border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            : "border-transparent bg-slate-50"
                             } outline-none transition`}
                         />
                       </div>
@@ -1062,8 +1062,8 @@ const Profile = () => {
                         </div>
                       </div>
                       <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${user?.role === 'owner' ? 'bg-blue-100 text-blue-700' :
-                          user?.role === 'agent' ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-700'
+                        user?.role === 'agent' ? 'bg-purple-100 text-purple-700' :
+                          'bg-gray-100 text-gray-700'
                         }`}>
                         {user?.role === 'owner' ? '🏠 Owner' : user?.role === 'agent' ? '👔 Agent' : '👤 Buyer'}
                       </span>

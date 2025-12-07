@@ -582,7 +582,7 @@ const PropertyPage = () => {
     navigate(`/properties/${property._id}`, { state: { property } });
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pt-16">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
 
       {/* Filter Bar - Sticky */}
       <div className="sticky top-16 z-30 bg-white shadow-md border-b border-slate-200 py-5 px-6 transition-all">
@@ -634,7 +634,7 @@ const PropertyPage = () => {
                           />
                         ) : (
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
-                              'bg-green-100 text-green-600'
+                            'bg-green-100 text-green-600'
                             }`}>
                             {suggestion.type === 'project' ? '🏠' : '📍'}
                           </div>
@@ -648,8 +648,8 @@ const PropertyPage = () => {
                           )}
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
-                            suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
-                              'bg-orange-50 text-orange-600'
+                          suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
+                            'bg-orange-50 text-orange-600'
                           }`}>
                           {suggestion.type}
                         </span>
@@ -729,8 +729,8 @@ const PropertyPage = () => {
                 <button
                   onClick={() => setViewMode("list")}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "list"
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white text-slate-800 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
                     }`}
                 >
                   <FaList size={14} />
@@ -739,8 +739,8 @@ const PropertyPage = () => {
                 <button
                   onClick={() => setViewMode("map")}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "map"
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white text-slate-800 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
                     }`}
                 >
                   <FaMap size={14} />
@@ -862,10 +862,10 @@ const PropertyPage = () => {
                     }
                   }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-medium text-sm transition-all ${pinDropMode
-                      ? 'bg-green-600 text-white animate-pulse'
-                      : droppedPin
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                    ? 'bg-green-600 text-white animate-pulse'
+                    : droppedPin
+                      ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                      : 'bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                 >
                   {droppedPin ? (

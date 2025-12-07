@@ -318,7 +318,7 @@ export default function SavedProperties() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -382,8 +382,8 @@ export default function SavedProperties() {
                     key={tab.key}
                     onClick={() => setFilterType(tab.key)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${filterType === tab.key
-                        ? "bg-red-600 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                   >
                     {tab.label}

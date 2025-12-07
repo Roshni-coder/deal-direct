@@ -106,16 +106,16 @@ const PropertyDetails = () => {
   // Combine regular images with categorized images
   const getAllImages = () => {
     const allImages = [];
-    
+
     // Add regular images
     if (property?.images?.length > 0) {
       property.images.forEach(img => allImages.push({ url: buildImageUrl(img), category: 'Gallery' }));
     }
-    
+
     // Add categorized images if available
     if (property?.categorizedImages) {
       const catImages = property.categorizedImages;
-      
+
       // Check residential images
       if (catImages.residential) {
         Object.entries(catImages.residential).forEach(([category, images]) => {
@@ -126,7 +126,7 @@ const PropertyDetails = () => {
           }
         });
       }
-      
+
       // Check commercial images
       if (catImages.commercial) {
         Object.entries(catImages.commercial).forEach(([category, images]) => {
@@ -138,10 +138,10 @@ const PropertyDetails = () => {
         });
       }
     }
-    
+
     return allImages;
   };
-  
+
   // Format category key to display name (e.g., "livingRoom" -> "Living Room")
   const formatCategoryName = (key) => {
     return key
@@ -151,10 +151,10 @@ const PropertyDetails = () => {
   };
 
   const allPropertyImages = getAllImages();
-  const imgs = allPropertyImages.length > 0 
-    ? allPropertyImages.map(item => item.url) 
+  const imgs = allPropertyImages.length > 0
+    ? allPropertyImages.map(item => item.url)
     : (property?.images || []).map(buildImageUrl);
-  
+
   // Get current image category for display
   const currentImageCategory = allPropertyImages[activeImage]?.category || 'Gallery';
 
@@ -204,7 +204,7 @@ const PropertyDetails = () => {
     // Check if user is logged in
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
-    
+
     if (!token || !user) {
       toast.info("Please login to express interest in this property");
       navigate("/login", { state: { from: `/properties/${id}` } });
@@ -244,7 +244,7 @@ const PropertyDetails = () => {
   const handleChatWithOwner = async () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    
+
     if (!token || !user._id) {
       toast.info("Please login to chat with the owner");
       navigate("/login", { state: { from: `/properties/${id}` } });
@@ -253,7 +253,7 @@ const PropertyDetails = () => {
 
     // Get owner ID from property
     const ownerId = property.owner?._id || property.owner;
-    
+
     // Check if property has an owner
     if (!ownerId) {
       toast.error("Unable to contact owner - no owner information available");
@@ -286,7 +286,7 @@ const PropertyDetails = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 mt-20 font-sans">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 font-sans">
       <VisitModal
         isOpen={isVisitModalOpen}
         onClose={() => setIsVisitModalOpen(false)}
@@ -432,11 +432,10 @@ const PropertyDetails = () => {
             <button
               onClick={handleInterest}
               disabled={interestLoading || isInterested}
-              className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed ${
-                isInterested 
-                  ? "bg-green-600 text-white" 
+              className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold shadow-md transition transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed ${isInterested
+                  ? "bg-green-600 text-white"
                   : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+                }`}
             >
               {interestLoading ? (
                 <>

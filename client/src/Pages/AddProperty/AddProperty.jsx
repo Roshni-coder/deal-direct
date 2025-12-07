@@ -761,7 +761,7 @@ export default function AddProperty() {
     const searchLocations = (query, fieldType) => {
         setActiveLocationField(fieldType);
         setShowSuggestions(true);
-        
+
         const suggestions = [];
         const searchTerm = (query || '').toLowerCase().trim();
 
@@ -782,11 +782,11 @@ export default function AddProperty() {
         } else if (fieldType === 'locality') {
             // Search areas/localities within selected city or all cities
             const selectedCity = formData.city?.toLowerCase();
-            
+
             locationData.cities.forEach(city => {
                 // If city is selected, only search within that city
                 if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
-                
+
                 city.areas.forEach(area => {
                     if (!searchTerm || area.name.toLowerCase().includes(searchTerm)) {
                         suggestions.push({
@@ -805,7 +805,7 @@ export default function AddProperty() {
             // Search ALL - cities, areas, and projects for comprehensive suggestions
             const selectedCity = formData.city?.toLowerCase();
             const selectedLocality = formData.locality?.toLowerCase();
-            
+
             locationData.cities.forEach(city => {
                 // If no city selected, also show matching cities
                 if (!selectedCity && (!searchTerm || city.name.toLowerCase().includes(searchTerm))) {
@@ -818,9 +818,9 @@ export default function AddProperty() {
                         shortName: city.name
                     });
                 }
-                
+
                 if (selectedCity && city.name.toLowerCase() !== selectedCity) return;
-                
+
                 city.areas.forEach(area => {
                     // If no locality selected, also show matching areas
                     if (!selectedLocality && (!searchTerm || area.name.toLowerCase().includes(searchTerm))) {
@@ -833,9 +833,9 @@ export default function AddProperty() {
                             shortName: `${area.name}, ${city.name}`
                         });
                     }
-                    
+
                     if (selectedLocality && area.name.toLowerCase() !== selectedLocality) return;
-                    
+
                     // Always search projects
                     area.projects.forEach(project => {
                         if (!searchTerm || project.toLowerCase().includes(searchTerm)) {
@@ -914,12 +914,12 @@ export default function AddProperty() {
                 updates.address = '';
             }
         }
-        
+
         if (suggestion.type === 'locality' || activeLocationField === 'locality') {
             updates.locality = suggestion.locality;
             if (suggestion.city) updates.city = suggestion.city;
         }
-        
+
         if (suggestion.type === 'project' || activeLocationField === 'address') {
             updates.address = suggestion.project || suggestion.display_name;
             if (suggestion.city) updates.city = suggestion.city;
@@ -1073,11 +1073,10 @@ export default function AddProperty() {
                                             {suggestion.type === 'project' && `${suggestion.locality}, ${suggestion.city}`}
                                         </div>
                                     </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                                        suggestion.type === 'city' ? 'bg-blue-100 text-blue-700' :
-                                        suggestion.type === 'locality' ? 'bg-green-100 text-green-700' :
-                                        'bg-orange-100 text-orange-700'
-                                    }`}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${suggestion.type === 'city' ? 'bg-blue-100 text-blue-700' :
+                                            suggestion.type === 'locality' ? 'bg-green-100 text-green-700' :
+                                                'bg-orange-100 text-orange-700'
+                                        }`}>
                                         {suggestion.type === 'city' ? 'City' : suggestion.type === 'locality' ? 'Area' : 'Project'}
                                     </span>
                                 </div>
@@ -1663,10 +1662,10 @@ export default function AddProperty() {
         );
     };
 
-    if (!isAuthorized) return <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20"><EmailVerificationModal isOpen={showVerificationModal} onClose={() => navigate("/")} user={user} onVerified={handleVerificationSuccess} /></div>;
+    if (!isAuthorized) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><EmailVerificationModal isOpen={showVerificationModal} onClose={() => navigate("/")} user={user} onVerified={handleVerificationSuccess} /></div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900 pt-20">
+        <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
             {/* Sidebar (Kept Red as per previous instruction/layout, but main content is now Blue theme) */}
             <aside className="hidden md:flex flex-col w-80 bg-red-600 h-[calc(100vh-5rem)] sticky top-20 p-6 pt-8 z-20 shadow-xl overflow-y-auto">
                 <nav className="space-y-2 flex-1">

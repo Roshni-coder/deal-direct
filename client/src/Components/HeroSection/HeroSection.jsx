@@ -37,6 +37,28 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
   const abortControllerRef = useRef(null);
   const recognitionRef = useRef(null);
 
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("dealDirectRecentSearches");
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse recent searches");
+      }
+    }
+  }, []);
+
+  const addToRecentSearches = (item) => {
+    setRecentSearches(prev => {
+      const filtered = prev.filter(p => p.value !== item.value);
+      const newRecent = [{ ...item, timestamp: Date.now() }, ...filtered].slice(0, 5);
+      localStorage.setItem("dealDirectRecentSearches", JSON.stringify(newRecent));
+      return newRecent;
+    });
+  };
+
   const dropdownRefs = {
     budget: useRef(null),
     propertyType: useRef(null),
@@ -186,6 +208,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
     });
 
   const handleSuggestionClick = (suggestion) => {
+    addToRecentSearches(suggestion);
     setFilters({ ...filters, search: suggestion.value });
     setShowSuggestions(false);
     setSelectedIndex(-1);
@@ -260,17 +283,17 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
     return (
       <>
         {text.substring(0, index)}
-        <span className="font-semibold">{text.substring(index, index + query.length)}</span>
+        <span className="text-red-500 font-bold">{text.substring(index, index + query.length)}</span>
         {text.substring(index + query.length)}
       </>
     );
   };
 
   return (
-    <section className="relative flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center overflow-hidden">
+    <section className="relative flex flex-col justify-center items-center px-4 sm:px-8 lg:px-16 text-center z-20">
       {/* Background image */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-left md:bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${herokaback})` }}
       ></div>
 
@@ -281,7 +304,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-[700] text-white leading-tight max-w-4xl">
           Buy, Rent & Sell Properties
           <br />
-          <span className="text-red-500">Directly from Owners</span>
+          <span className="text-red-600">Directly from Owners</span>
         </h1>
 
         <p className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-200 max-w-3xl">
@@ -307,7 +330,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                   }}
                   onKeyDown={handleKeyDown}
                   onFocus={() => {
-                    if (suggestions.length > 0) setShowSuggestions(true);
+                    setShowSuggestions(true);
                   }}
                   className="w-full bg-transparent rounded-full pl-9 sm:pl-12 pr-16 sm:pr-20 py-2 sm:py-4 text-sm sm:text-lg text-gray-900 placeholder-gray-400 focus:outline-none placeholder:text-ellipsis"
                 />
@@ -330,59 +353,136 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
               </div>
 
               {/* Omnibox Suggestions */}
-              {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
+              {showSuggestions && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 text-left"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-[500px] overflow-y-auto z-50 text-left py-2"
                 >
                   {isLoadingSuggestions ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <div className="animate-spin inline-block w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full"></div>
-                      <p className="mt-2 text-sm">Searching...</p>
+                    <div className="p-6 text-center text-gray-500">
+                      <div className="animate-spin inline-block w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full"></div>
+                      <p className="mt-2 text-sm font-medium">Finding best matches...</p>
                     </div>
                   ) : (
-                    <ul className="py-1">
-                      {suggestions.map((suggestion, index) => (
-                        <li
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          onMouseEnter={() => setSelectedIndex(index)}
-                          className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 ${selectedIndex === index ? 'bg-gray-100' : 'hover:bg-gray-50'
-                            }`}
-                        >
-                          {suggestion.type === 'city' ? (
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0">
-                              <FaMapMarkerAlt className="text-white text-lg" />
-                            </div>
-                          ) : suggestion.image ? (
-                            <img
-                              src={suggestion.image}
-                              alt=""
-                              className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          ) : (
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-100 text-blue-600' :
-                              'bg-green-100 text-green-600'
-                              }`}>
-                              {suggestion.type === 'project' ? '🏠' : '📍'}
+                    <div className="flex flex-col">
+                      {/* Recent Searches Section - Show if query is empty or matches found */}
+                      {(!filters.search || filters.search.length < 2) && recentSearches.length > 0 && (
+                        <div className="mb-2">
+                          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-6 mt-2">Recent Searches</h3>
+                          <div className="px-4 space-y-2">
+                            {recentSearches.map((suggestion, index) => (
+                              <div
+                                key={`recent-${index}`}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                className="border border-gray-200 rounded-xl p-3 hover:bg-red-50 cursor-pointer transition-colors group"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:text-red-500 transition-colors">
+                                    <FaMicrophone size={12} className="transform rotate-12" /> {/* Using generic icon for recent */}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-800">{suggestion.value}</p>
+                                    {suggestion.subtitle && <p className="text-xs text-gray-500">{suggestion.subtitle}</p>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Grouped API Results */}
+                      {suggestions.length > 0 && (
+                        <>
+                          {/* Locations Group */}
+                          {suggestions.filter(s => s.type === 'city' || s.type === 'locality').length > 0 && (
+                            <div className="mt-2">
+                              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-6 pt-2">Location</h3>
+                              <ul>
+                                {suggestions.filter(s => s.type === 'city' || s.type === 'locality').map((suggestion, index) => (
+                                  <li
+                                    key={`loc-${index}`}
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                    className="px-6 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 group"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                                      <FaMapMarkerAlt />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm text-gray-700">
+                                        {highlightMatch(suggestion.value, filters.search)}
+                                      </p>
+                                      {suggestion.subtitle && (
+                                        <p className="text-xs text-gray-400">{suggestion.subtitle}</p>
+                                      )}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-900 font-medium">
-                              {highlightMatch(suggestion.value, filters.search)}
-                            </p>
-                            {suggestion.subtitle && suggestion.type !== 'city' && (
-                              <p className="text-xs text-gray-500 truncate">{suggestion.subtitle}</p>
-                            )}
-                          </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${suggestion.type === 'project' ? 'bg-blue-50 text-blue-600' :
-                            suggestion.type === 'locality' ? 'bg-green-50 text-green-600' :
-                              'bg-orange-50 text-orange-600'
-                            }`}>{suggestion.type}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                          {/* Projects Group */}
+                          {suggestions.filter(s => s.type === 'project').length > 0 && (
+                            <div className="mt-2 text-gray-800">
+                              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-6 pt-2">Project</h3>
+                              <ul>
+                                {suggestions.filter(s => s.type === 'project').map((suggestion, index) => (
+                                  <li
+                                    key={`proj-${index}`}
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                    className="px-6 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 group"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                                      <FaBuilding />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm text-gray-700">
+                                        {highlightMatch(suggestion.value, filters.search)}
+                                      </p>
+                                      {suggestion.subtitle && (
+                                        <p className="text-xs text-gray-400">{suggestion.subtitle}</p>
+                                      )}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Other Group (if any) */}
+                          {suggestions.filter(s => !['city', 'locality', 'project'].includes(s.type)).length > 0 && (
+                            <div className="mt-2 text-gray-800">
+                              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-6 pt-2">Other Matches</h3>
+                              <ul>
+                                {suggestions.filter(s => !['city', 'locality', 'project'].includes(s.type)).map((suggestion, index) => (
+                                  <li
+                                    key={`other-${index}`}
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                    className="px-6 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 group"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-50 text-gray-400">
+                                      <AiOutlineSearch />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm text-gray-700">
+                                        {highlightMatch(suggestion.value, filters.search)}
+                                      </p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {suggestions.length === 0 && (!filters.search || filters.search.length < 2) && recentSearches.length === 0 && (
+                        <div className="p-8 text-center text-gray-400">
+                          <p>Start typing to search properties...</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -643,7 +643,7 @@ export default function MyProperties() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -687,8 +687,8 @@ export default function MyProperties() {
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key); setSelectedPropertyForLeads(null); }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab.key
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -741,8 +741,8 @@ export default function MyProperties() {
                       key={tab.key}
                       onClick={() => setFilter(tab.key)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${filter === tab.key
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                     >
                       {tab.label}
@@ -837,8 +837,8 @@ export default function MyProperties() {
                       key={tab.key}
                       onClick={() => setLeadFilter(tab.key)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${leadFilter === tab.key
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                     >
                       {tab.label}

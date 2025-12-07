@@ -24,7 +24,7 @@ import ChatButton from "./Components/Chat/ChatButton.jsx";
 
 function App() {
   return (
-    <div className="w-full min-h-screen overflow-x-hidden bg-white">
+    <div className="w-full min-h-screen overflow-x-hidden bg-white pt-16 lg:pt-20">
       <Router>
         <ChatProvider>
           <ScrollToTop />

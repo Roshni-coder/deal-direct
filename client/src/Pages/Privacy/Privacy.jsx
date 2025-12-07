@@ -48,7 +48,7 @@ const PrivacyPolicy = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans pt-20">
+        <div className="min-h-screen bg-slate-50 font-sans">
 
             {/* Header */}
             <div className="bg-slate-900 text-white py-16 px-6">
