@@ -605,6 +605,10 @@ export default function AddProperty() {
             const legalData = { reraId: formData.reraId, occupancyCertificate: !!formData.occupancyCertificate, tradeLicense: !!formData.tradeLicense, fireNoc: !!formData.fireNoc };
             submitData.append("legal", JSON.stringify(legalData));
 
+            // Add additional fields that were missing
+            if (formData.videoUrl) submitData.append("videoUrl", formData.videoUrl);
+            if (formData.bookingAmount) submitData.append("bookingAmount", formData.bookingAmount);
+
             // images.forEach(file => submitData.append("images", file));
 
             const imageCategoryMap = {};

@@ -177,7 +177,11 @@ const propertySchema = new mongoose.Schema(
       occupancyCertificate: Boolean,
       tradeLicense: Boolean,
       fireNoc: Boolean
-    }
+    },
+
+    // Additional fields
+    videoUrl: String,
+    bookingAmount: mongoose.Schema.Types.Mixed // For sale listings - booking/token amount
   },
   { timestamps: true }
 );

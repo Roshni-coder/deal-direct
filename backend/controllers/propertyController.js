@@ -75,6 +75,16 @@ export const addProperty = async (req, res) => {
     if (data.negotiable !== undefined) {
       data.negotiable = data.negotiable === 'true' || data.negotiable === true;
     }
+    
+    // Convert dockAvailable string to boolean if present
+    if (data.dockAvailable !== undefined) {
+      data.dockAvailable = data.dockAvailable === 'true' || data.dockAvailable === true;
+    }
+    
+    // Handle bookingAmount - can be number or string
+    if (data.bookingAmount) {
+      data.bookingAmount = Number(data.bookingAmount) || data.bookingAmount;
+    }
 
     // Spread features into top-level data if it exists
     if (data.features && typeof data.features === 'object') {
@@ -246,6 +256,21 @@ export const updateProperty = async (req, res) => {
         }
       }
     });
+
+    // Convert string booleans to actual booleans
+    if (data.negotiable !== undefined) {
+      data.negotiable = data.negotiable === 'true' || data.negotiable === true;
+    }
+    
+    // Convert dockAvailable string to boolean if present
+    if (data.dockAvailable !== undefined) {
+      data.dockAvailable = data.dockAvailable === 'true' || data.dockAvailable === true;
+    }
+    
+    // Handle bookingAmount - can be number or string
+    if (data.bookingAmount) {
+      data.bookingAmount = Number(data.bookingAmount) || data.bookingAmount;
+    }
 
     // Spread features into top-level data if it exists
     if (data.features && typeof data.features === 'object') {
