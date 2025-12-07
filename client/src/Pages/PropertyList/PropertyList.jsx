@@ -12,7 +12,13 @@ import {
   FaList,
   FaMap,
   FaCrosshairs,
-  FaTimes
+  FaTimes,
+  FaBalanceScale,
+  FaCheckCircle,
+  FaRupeeSign,
+  FaBuilding,
+  FaWrench,
+  FaLandmark
 } from "react-icons/fa";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from "react-leaflet";
 import L from "leaflet";
@@ -280,6 +286,7 @@ const PropertyPage = () => {
   const [pinDropMode, setPinDropMode] = useState(false);
   const [droppedPin, setDroppedPin] = useState(null); // { lat, lng }
   const [searchRadius, setSearchRadius] = useState(2); // km
+  const initialBoundsSetRef = useRef(false); // Track if initial bounds have been set
 
   // Autocomplete states
   const [suggestions, setSuggestions] = useState([]);
@@ -288,6 +295,10 @@ const PropertyPage = () => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
+
+  // Comparison states
+  const [compareList, setCompareList] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
   const abortControllerRef = useRef(null);
 
   const resolveImageSrc = (img) => {
@@ -470,6 +481,8 @@ const PropertyPage = () => {
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
+    // Reset bounds so map refits to new filtered properties
+    initialBoundsSetRef.current = false;
   };
 
   const filteredProperties = properties.filter((p) => {
@@ -564,24 +577,77 @@ const PropertyPage = () => {
     return null;
   };
 
-  // Component to fit map bounds to markers
+  // Component to fit map bounds to markers (only on initial load or pin drop)
   const MapBoundsUpdater = ({ properties }) => {
     const map = useMap();
 
     useEffect(() => {
       if (droppedPin) {
         map.setView([droppedPin.lat, droppedPin.lng], 14);
-      } else if (properties.length > 0) {
+        initialBoundsSetRef.current = true;
+      } else if (properties.length > 0 && !initialBoundsSetRef.current) {
         const bounds = L.latLngBounds(properties.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        initialBoundsSetRef.current = true;
       }
     }, [properties, map, droppedPin]);
+
+    // Reset the ref when droppedPin is cleared so we can re-fit if needed
+    useEffect(() => {
+      if (!droppedPin) {
+        // Don't reset immediately - only reset when properties actually change
+      }
+    }, [droppedPin]);
 
     return null;
   };
 
   const viewDetails = (property) =>
     navigate(`/properties/${property._id}`, { state: { property } });
+
+  // Comparison functions
+  const toggleCompare = (property, e) => {
+    e.stopPropagation();
+    const isSelected = compareList.some(p => p._id === property._id);
+    if (isSelected) {
+      setCompareList(prev => prev.filter(p => p._id !== property._id));
+    } else {
+      setCompareList(prev => [...prev, property]);
+    }
+  };
+
+  const removeFromCompare = (propertyId) => {
+    setCompareList(prev => prev.filter(p => p._id !== propertyId));
+  };
+
+  const clearCompare = () => {
+    setCompareList([]);
+    setShowCompareModal(false);
+  };
+
+  // Calculate price per sqft
+  const getPricePerSqft = (property) => {
+    const area = property.area?.carpetSqft || property.area?.builtUpSqft || property.size;
+    if (!area || !property.price) return '-';
+    return `₹${Math.round(property.price / area).toLocaleString()}`;
+  };
+
+  // Get maintenance info
+  const getMaintenance = (property) => {
+    if (property.maintenanceIncluded) return 'Included';
+    if (property.maintenance) return `₹${property.maintenance}/mo`;
+    return '-';
+  };
+
+  // Get nearby landmarks
+  const getNearbyLandmarks = (property) => {
+    const landmarks = property.address?.nearby || [];
+    if (landmarks.length === 0) {
+      if (property.address?.landmark) return [property.address.landmark];
+      return [];
+    }
+    return landmarks.slice(0, 3);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 -mt-10 lg:-mt-8">
@@ -1044,8 +1110,20 @@ const PropertyPage = () => {
               <div
                 key={p._id}
                 onClick={() => viewDetails(p)}
-                className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
+                className={`group bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer relative ${compareList.some(cp => cp._id === p._id) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-100'}`}
               >
+                {/* Compare Button */}
+                <button
+                  onClick={(e) => toggleCompare(p, e)}
+                  className={`absolute top-16 right-3 z-[35] p-2.5 rounded-full backdrop-blur-sm transition-all shadow-md ${compareList.some(cp => cp._id === p._id)
+                    ? 'bg-blue-500 text-white shadow-lg scale-110'
+                    : 'bg-white/90 hover:bg-blue-500 hover:text-white text-slate-700'
+                    }`}
+                  title={compareList.some(cp => cp._id === p._id) ? 'Remove from compare' : 'Add to compare'}
+                >
+                  <FaBalanceScale size={14} />
+                </button>
+
                 <div className="relative h-64 overflow-hidden">
                   <div className="absolute top-3 left-3 z-10">
                     <span className="bg-white/95 backdrop-blur-sm text-slate-800 text-xs font-bold px-3 py-1 rounded-md shadow-sm">
@@ -1100,6 +1178,299 @@ const PropertyPage = () => {
           </div>
         )}
       </main>
+
+      {/* Floating Compare Bar */}
+      {compareList.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-2xl z-50 animate-in slide-in-from-bottom duration-300">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <FaBalanceScale size={20} />
+                  <span className="font-bold text-lg">Compare</span>
+                </div>
+                <span className="text-slate-500 text-sm">
+                  {compareList.length} selected
+                </span>
+              </div>
+
+              {/* Selected Properties Thumbnails */}
+              <div className="flex items-center gap-3 flex-1 justify-center overflow-x-auto">
+                {compareList.map((p) => (
+                  <div key={p._id} className="relative group flex-shrink-0">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-400 shadow-md">
+                      <img
+                        src={resolveImageSrc(p.images?.[0]) || FALLBACK_IMG}
+                        alt={p.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => removeFromCompare(p._id)}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    >
+                      <FaTimes size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={clearCompare}
+                  className="px-4 py-2 text-slate-600 hover:text-red-600 font-medium text-sm transition-colors"
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={() => setShowCompareModal(true)}
+                  disabled={compareList.length < 2}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
+                >
+                  <FaBalanceScale />
+                  Compare Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison Modal */}
+      {showCompareModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-start justify-center pt-20 pb-4 px-4 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[calc(100vh-6rem)] overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FaBalanceScale size={24} />
+                <div>
+                  <h2 className="text-xl font-bold">The Decision Maker</h2>
+                  <p className="text-blue-100 text-sm">Side-by-side property comparison</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCompareModal(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="overflow-auto max-h-[calc(90vh-100px)]">
+              <table className="w-full">
+                <thead className="bg-slate-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-left py-4 px-4 text-sm font-bold text-slate-700 border-b border-slate-200 w-40">
+                      Features
+                    </th>
+                    {compareList.map((p) => (
+                      <th key={p._id} className="py-4 px-4 border-b border-slate-200 min-w-[220px]">
+                        <div className="flex flex-col items-center gap-2">
+                          <img
+                            src={resolveImageSrc(p.images?.[0]) || FALLBACK_IMG}
+                            alt={p.title}
+                            className="w-24 h-20 rounded-xl object-cover shadow-md"
+                            onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
+                          />
+                          <h3 className="font-bold text-slate-800 text-sm text-center line-clamp-2">{p.title}</h3>
+                          <p className="text-slate-500 text-xs flex items-center gap-1">
+                            <FaMapMarkerAlt className="text-red-500" size={10} />
+                            {p.address?.city}
+                          </p>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Price */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaRupeeSign className="text-green-600" />
+                        <span>Price</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="text-xl font-bold text-green-600">
+                          ₹{p.price?.toLocaleString()}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Price Per Sqft */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaRulerCombined className="text-blue-600" />
+                        <span>Price / Sq.ft</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="font-bold text-blue-600">{getPricePerSqft(p)}</span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Carpet Area */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaBuilding className="text-orange-500" />
+                        <span>Carpet Area</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="font-semibold text-slate-800">
+                          {p.area?.carpetSqft ? `${p.area.carpetSqft} sq.ft` : '-'}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Built-up Area */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaBuilding className="text-purple-500" />
+                        <span>Built-up Area</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="font-semibold text-slate-800">
+                          {p.area?.builtUpSqft ? `${p.area.builtUpSqft} sq.ft` : (p.size ? `${p.size} sq.ft` : '-')}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Maintenance */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaWrench className="text-slate-500" />
+                        <span>Maintenance</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className={`font-semibold ${getMaintenance(p) === 'Included' ? 'text-green-600' : 'text-slate-700'}`}>
+                          {getMaintenance(p)}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Bedrooms */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaBed className="text-red-500" />
+                        <span>Bedrooms</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="font-bold text-slate-800 text-lg">{p.bedrooms || '-'}</span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Bathrooms */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaBath className="text-cyan-500" />
+                        <span>Bathrooms</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className="font-bold text-slate-800 text-lg">{p.bathrooms || '-'}</span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Furnishing */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <span className="text-lg">🛋️</span>
+                        <span>Furnishing</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${p.furnishing === 'Fully Furnished' ? 'bg-green-100 text-green-700' :
+                          p.furnishing === 'Semi Furnished' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                          {p.furnishing || 'Unfurnished'}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Nearby Landmarks */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium">
+                        <FaLandmark className="text-amber-600" />
+                        <span>Nearby</span>
+                      </div>
+                    </td>
+                    {compareList.map((p) => {
+                      const landmarks = getNearbyLandmarks(p);
+                      return (
+                        <td key={p._id} className="py-4 px-4 text-center border-b border-slate-100">
+                          {landmarks.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {landmarks.map((l, i) => (
+                                <span key={i} className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full inline-block">
+                                  {l}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-sm">-</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* View Details Button Row */}
+                  <tr className="bg-slate-50">
+                    <td className="py-4 px-4"></td>
+                    {compareList.map((p) => (
+                      <td key={p._id} className="py-4 px-4 text-center">
+                        <button
+                          onClick={() => {
+                            setShowCompareModal(false);
+                            viewDetails(p);
+                          }}
+                          className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors shadow-md"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
