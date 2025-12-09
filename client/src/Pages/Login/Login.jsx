@@ -266,16 +266,16 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Remember Me / Forgot Password */}
+              {/* Remember Me / Forgot Password - Touch Optimized */}
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 text-blue-900 border-slate-300 rounded focus:ring-blue-900" />
-                  <span className="ml-2 text-slate-600">Remember me</span>
+                <label className="flex items-center cursor-pointer min-h-[44px] py-2 -ml-2 px-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-action-manipulation">
+                  <input type="checkbox" className="w-5 h-5 min-w-[20px] text-blue-900 border-slate-300 rounded focus:ring-blue-900 cursor-pointer touch-checkbox" />
+                  <span className="ml-3 text-slate-600 font-medium">Remember me</span>
                 </label>
                 <button
                   type="button"
                   onClick={openForgotModal}
-                  className="font-medium text-blue-900 hover:underline"
+                  className="font-medium text-blue-900 hover:underline py-3 px-2 min-h-[44px] hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-action-manipulation"
                 >
                   Forgot password?
                 </button>

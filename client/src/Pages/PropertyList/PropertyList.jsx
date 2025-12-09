@@ -741,36 +741,36 @@ const PropertyPage = () => {
             {/* Dropdowns Group */}
             <div className="flex flex-wrap items-center gap-2">
 
-              {/* City Dropdown */}
+              {/* City Dropdown - Touch Optimized */}
               <div className="relative">
                 <select
-                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  className="appearance-none bg-white border border-slate-200 min-h-[44px] py-3 pl-4 pr-10 rounded-xl text-base sm:text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
                   value={filters.city}
                   onChange={(e) => handleFilterChange("city", e.target.value)}
                 >
                   <option value="">All Cities</option>
                   {cities.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <FaMapMarkerAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
+                <FaMapMarkerAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm" />
               </div>
 
-              {/* Type Dropdown */}
+              {/* Type Dropdown - Touch Optimized */}
               <div className="relative">
                 <select
-                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  className="appearance-none bg-white border border-slate-200 min-h-[44px] py-3 pl-4 pr-10 rounded-xl text-base sm:text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
                   value={filters.propertyType}
                   onChange={(e) => handleFilterChange("propertyType", e.target.value)}
                 >
                   <option value="">All Types</option>
                   {propertyTypes.map(pt => <option key={pt._id} value={pt._id}>{pt.name}</option>)}
                 </select>
-                <FaFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs" />
+                <FaFilter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm" />
               </div>
 
-              {/* Price Range */}
+              {/* Price Range - Touch Optimized */}
               <div className="relative">
                 <select
-                  className="appearance-none bg-white border border-slate-200 py-3 pl-4 pr-10 rounded-xl text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
+                  className="appearance-none bg-white border border-slate-200 min-h-[44px] py-3 pl-4 pr-10 rounded-xl text-base sm:text-sm font-medium hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 cursor-pointer shadow-sm transition-all"
                   value={filters.priceRange}
                   onChange={(e) => handleFilterChange("priceRange", e.target.value)}
                 >
@@ -779,26 +779,27 @@ const PropertyPage = () => {
                   <option value="mid">₹50 Lac - ₹1.5 Cr</option>
                   <option value="high">Above ₹1.5 Cr</option>
                 </select>
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs">₹</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm">₹</span>
               </div>
 
-              {/* Clear Button */}
+              {/* Clear Button - Touch Optimized */}
               {(filters.search || filters.city || filters.propertyType || filters.priceRange || filters.availableFor) && (
                 <button
                   onClick={() => setFilters(initialFilters)}
-                  className="text-red-600 text-sm font-semibold hover:underline px-3 py-2 hover:bg-red-50 rounded-lg transition-colors"
+                  className="text-red-600 text-sm font-semibold hover:underline px-4 py-3 min-h-[44px] hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-action-manipulation"
                 >
                   Reset
                 </button>
               )}
 
-              {/* View Toggle */}
+              {/* View Toggle - Touch Optimized */}
               <div className="flex items-center bg-slate-100 rounded-xl p-1">
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "list"
+                  aria-pressed={viewMode === "list"}
+                  className={`flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg text-sm font-medium transition-all touch-action-manipulation ${viewMode === "list"
                     ? "bg-white text-slate-800 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    : "text-slate-500 hover:text-slate-700 active:bg-white/50"
                     }`}
                 >
                   <FaList size={14} />
@@ -806,9 +807,10 @@ const PropertyPage = () => {
                 </button>
                 <button
                   onClick={() => setViewMode("map")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === "map"
+                  aria-pressed={viewMode === "map"}
+                  className={`flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg text-sm font-medium transition-all touch-action-manipulation ${viewMode === "map"
                     ? "bg-white text-slate-800 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    : "text-slate-500 hover:text-slate-700 active:bg-white/50"
                     }`}
                 >
                   <FaMap size={14} />

@@ -278,23 +278,24 @@ export default function Register() {
                     </div>
                   </div>
 
-                  {/* Terms Checkbox */}
+                  {/* Terms Checkbox - Touch Optimized */}
                   <div className="flex items-start">
-                    <div className="flex items-center h-5">
+                    <label
+                      htmlFor="agree"
+                      className="flex items-start gap-3 cursor-pointer min-h-[44px] py-2 -ml-2 px-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-action-manipulation w-full"
+                    >
                       <input
                         id="agree"
                         name="agree"
                         type="checkbox"
                         checked={formData.agree}
                         onChange={handleChange}
-                        className="w-4 h-4 text-blue-900 border-slate-300 rounded focus:ring-blue-900 cursor-pointer"
+                        className="w-5 h-5 min-w-[20px] mt-0.5 text-blue-900 border-slate-300 rounded focus:ring-blue-900 cursor-pointer touch-checkbox"
                       />
-                    </div>
-                    <div className="ml-3 text-sm">
-                      <label htmlFor="agree" className="text-slate-600 cursor-pointer">
+                      <span className="text-sm text-slate-600">
                         I agree to the <a href="#" className="text-blue-900 font-medium hover:underline">Terms of Service</a> and <a href="#" className="text-blue-900 font-medium hover:underline">Privacy Policy</a>
-                      </label>
-                    </div>
+                      </span>
+                    </label>
                   </div>
 
                   {/* Submit Button */}

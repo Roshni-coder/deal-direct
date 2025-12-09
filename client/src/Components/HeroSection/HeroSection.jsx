@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AiOutlineSearch } from "react-icons/ai";
-import { FaMapMarkerAlt, FaMicrophone, FaHome, FaKey, FaBuilding, FaBed, FaTree } from "react-icons/fa";
+import { FaMapMarkerAlt, FaMicrophone, FaHome, FaKey, FaBuilding, FaBed, FaTree, FaHistory } from "react-icons/fa";
 import { tabConfig } from "./filterConfig";
 import PropertyTypeFilter from "./PropertyTypeFilter";
 import herokaback from "../../assets/herokaback.png";
@@ -394,7 +394,7 @@ const HeroSection = ({ filters, setFilters, propertyTypes = [] }) => {
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:text-red-500 transition-colors">
-                                    <FaMicrophone size={12} className="transform rotate-12" /> {/* Using generic icon for recent */}
+                                    <FaHistory size={14} />
                                   </div>
                                   <div>
                                     <p className="text-sm font-semibold text-gray-800">{suggestion.value}</p>
